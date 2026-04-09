@@ -16,6 +16,7 @@ async def verify_clerk_token(token: str) -> Optional[dict]:
         try:
             payload = jwt.decode(
                 token,
+                "",
                 options={"verify_signature": False},
             )
             return payload
