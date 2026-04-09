@@ -47,11 +47,15 @@ function generateDemoAnalysis(prompt: string, provider: string, model: string): 
   const estInput = tokens * inputPrice;
   const estOutput = Math.ceil(tokens * 0.7) * outputPrice;
 
-  const tokenScores = words.map((word, i) => ({
-    token: word.replace(/[.,!?;:'"()[\]{}]/g, ""),
-    score: Math.random(),
-    importance: Math.random() > 0.7 ? "high" : Math.random() > 0.4 ? "medium" : "low",
-  }));
+  const tokenScores = words.map((word) => {
+    const rand = Math.random();
+    const importance: "high" | "medium" | "low" = rand > 0.7 ? "high" : rand > 0.4 ? "medium" : "low";
+    return {
+      token: word.replace(/[.,!?;:'"()[\]{}]/g, ""),
+      score: Math.random(),
+      importance,
+    };
+  });
 
   return {
     tokens,
@@ -67,7 +71,7 @@ function generateDemoAnalysis(prompt: string, provider: string, model: string): 
 
 function generateDemoOptimization(analysis: AnalyzeResult, targetTokens?: number): OptimizeResult {
   const target = targetTokens || Math.floor(analysis.tokens * 0.7);
-  const kept = analysis.token_scores.slice(0, target).map(t => ({ ...t, importance: t.importance }));
+  const kept = analysis.token_scores.slice(0, target);
 
   const words = analysis.token_scores.slice(0, target).map(t => t.token);
   const optimized = words.join(" ");
