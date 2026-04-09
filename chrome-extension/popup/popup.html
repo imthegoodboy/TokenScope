@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TokenScope</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      width: 380px;
+      min-height: 500px;
+      background: #0a0a0a;
+      color: #fff;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 13px;
+      overflow-x: hidden;
+    }
+
+    /* Header */
+    .header {
+      background: linear-gradient(135deg, #1a1a1a 0%, #0d0d0d 100%);
+      padding: 20px;
+      border-bottom: 1px solid #222;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .header::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -20%;
+      width: 200px;
+      height: 200px;
+      background: radial-gradient(circle, rgba(255,107,0,0.15) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .header-content {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .logo {
+      width: 44px;
+      height: 44px;
+      background: linear-gradient(135deg, #FF6B00, #FF8533);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      font-weight: 800;
+      color: #000;
+      box-shadow: 0 4px 15px rgba(255,107,0,0.3);
+    }
+
+    .title-area {
+      flex: 1;
+    }
+
+    .title {
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+
+    .title span {
+      color: #FF6B00;
+    }
+
+    .subtitle {
+      font-size: 11px;
+      color: #666;
+      margin-top: 2px;
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      padding: 16px;
+      background: #111;
+    }
+
+    .stat-card {
+      background: linear-gradient(135deg, #1a1a1a, #151515);
+      border: 1px solid #222;
+      border-radius: 12px;
+      padding: 14px 10px;
+      text-align: center;
+      transition: all 0.3s ease;
+    }
+
+    .stat-card:hover {
+      border-color: #FF6B00;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 20px rgba(255,107,0,0.1);
+    }
+
+    .stat-icon {
+      width: 32px;
+      height: 32px;
+      margin: 0 auto 8px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+    }
+
+    .stat-card:nth-child(1) .stat-icon { background: rgba(59,130,246,0.2); }
+    .stat-card:nth-child(2) .stat-icon { background: rgba(34,197,94,0.2); }
+    .stat-card:nth-child(3) .stat-icon { background: rgba(255,107,0,0.2); }
+
+    .stat-value {
+      font-size: 20px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .stat-card:nth-child(2) .stat-value { color: #22c55e; }
+    .stat-card:nth-child(3) .stat-value { color: #FF6B00; }
+
+    .stat-label {
+      font-size: 10px;
+      color: #666;
+      margin-top: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* Sections */
+    .section {
+      padding: 16px;
+      border-bottom: 1px solid #1a1a1a;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .section-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      color: #666;
+      letter-spacing: 1px;
+      font-weight: 600;
+    }
+
+    /* Optimizer */
+    .optimizer-card {
+      background: linear-gradient(135deg, #141414, #0f0f0f);
+      border: 1px solid #222;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .optimizer-header {
+      background: linear-gradient(90deg, rgba(255,107,0,0.1), transparent);
+      padding: 12px 14px;
+      border-bottom: 1px solid #222;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .optimizer-header span {
+      font-size: 12px;
+      color: #FF6B00;
+      font-weight: 600;
+    }
+
+    .optimizer-body {
+      padding: 14px;
+    }
+
+    .prompt-input {
+      width: 100%;
+      background: #0d0d0d;
+      border: 1px solid #333;
+      border-radius: 8px;
+      padding: 12px;
+      color: #fff;
+      font-size: 13px;
+      resize: none;
+      height: 70px;
+      font-family: inherit;
+      transition: all 0.2s;
+    }
+
+    .prompt-input:focus {
+      outline: none;
+      border-color: #FF6B00;
+      box-shadow: 0 0 0 3px rgba(255,107,0,0.1);
+    }
+
+    .prompt-input::placeholder {
+      color: #444;
+    }
+
+    .optimizer-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .btn {
+      flex: 1;
+      padding: 10px 16px;
+      border: none;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #FF6B00, #FF8533);
+      color: #000;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 15px rgba(255,107,0,0.3);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-secondary {
+      background: #222;
+      color: #888;
+      flex: 0 0 auto;
+    }
+
+    .btn-secondary:hover {
+      background: #2a2a2a;
+      color: #fff;
+    }
+
+    /* Result */
+    .result-card {
+      margin-top: 12px;
+      background: #0d0d0d;
+      border: 1px solid #FF6B00;
+      border-radius: 10px;
+      overflow: hidden;
+      display: none;
+    }
+
+    .result-card.show {
+      display: block;
+      animation: slideIn 0.3s ease;
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .result-header {
+      background: linear-gradient(90deg, rgba(255,107,0,0.15), transparent);
+      padding: 10px 12px;
+      border-bottom: 1px solid #222;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .result-label {
+      font-size: 11px;
+      color: #FF6B00;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .result-savings {
+      background: rgba(34,197,94,0.2);
+      color: #22c55e;
+      padding: 4px 8px;
+      border-radius: 20px;
+      font-size: 10px;
+      font-weight: 600;
+    }
+
+    .result-body {
+      padding: 12px;
+    }
+
+    .result-text {
+      font-size: 13px;
+      line-height: 1.6;
+      color: #e5e5e5;
+    }
+
+    .result-meta {
+      display: flex;
+      gap: 16px;
+      margin-top: 12px;
+      padding-top: 10px;
+      border-top: 1px solid #222;
+    }
+
+    .result-meta-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: #666;
+    }
+
+    .result-meta-item span {
+      color: #fff;
+      font-weight: 600;
+    }
+
+    /* History */
+    .history-list {
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .history-item {
+      background: #141414;
+      border: 1px solid #1f1f1f;
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 8px;
+      transition: all 0.2s;
+    }
+
+    .history-item:hover {
+      border-color: #333;
+    }
+
+    .history-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .history-item-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .history-chatbot {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: #888;
+    }
+
+    .history-savings {
+      font-size: 11px;
+      color: #22c55e;
+      font-weight: 600;
+    }
+
+    .history-prompt {
+      font-size: 12px;
+      color: #666;
+      line-height: 1.5;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .history-optimized {
+      font-size: 12px;
+      color: #fff;
+      line-height: 1.5;
+      margin-top: 6px;
+      padding-top: 6px;
+      border-top: 1px dashed #333;
+    }
+
+    .history-empty {
+      text-align: center;
+      padding: 30px 20px;
+      color: #444;
+    }
+
+    .history-empty-icon {
+      font-size: 32px;
+      margin-bottom: 8px;
+      opacity: 0.5;
+    }
+
+    /* Footer */
+    .footer {
+      padding: 16px;
+      background: #0d0d0d;
+    }
+
+    .open-dashboard {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      padding: 12px;
+      background: linear-gradient(135deg, #1a1a1a, #141414);
+      border: 1px solid #333;
+      border-radius: 10px;
+      color: #fff;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-decoration: none;
+    }
+
+    .open-dashboard:hover {
+      border-color: #FF6B00;
+      background: linear-gradient(135deg, #1f1f1f, #1a1a1a);
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #333;
+      border-radius: 2px;
+    }
+
+    /* Loading */
+    .spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid #0003;
+      border-top-color: #000;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="header-content">
+      <div class="logo">TS</div>
+      <div class="title-area">
+        <div class="title">Token<span>Scope</span></div>
+        <div class="subtitle">AI Prompt Optimizer</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon">📊</div>
+      <div class="stat-value" id="total-prompts">0</div>
+      <div class="stat-label">Prompts</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">✨</div>
+      <div class="stat-value" id="saved-tokens">0</div>
+      <div class="stat-label">Tokens Saved</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">💰</div>
+      <div class="stat-value" id="saved-cost">$0</div>
+      <div class="stat-label">Cost Saved</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">
+      <div class="section-title">Quick Optimize</div>
+    </div>
+    <div class="optimizer-card">
+      <div class="optimizer-body">
+        <textarea class="prompt-input" id="prompt-input" placeholder="Paste your prompt here..."></textarea>
+        <div class="optimizer-actions">
+          <button class="btn btn-primary" id="optimize-btn">
+            <span>✨</span> Optimize
+          </button>
+          <button class="btn btn-secondary" id="clear-btn" title="Clear">
+            ✕
+          </button>
+        </div>
+
+        <div class="result-card" id="result-card">
+          <div class="result-header">
+            <span class="result-label">✨ Optimized</span>
+            <span class="result-savings" id="result-savings-badge">-0%</span>
+          </div>
+          <div class="result-body">
+            <div class="result-text" id="result-text"></div>
+            <div class="result-meta">
+              <div class="result-meta-item">
+                <span>📝</span>
+                <span id="result-tokens">0</span> tokens
+              </div>
+              <div class="result-meta-item">
+                <span>💰</span>
+                <span id="result-cost">$0</span> cost
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">
+      <div class="section-title">Recent Optimizations</div>
+    </div>
+    <div class="history-list" id="history-list">
+      <div class="history-empty">
+        <div class="history-empty-icon">📭</div>
+        <div>No history yet</div>
+        <div style="font-size: 11px; margin-top: 4px;">Optimize your first prompt!</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <a href="http://localhost:3000/dashboard" target="_blank" class="open-dashboard" id="open-dashboard">
+      <span>📊</span> Open Dashboard
+    </a>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

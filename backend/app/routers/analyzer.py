@@ -30,7 +30,7 @@ async def analyze_prompt(request: AnalyzeRequest):
     current_tokens = len(tokens)
     current_cost = tfidf_engine.estimate_cost(request.prompt, request.target_model)
 
-    enhanced = tfidf_engine.enhance_prompt(request.prompt)
+    enhanced = tfidf_engine.enhance_prompt(request.prompt, request.target_model)
     enhanced_tokens = len(enhanced.split())
     enhanced_cost = tfidf_engine.estimate_cost(enhanced, request.target_model)
 
@@ -46,17 +46,27 @@ async def analyze_prompt(request: AnalyzeRequest):
             "tokens": enhanced_tokens,
             "estimated_cost": enhanced_cost,
             "token_savings": current_tokens - enhanced_tokens,
-            "cost_savings_percent": ((current_cost - enhanced_cost) / current_cost * 100) if current_cost > 0 else 0
+            "cost_savings_percent": ((current_cost - enhanced_cost) / current_cost * 100) if current_cost > 0 else 0,
+            "cost_savings": round(current_cost - enhanced_cost, 8),
         }
     }
 
 @router.post("/enhance")
 async def enhance_prompt(request: EnhanceRequest):
-    enhanced = tfidf_engine.enhance_prompt(request.prompt)
+    enhanced = tfidf_engine.enhance_prompt(request.prompt, request.target_model)
+    original_tokens = len(request.prompt.split())
+    enhanced_tokens = len(enhanced.split())
+    current_cost = tfidf_engine.estimate_cost(request.prompt, request.target_model)
+    enhanced_cost = tfidf_engine.estimate_cost(enhanced, request.target_model)
 
     return {
         "original": request.prompt,
         "enhanced": enhanced,
-        "original_tokens": len(request.prompt.split()),
-        "enhanced_tokens": len(enhanced.split())
+        "original_tokens": original_tokens,
+        "enhanced_tokens": enhanced_tokens,
+        "estimated_cost_original": current_cost,
+        "estimated_cost_enhanced": enhanced_cost,
+        "cost_savings": round(current_cost - enhanced_cost, 8),
+        "cost_savings_percent": ((current_cost - enhanced_cost) / current_cost * 100) if current_cost > 0 else 0,
+        "token_savings": original_tokens - enhanced_tokens,
     }
