@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState } from "react";
 import { Header } from "@/components/layout/header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -168,9 +168,8 @@ export default function HistoryPage() {
               </thead>
               <tbody className="divide-y divide-black-border">
                 {paged.map((record) => (
-                  <>
+                  <React.Fragment key={record.id}>
                     <tr
-                      key={record.id}
                       className="hover:bg-black/2 transition-colors cursor-pointer"
                       onClick={() => setExpanded(expanded === record.id ? null : record.id)}
                     >
@@ -211,8 +210,8 @@ export default function HistoryPage() {
                       </td>
                     </tr>
                     {expanded === record.id && (
-                      <tr key={`${record.id}-detail`}>
-                        <td colSpan={6} className="bg-cream px-8 py-4">
+                      <tr>
+                        <td colSpan={6} className="bg-bg px-8 py-4">
                           <div className="grid grid-cols-3 gap-4 text-sm">
                             <div>
                               <p className="text-xs text-black-muted mb-1">Prompt Tokens</p>
@@ -230,7 +229,7 @@ export default function HistoryPage() {
                         </td>
                       </tr>
                     )}
-                  </>
+                  </React.Fragment>
                 ))}
               </tbody>
             </table>

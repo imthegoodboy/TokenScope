@@ -50,7 +50,7 @@ function Bar({
       </mesh>
       <mesh position={[0, -0.01, 0]} receiveShadow>
         <boxGeometry args={[0.6, 0.02, 0.6]} />
-        <meshStandardMaterial color="#E8E4DE" roughness={0.8} />
+        <meshStandardMaterial color="#E2DDD7" roughness={0.8} />
       </mesh>
       <Text
         position={[0, -0.2, 0]}
@@ -73,9 +73,9 @@ function Scene({ data }: { data: ChartDataPoint[] }) {
   const totalWidth = (data.length - 1) * spacing;
 
   const providerColors: Record<string, string> = {
-    openai: "#10A37F",
-    anthropic: "#D4A574",
-    gemini: "#4285F4",
+    openai: "#F07F3C",
+    anthropic: "#16563B",
+    gemini: "#002F4B",
   };
 
   return (
@@ -108,7 +108,7 @@ function Scene({ data }: { data: ChartDataPoint[] }) {
       {/* Floor */}
       <mesh position={[0, -0.01, 0]} receiveShadow>
         <planeGeometry args={[12, 6]} />
-        <meshStandardMaterial color="#FAF7F2" roughness={0.9} />
+        <meshStandardMaterial color="#F7F4F0" roughness={0.9} />
       </mesh>
 
       <OrbitControls
@@ -143,9 +143,9 @@ export function Usage3DChart({ data, period }: Usage3DChartProps) {
       {/* Legend */}
       <div className="absolute bottom-2 right-2 flex gap-3 bg-surface/80 backdrop-blur-sm rounded-lg px-3 py-1.5">
         {[
-          { label: "OpenAI", color: "#10A37F" },
-          { label: "Anthropic", color: "#D4A574" },
-          { label: "Gemini", color: "#4285F4" },
+          { label: "OpenAI", color: "#F07F3C" },
+          { label: "Anthropic", color: "#16563B" },
+          { label: "Gemini", color: "#002F4B" },
         ].map((l) => (
           <div key={l.label} className="flex items-center gap-1.5">
             <div className="w-2 h-2 rounded-sm" style={{ backgroundColor: l.color }} />
