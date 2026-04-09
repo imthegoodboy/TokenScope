@@ -10,7 +10,9 @@
       "Bash(python -c \"from app.main import app; print\\('Backend OK'\\)\")",
       "Bash(npm run:*)",
       "Bash(python -c \"from backend.app.database import PromptOptimization; print\\('Database models OK'\\)\")",
-      "Bash(python -c \"from backend.app.routers.extension import router; print\\('Extension router OK'\\)\")"
+      "Bash(python -c \"from backend.app.routers.extension import router; print\\('Extension router OK'\\)\")",
+      "Bash(python -c \"from backend.app.database import PromptOptimization, UserScore, UserRole; print\\('DB Models OK'\\)\")",
+      "Bash(python -c \"from backend.app.services.scoring_engine import scoring_engine; print\\('Scoring Engine OK'\\)\")"
     ]
   }
 }

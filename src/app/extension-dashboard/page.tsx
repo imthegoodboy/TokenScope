@@ -592,6 +592,122 @@ export default function ExtensionDashboardPage() {
             </div>
           </div>
         )}
+
+        {/* Quick Prompt Optimizer */}
+        <div className="mt-8 bg-gradient-to-br from-orange/10 to-orange/5 border border-orange/20 rounded-xl p-6">
+          <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
+            <Sparkles className="w-5 h-5 text-orange" />
+            Quick Prompt Optimizer
+          </h2>
+          <p className="text-gray-400 text-sm mb-4">
+            Paste your prompt below and see how it can be optimized for better results and token savings.
+          </p>
+          <PromptOptimizer />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Quick Prompt Optimizer Component
+function PromptOptimizer() {
+  const [prompt, setPrompt] = useState('');
+  const [optimized, setOptimized] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const handleOptimize = async () => {
+    if (!prompt.trim()) return;
+
+    setLoading(true);
+    setError('');
+    setOptimized('');
+
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
+      const response = await fetch(`${apiUrl}/analyze`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt,
+          target_model: 'chatgpt',
+          user_id: 'optimizer'
+        })
+      });
+
+      if (!response.ok) throw new Error('Optimization failed');
+
+      const data = await response.json();
+      if (data.suggestion?.text) {
+        setOptimized(data.suggestion.text);
+      }
+    } catch (err: any) {
+      setError(err.message || 'Failed to optimize prompt');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="grid md:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-400 mb-2">Your Prompt</label>
+          <textarea
+            value={prompt}
+            onChange={(e) => setPrompt(e.target.value)}
+            placeholder="Enter your prompt here..."
+            className="w-full h-32 bg-black/50 border border-gray-700 rounded-lg p-3 text-white placeholder-gray-500 focus:border-orange focus:ring-1 focus:ring-orange resize-none"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-400 mb-2">Optimized Prompt</label>
+          <div className={`h-32 bg-black/50 border rounded-lg p-3 overflow-auto ${
+            error ? 'border-red-500' : optimized ? 'border-green-500' : 'border-gray-700'
+          }`}>
+            {loading ? (
+              <div className="flex items-center justify-center h-full">
+                <div className="w-6 h-6 border-2 border-orange border-t-transparent rounded-full animate-spin" />
+              </div>
+            ) : error ? (
+              <p className="text-red-400 text-sm">{error}</p>
+            ) : optimized ? (
+              <p className="text-gray-300 text-sm whitespace-pre-wrap">{optimized}</p>
+            ) : (
+              <p className="text-gray-500 text-sm">Optimized prompt will appear here...</p>
+            )}
+          </div>
+        </div>
+      </div>
+      <div className="flex items-center justify-between">
+        <p className="text-xs text-gray-500">
+          {prompt.split(' ').filter(w => w.length > 0).length} words, {prompt.length} characters
+        </p>
+        <div className="flex gap-3">
+          <button
+            onClick={() => { setPrompt(''); setOptimized(''); setError(''); }}
+            className="px-4 py-2 text-gray-400 hover:text-white transition-colors text-sm"
+          >
+            Clear
+          </button>
+          <button
+            onClick={handleOptimize}
+            disabled={!prompt.trim() || loading}
+            className="px-6 py-2 bg-orange hover:bg-orange-light text-black font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          >
+            {loading ? (
+              <>
+                <div className="w-4 h-4 border-2 border-black/30 border-t-black rounded-full animate-spin" />
+                Optimizing...
+              </>
+            ) : (
+              <>
+                <Sparkles className="w-4 h-4" />
+                Optimize
+              </>
+            )}
+          </button>
+        </div>
       </div>
     </div>
   );

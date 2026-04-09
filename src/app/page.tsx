@@ -554,16 +554,39 @@ function LandingContent() {
             <br />
             <span className="text-orange">LLM Costs?</span>
           </h2>
-          <p className="text-xl text-gray-400 mb-10 max-w-2xl mx-auto">
-            Join thousands of developers using TokenScope to reduce their AI costs
+          <p className="text-xl text-gray-400 mb-6 max-w-2xl mx-auto">
+            Whether you're a developer looking for API analytics or a user wanting better prompts, TokenScope has you covered.
           </p>
-          <Link
-            href="/sign-up"
-            className="inline-flex items-center gap-2 px-8 py-4 bg-black hover:bg-gray-900 text-white font-semibold rounded-xl transition-colors"
-          >
-            Get Started Free
-            <ArrowRight className="w-5 h-5" />
-          </Link>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
+            <Link
+              href="/sign-up"
+              className="inline-flex items-center gap-2 px-8 py-4 bg-orange hover:bg-orange-light text-black font-semibold rounded-xl transition-colors"
+            >
+              Get Started Free
+              <ArrowRight className="w-5 h-5" />
+            </Link>
+            <Link
+              href="/docs"
+              className="inline-flex items-center gap-2 px-8 py-4 border border-gray-700 hover:border-gray-500 text-gray-300 font-semibold rounded-xl transition-colors"
+            >
+              Learn More
+              <Play className="w-5 h-5" />
+            </Link>
+          </div>
+          <div className="flex items-center justify-center gap-6 text-sm text-gray-500">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-green-500" />
+              Browser Extension
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-blue-500" />
+              Attention Score
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-purple-500" />
+              Performance Tiers
+            </div>
+          </div>
         </div>
       </section>
 
