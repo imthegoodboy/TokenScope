@@ -28,6 +28,9 @@ class ProxyLog(SQLModel, table=True):
     # Request
     request_prompt: str = Field()
     request_tokens: int = Field(default=0)
+    prompt_tokens: int = Field(default=0)
+    completion_tokens: int = Field(default=0)
+    total_tokens: int = Field(default=0)
 
     # Enhancement
     enhanced_prompt: str = Field(default=None)

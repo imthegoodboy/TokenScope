@@ -1,8 +1,13 @@
 "use client";
 
-import { SignInButton, SignUpButton, SignedIn, SignedOut, useAuth } from "@clerk/nextjs";
+import {
+  SignInButton,
+  SignUpButton,
+  SignedIn,
+  SignedOut,
+  UserButton,
+} from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
 import Image from "next/image";
 import {
   Zap,
@@ -73,11 +78,6 @@ const providers = [
 
 export default function LandingPage() {
   const router = useRouter();
-  const { userId } = useAuth();
-
-  useEffect(() => {
-    if (userId) router.replace("/dashboard");
-  }, [userId, router]);
 
   return (
     <div className="min-h-screen bg-bg">
@@ -103,9 +103,18 @@ export default function LandingPage() {
           </div>
         </SignedOut>
         <SignedIn>
-          <Button onClick={() => router.push("/dashboard")} size="sm">
-            Open Dashboard <ArrowRight size={14} />
-          </Button>
+          <div className="flex items-center gap-3">
+            <Button onClick={() => router.push("/dashboard")} size="sm">
+              Dashboard <ArrowRight size={14} className="ml-0.5" />
+            </Button>
+            <UserButton
+              appearance={{
+                elements: {
+                  avatarBox: "w-8 h-8",
+                },
+              }}
+            />
+          </div>
         </SignedIn>
       </nav>
 
@@ -130,14 +139,23 @@ export default function LandingPage() {
             visualize in 3D, and get AI-powered prompt optimization.
           </p>
           <div className="flex items-center justify-center gap-3 animate-slide-up" style={{ animationDelay: "200ms" }}>
-            <SignUpButton mode="modal">
-              <Button size="lg">
-                Start Free <ArrowRight size={16} />
+            <SignedOut>
+              <>
+                <SignUpButton mode="modal">
+                  <Button size="lg">
+                    Start Free <ArrowRight size={16} />
+                  </Button>
+                </SignUpButton>
+                <Button variant="outline" size="lg" onClick={() => router.push("/dashboard")}>
+                  View Demo
+                </Button>
+              </>
+            </SignedOut>
+            <SignedIn>
+              <Button size="lg" onClick={() => router.push("/dashboard")}>
+                Go to Dashboard <ArrowRight size={16} />
               </Button>
-            </SignUpButton>
-            <Button variant="outline" size="lg" onClick={() => router.push("/dashboard")}>
-              View Demo
-            </Button>
+            </SignedIn>
           </div>
 
           {/* Providers logos */}
@@ -249,11 +267,18 @@ export default function LandingPage() {
                 Add your first API key and see your usage dashboard immediately.
                 No setup, no configuration, just results.
               </p>
-              <SignUpButton mode="modal">
-                <Button size="lg">
-                  Create Free Account <ArrowRight size={16} />
+              <SignedOut>
+                <SignUpButton mode="modal">
+                  <Button size="lg">
+                    Create Free Account <ArrowRight size={16} />
+                  </Button>
+                </SignUpButton>
+              </SignedOut>
+              <SignedIn>
+                <Button size="lg" onClick={() => router.push("/dashboard")}>
+                  Open your dashboard <ArrowRight size={16} />
                 </Button>
-              </SignUpButton>
+              </SignedIn>
             </div>
           </div>
         </div>

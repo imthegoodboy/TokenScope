@@ -43,7 +43,7 @@ async def forward_anthropic(api_key: str, model: str, messages: list, max_tokens
     latency_ms = int((time.time() - start) * 1000)
     data = resp.json()
     if resp.status_code != 200:
-        raise ProxyError(str(data.get("error", "Anthropic failed"), resp.status_code, "anthropic")
+        raise ProxyError(str(data.get("error", "Anthropic failed")), resp.status_code, "anthropic")
     return {"raw": data, "latency_ms": latency_ms, "provider": "anthropic"}
 
 async def forward_gemini(api_key: str, model: str, messages: list, temperature: float = 0.7, max_tokens: int = 2048, timeout: int = 60) -> dict:
@@ -59,7 +59,7 @@ async def forward_gemini(api_key: str, model: str, messages: list, temperature: 
     latency_ms = int((time.time() - start) * 1000)
     data = resp.json()
     if resp.status_code != 200:
-        raise ProxyError(str(data.get("error", "Gemini failed"), resp.status_code, "gemini")
+        raise ProxyError(str(data.get("error", {}).get("message", "Gemini failed")), resp.status_code, "gemini")
     return {"raw": data, "latency_ms": latency_ms, "provider": "gemini"}
 
 async def forward_to_provider(provider: str, api_key: str, model: str, messages: list, **kwargs) -> dict:

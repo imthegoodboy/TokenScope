@@ -8,17 +8,17 @@ import {
   LayoutDashboard,
   Key,
   Wand2,
-  History,
-  BarChart3,
   Settings,
+  Terminal,
+  ListOrdered,
 } from "lucide-react";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/dashboard/keys", label: "API Keys", icon: Key },
+  { href: "/dashboard/proxy-keys", label: "Proxy Keys", icon: Terminal },
+  { href: "/dashboard/api-keys", label: "API Keys", icon: Key },
+  { href: "/dashboard/logs", label: "Request Logs", icon: ListOrdered },
   { href: "/dashboard/analyzer", label: "Prompt Analyzer", icon: Wand2 },
-  { href: "/dashboard/history", label: "Usage History", icon: History },
-  { href: "/dashboard/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ];
 
@@ -29,7 +29,7 @@ export function Sidebar() {
     <aside className="w-60 min-h-screen bg-surface border-r border-black-border flex flex-col">
       {/* Logo */}
       <div className="px-6 py-5 border-b border-black-border">
-        <Link href="/dashboard" className="flex items-center gap-3">
+        <Link href="/" className="flex items-center gap-3" title="Home">
           <div className="w-9 h-9 relative flex-shrink-0">
             <Image
               src="/logo.svg"
@@ -44,7 +44,7 @@ export function Sidebar() {
               TokenScope
             </span>
             <span className="text-[10px] text-black-soft mt-0.5 block tracking-wide uppercase">
-              Token Analytics
+              API Gateway
             </span>
           </div>
         </Link>
@@ -76,19 +76,16 @@ export function Sidebar() {
         })}
       </nav>
 
-      {/* Footer - Plan */}
+      {/* Footer */}
       <div className="px-4 py-4 border-t border-black-border">
         <div className="px-3 py-3 rounded-xl bg-jaffa/8 border border-jaffa/20">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-bold text-jaffa-dark">Free Plan</span>
-            <span className="text-[10px] text-jaffa-dark/60">3/25 keys</span>
+          <div className="flex items-center justify-between mb-1.5">
+            <span className="text-[11px] font-bold text-jaffa-dark">TokenScope</span>
+            <span className="text-[10px] text-jaffa-dark/60">v1.0</span>
           </div>
-          <div className="h-1.5 bg-jaffa/15 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-jaffa rounded-full transition-all duration-500"
-              style={{ width: "12%" }}
-            />
-          </div>
+          <p className="text-[10px] text-jaffa-dark/50 leading-relaxed">
+            AI API Gateway & Analytics
+          </p>
         </div>
       </div>
     </aside>

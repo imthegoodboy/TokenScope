@@ -144,14 +144,14 @@ async def get_summary(
             )
         )
         day_row = day_result.one_or_none()
-        tokens = day_row.tokens or (i + 1) * 10000
+        tokens = int(day_row.tokens or 0)
         cost = float(day_row.cost or 0)
         providers = ["openai", "anthropic", "gemini"]
         chart_data.append(
             ChartDataPoint(
                 date=date.strftime("%Y-%m-%d"),
                 tokens=tokens,
-                cost=cost or round((i + 1) * 0.5, 4),
+                cost=cost,
                 provider=providers[i % 3],
             )
         )
@@ -245,19 +245,18 @@ async def get_chart_data(
                 chart_data.append(
                     ChartDataPoint(
                         date=date.strftime("%Y-%m-%d"),
-                        tokens=r.tokens or 0,
+                        tokens=int(r.tokens or 0),
                         cost=float(r.cost or 0),
                         provider=r.provider,
                     )
                 )
         else:
-            providers = ["openai", "anthropic", "gemini"]
             chart_data.append(
                 ChartDataPoint(
                     date=date.strftime("%Y-%m-%d"),
-                    tokens=10000 * (i + 1),
-                    cost=round(0.5 * (i + 1), 4),
-                    provider=providers[i % 3],
+                    tokens=0,
+                    cost=0.0,
+                    provider="openai",
                 )
             )
     return chart_data

@@ -11,7 +11,7 @@ async_session = sessionmaker(async_engine, class_=AsyncSession, expire_on_commit
 
 
 async def init_db():
-    from app.models import user, api_key, usage, analysis  # noqa
+    from app.models import user, api_key, usage, analysis, proxy  # noqa
     async with async_engine.begin() as conn:
         await conn.run_sync(SQLModel.metadata.create_all)
 

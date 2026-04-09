@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import dynamic from "next/dynamic";
 import { Header } from "@/components/layout/header";
 import { StatsCard } from "@/components/dashboard/stats-card";
@@ -10,59 +10,33 @@ import { ProviderPie } from "@/components/charts/provider-pie";
 import { ContributionGraph } from "@/components/charts/contribution-graph";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import { formatCurrency, formatNumber } from "@/lib/utils";
+import { formatCurrency, formatNumber, formatDateTime } from "@/lib/utils";
 import {
   DollarSign,
   Cpu,
   Zap,
-  Key,
-  TrendingUp,
+  Clock,
+  CheckCircle2,
+  Wand2,
   Activity,
+  RefreshCw,
+  ExternalLink,
 } from "lucide-react";
-import { useUsageStore } from "@/store/usage-store";
+import {
+  getLogsStats,
+  getLogsBreakdown,
+  getLogsChart,
+  getLogs,
+  type LogsStats,
+  type LogsBreakdown,
+  type ChartPoint,
+  type ProxyLog,
+} from "@/lib/api";
 
-// Dynamic import for 3D chart (SSR disabled)
 const Usage3DChart = dynamic(
   () => import("@/components/charts/usage-3d-chart").then((m) => m.Usage3DChart),
   { ssr: false, loading: () => <Skeleton className="h-64 rounded-lg" /> }
 );
-
-const demoSummary = {
-  total_spend: 127.43,
-  total_tokens: 4_820_000,
-  total_calls: 1284,
-  avg_cost_per_call: 0.0992,
-  active_keys: 3,
-  provider_breakdown: {
-    openai: { tokens: 2_100_000, cost: 89.5, calls: 620 },
-    anthropic: { tokens: 1_820_000, cost: 31.8, calls: 540 },
-    gemini: { tokens: 900_000, cost: 6.13, calls: 124 },
-  },
-  model_breakdown: [
-    { model: "gpt-4o", tokens: 1_200_000, cost: 52.5, calls: 340 },
-    { model: "claude-3-5-sonnet", tokens: 1_100_000, cost: 26.4, calls: 380 },
-    { model: "gpt-4o-mini", tokens: 900_000, cost: 37.0, calls: 280 },
-    { model: "gemini-1.5-flash", tokens: 700_000, cost: 5.25, calls: 100 },
-    { model: "claude-3-5-haiku", tokens: 720_000, cost: 5.4, calls: 160 },
-  ],
-  chart_data: Array.from({ length: 30 }, (_, i) => {
-    const d = new Date();
-    d.setDate(d.getDate() - (29 - i));
-    return {
-      date: d.toISOString().split("T")[0],
-      tokens: Math.floor(Math.random() * 500000) + 100000,
-      cost: Math.random() * 20 + 2,
-      provider: ["openai", "anthropic", "gemini"][i % 3],
-    };
-  }),
-  recent_calls: [
-    { id: "1", provider: "openai", model: "gpt-4o", prompt_tokens: 1240, completion_tokens: 380, total_tokens: 1620, cost_usd: 0.0628, created_at: new Date(Date.now() - 5 * 60000).toISOString() },
-    { id: "2", provider: "anthropic", model: "claude-3-5-sonnet", prompt_tokens: 890, completion_tokens: 520, total_tokens: 1410, cost_usd: 0.0282, created_at: new Date(Date.now() - 15 * 60000).toISOString() },
-    { id: "3", provider: "openai", model: "gpt-4o-mini", prompt_tokens: 2100, completion_tokens: 280, total_tokens: 2380, cost_usd: 0.0318, created_at: new Date(Date.now() - 30 * 60000).toISOString() },
-    { id: "4", provider: "gemini", model: "gemini-1.5-flash", prompt_tokens: 560, completion_tokens: 190, total_tokens: 750, cost_usd: 0.0056, created_at: new Date(Date.now() - 45 * 60000).toISOString() },
-    { id: "5", provider: "anthropic", model: "claude-3-5-haiku", prompt_tokens: 340, completion_tokens: 210, total_tokens: 550, cost_usd: 0.0044, created_at: new Date(Date.now() - 60 * 60000).toISOString() },
-  ],
-};
 
 const PROVIDER_COLORS: Record<string, string> = {
   openai: "#F07F3C",
@@ -71,67 +45,132 @@ const PROVIDER_COLORS: Record<string, string> = {
 };
 
 export default function DashboardPage() {
-  const { summary, setSummary, isLoading, setLoading } = useUsageStore();
-  const [data, setData] = useState(demoSummary);
+  const [stats, setStats] = useState<LogsStats | null>(null);
+  const [breakdown, setBreakdown] = useState<LogsBreakdown | null>(null);
+  const [chartData, setChartData] = useState<ChartPoint[]>([]);
+  const [recentLogs, setRecentLogs] = useState<ProxyLog[]>([]);
+  const [loading, setLoading] = useState(true);
   const [chartPeriod, setChartPeriod] = useState<"7d" | "14d" | "30d">("14d");
 
-  useEffect(() => {
-    async function load() {
-      setLoading(true);
-      try {
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/v1/usage/summary`
-        );
-        if (res.ok) {
-          const d = await res.json();
-          setData(d);
-          setSummary(d);
-        }
-      } catch {
-        // Use demo data
-      } finally {
-        setLoading(false);
-      }
+  const loadData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [statsRes, breakdownRes, chartRes, logsRes] = await Promise.all([
+        getLogsStats(),
+        getLogsBreakdown(),
+        getLogsChart(chartPeriod),
+        getLogs({ page: 1, limit: 5 }),
+      ]);
+      setStats(statsRes);
+      setBreakdown(breakdownRes);
+      setChartData(chartRes);
+      setRecentLogs(logsRes.logs);
+    } catch (e) {
+      console.error("Failed to load dashboard data:", e);
+    } finally {
+      setLoading(false);
     }
-    load();
-  }, [setLoading, setSummary]);
+  }, [chartPeriod]);
 
-  const display = summary || data;
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  const providerBreakdown = breakdown?.providers || {};
+  const modelBreakdown = breakdown?.models || [];
+
+  // Contribution graph data from chart
+  const contributionData = chartData.map((d) => ({
+    date: d.date,
+    count: d.calls || 0,
+  }));
 
   return (
     <div>
-      <Header title="Dashboard" description="Overview of your AI token usage" />
+      <Header
+        title="Dashboard"
+        description="Overview of your AI API gateway usage"
+        action={
+          <button
+            onClick={loadData}
+            className="flex items-center gap-1.5 text-sm text-black-soft hover:text-black transition-colors"
+          >
+            <RefreshCw size={14} />
+            Refresh
+          </button>
+        }
+      />
 
       <div className="px-8 py-6 space-y-6">
         {/* Stats */}
-        {isLoading ? (
+        {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {[...Array(4)].map((_, i) => (
               <Skeleton key={i} className="h-32 rounded-card" />
             ))}
           </div>
-        ) : (
+        ) : stats ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <StatsCard title="Total Spend" value={formatCurrency(display.total_spend)} icon={DollarSign} change="+12.4%" trend={false} accent="jaffa" />
-            <StatsCard title="Total Tokens" value={formatNumber(display.total_tokens)} icon={Cpu} change="+8.2%" trend={true} accent="navy" />
-            <StatsCard title="API Calls" value={formatNumber(display.total_calls)} icon={Zap} change="+15.1%" trend={true} accent="green" />
-            <StatsCard title="Active Keys" value={display.active_keys.toString()} icon={Key} change="3 providers" trend={true} accent="jaffa" />
+            <StatsCard
+              title="Total Spend"
+              value={formatCurrency(stats.total_spend)}
+              icon={DollarSign}
+              accent="jaffa"
+            />
+            <StatsCard
+              title="Total Tokens"
+              value={formatNumber(stats.prompt_tokens_total + stats.completion_tokens_total)}
+              icon={Cpu}
+              accent="navy"
+            />
+            <StatsCard
+              title="API Requests"
+              value={formatNumber(stats.total_requests)}
+              icon={Zap}
+              accent="green"
+            />
+            <StatsCard
+              title="Avg Latency"
+              value={`${stats.avg_latency_ms}ms`}
+              icon={Clock}
+              accent="jaffa"
+            />
+          </div>
+        ) : (
+          <div className="card text-center py-16">
+            <div className="w-14 h-14 rounded-2xl bg-jaffa/8 flex items-center justify-center mx-auto mb-4">
+              <Activity size={24} className="text-jaffa" />
+            </div>
+            <h3 className="font-bold text-lg mb-2">Welcome to TokenScope</h3>
+            <p className="text-sm opacity-50 mb-6">
+              Get started by adding a provider API key and creating a proxy key.
+            </p>
+            <div className="flex items-center justify-center gap-3">
+              <a href="/dashboard/api-keys">
+                <Badge variant="jaffa" className="cursor-pointer">Add API Key</Badge>
+              </a>
+              <a href="/dashboard/proxy-keys">
+                <Badge variant="green" className="cursor-pointer">Create Proxy Key</Badge>
+              </a>
+            </div>
           </div>
         )}
 
         {/* Contribution Graph */}
-        <div className="card">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h3 className="font-semibold">Request Activity</h3>
-              <p className="text-xs opacity-60 mt-0.5">API calls over the last 12 weeks</p>
+        {chartData.length > 0 && (
+          <div className="card">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="font-semibold">Request Activity</h3>
+                <p className="text-xs opacity-60 mt-0.5">API calls over the last {chartPeriod}</p>
+              </div>
+              <Badge className="bg-jaffa-bg text-jaffa-dark border-jaffa/30">
+                <Activity size={10} /> {stats?.total_requests ? formatNumber(stats.total_requests) : 0} total
+              </Badge>
             </div>
-            <Badge className="bg-jaffa-bg text-jaffa-dark border-jaffa/30">
-              <Activity size={10} /> Live tracking
-            </Badge>
+            <ContributionGraph data={contributionData} weeks={12} />
           </div>
-          <ContributionGraph data={display.chart_data.map((d) => ({ date: d.date, count: d.cost * 10 }))} weeks={12} />
-        </div>
+        )}
 
         {/* 3D Chart + Provider Pie */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -139,7 +178,7 @@ export default function DashboardPage() {
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h3 className="font-semibold">Token Usage (3D)</h3>
-                <p className="text-xs opacity-60 mt-0.5">Drag to rotate • Scroll to zoom</p>
+                <p className="text-xs opacity-60 mt-0.5">Drag to rotate · Scroll to zoom</p>
               </div>
               <div className="flex gap-1">
                 {(["7d", "14d", "30d"] as const).map((p) => (
@@ -156,68 +195,97 @@ export default function DashboardPage() {
               </div>
             </div>
             <div className="h-64">
-              <Usage3DChart data={display.chart_data} period={chartPeriod} />
+              <Usage3DChart data={chartData} period={chartPeriod} />
             </div>
           </div>
 
           <div className="card">
             <h3 className="font-semibold mb-4">Spend by Provider</h3>
-            <div className="h-44">
-              <ProviderPie data={display.provider_breakdown} />
-            </div>
-            <div className="mt-4 space-y-2">
-              {Object.entries(display.provider_breakdown).map(([key, val]) => (
-                <div key={key} className="flex items-center justify-between text-sm">
-                  <div className="flex items-center gap-2">
-                    <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: PROVIDER_COLORS[key] || "#6B6B6B" }} />
-                    <span className="capitalize font-medium">{key}</span>
-                    <span className="text-xs opacity-60">{val.calls} calls</span>
-                  </div>
-                  <span className="font-mono font-semibold">{formatCurrency(val.cost)}</span>
+            {Object.keys(providerBreakdown).length > 0 ? (
+              <>
+                <div className="h-44">
+                  <ProviderPie data={providerBreakdown} />
                 </div>
-              ))}
-            </div>
+                <div className="mt-4 space-y-2">
+                  {Object.entries(providerBreakdown).map(([key, val]) => (
+                    <div key={key} className="flex items-center justify-between text-sm">
+                      <div className="flex items-center gap-2">
+                        <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: PROVIDER_COLORS[key] || "#6B6B6B" }} />
+                        <span className="capitalize font-medium">{key}</span>
+                        <span className="text-xs opacity-60">{formatNumber(val.calls)} calls</span>
+                      </div>
+                      <span className="font-mono font-semibold">{formatCurrency(val.cost)}</span>
+                    </div>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <p className="text-sm opacity-50 text-center py-10">No provider data yet</p>
+            )}
           </div>
         </div>
 
-        {/* Cost + Recent Activity */}
+        {/* Cost Over Time + Recent Activity */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="card">
             <h3 className="font-semibold mb-4">Cost Over Time</h3>
-            <div className="h-52">
-              <CostLineChart data={display.chart_data} />
-            </div>
+            {chartData.length > 0 ? (
+              <div className="h-52">
+                <CostLineChart data={chartData} />
+              </div>
+            ) : (
+              <p className="text-sm opacity-50 text-center py-10">No cost data yet</p>
+            )}
           </div>
 
           <div className="card">
-            <h3 className="font-semibold mb-4">Recent Activity</h3>
-            <div className="space-y-3">
-              {display.recent_calls.slice(0, 5).map((call) => (
-                <div key={call.id} className="flex items-center justify-between py-2 border-b border-black-border last:border-0">
-                  <div className="flex items-center gap-3">
-                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: PROVIDER_COLORS[call.provider] || "#6B6B6B" }} />
-                    <div>
-                      <p className="text-sm font-medium font-mono">{call.model}</p>
-                      <p className="text-xs opacity-60">{formatNumber(call.total_tokens)} tokens</p>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold">Recent Activity</h3>
+              <a href="/dashboard/logs" className="text-xs text-jaffa hover:text-jaffa-dark flex items-center gap-1">
+                View all <ExternalLink size={10} />
+              </a>
+            </div>
+            {recentLogs.length > 0 ? (
+              <div className="space-y-3">
+                {recentLogs.map((call) => (
+                  <div key={call.id} className="flex items-center justify-between py-2 border-b border-black-border last:border-0">
+                    <div className="flex items-center gap-3">
+                      <div className="w-2 h-2 rounded-full" style={{ backgroundColor: PROVIDER_COLORS[call.provider] || "#6B6B6B" }} />
+                      <div>
+                        <p className="text-sm font-medium font-mono">{call.model}</p>
+                        <p className="text-xs opacity-60">{formatNumber(call.total_tokens)} tokens</p>
+                      </div>
+                      {call.enhancement_applied && (
+                        <Wand2 size={11} className="text-green" title="Auto-enhanced" />
+                      )}
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm font-mono font-semibold">{formatCurrency(call.total_cost)}</p>
+                      <p className="text-xs opacity-60">
+                        {new Date(call.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                      </p>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className="text-sm font-mono font-semibold">{formatCurrency(call.cost_usd)}</p>
-                    <p className="text-xs opacity-60">
-                      {new Date(call.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-10">
+                <p className="text-sm opacity-50 mb-3">No requests yet</p>
+                <a href="/dashboard/proxy-keys">
+                  <Badge variant="jaffa" className="cursor-pointer">Create Proxy Key</Badge>
+                </a>
+              </div>
+            )}
           </div>
         </div>
 
         {/* Top Models */}
-        <div className="card">
-          <h3 className="font-semibold mb-4">Top Models</h3>
-          <UsageTable models={display.model_breakdown} />
-        </div>
+        {modelBreakdown.length > 0 && (
+          <div className="card">
+            <h3 className="font-semibold mb-4">Top Models</h3>
+            <UsageTable models={modelBreakdown} />
+          </div>
+        )}
       </div>
     </div>
   );

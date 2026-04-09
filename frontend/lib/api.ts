@@ -1,4 +1,29 @@
+import { auth } from "@clerk/nextjs/server";
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
+// Server-side: get token from Clerk session
+export async function getServerToken(): Promise<string | null> {
+  const { userId } = await auth();
+  if (!userId) return null;
+
+  try {
+    const { getToken } = await import("@clerk/nextjs/server");
+    return await getToken();
+  } catch {
+    return null;
+  }
+}
+
+// Client-side: get Clerk token
+export async function getClientToken(): Promise<string | null> {
+  try {
+    const { getToken } = await import("@clerk/nextjs/auth");
+    return await getToken();
+  } catch {
+    return null;
+  }
+}
 
 interface RequestOptions {
   method?: string;
@@ -13,11 +38,14 @@ async function request<T>(
 ): Promise<T> {
   const { method = "GET", body, headers = {}, token } = options;
 
+  // Get Clerk token if not provided
+  const clerkToken = token ?? await getClientToken();
+
   const res = await fetch(`${API_URL}${path}`, {
     method,
     headers: {
       "Content-Type": "application/json",
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(clerkToken ? { Authorization: `Bearer ${clerkToken}` } : {}),
       ...headers,
     },
     body: body ? JSON.stringify(body) : undefined,
@@ -31,66 +59,138 @@ async function request<T>(
   return res.json();
 }
 
-// ─── Usage ───────────────────────────────────────────────────────────────────
+// ─── Proxy Keys ────────────────────────────────────────────────────────────────
 
-export interface UsageRecord {
+export interface ProxyKey {
+  id: string;
+  key_label: string;
+  active: boolean;
+  rate_limit: number;
+  auto_enhance: boolean;
+  created_at: string;
+}
+
+export interface ProxyKeyWithSecret extends ProxyKey {
+  key: string; // raw proxy key (only shown once)
+}
+
+export async function listProxyKeys(token?: string | null): Promise<ProxyKey[]> {
+  return request("/api/v1/proxy-keys/", { token });
+}
+
+export async function createProxyKey(
+  label: string,
+  token?: string | null
+): Promise<ProxyKeyWithSecret> {
+  return request("/api/v1/proxy-keys/", {
+    method: "POST",
+    body: { label },
+    token,
+  });
+}
+
+export async function deleteProxyKey(
+  keyId: string,
+  token?: string | null
+): Promise<void> {
+  await request(`/api/v1/proxy-keys/${keyId}`, { method: "DELETE", token });
+}
+
+export async function toggleProxyEnhance(
+  keyId: string,
+  enabled: boolean,
+  token?: string | null
+): Promise<{ auto_enhance: boolean }> {
+  return request(`/api/v1/proxy-keys/${keyId}/toggle-enhance?enabled=${enabled}`, {
+    method: "PATCH",
+    token,
+  });
+}
+
+// ─── Logs ────────────────────────────────────────────────────────────────────
+
+export interface ProxyLog {
   id: string;
   provider: string;
   model: string;
-  prompt_tokens: number;
-  completion_tokens: number;
+  request_prompt: string;
+  request_tokens: number;
+  response_text: string | null;
+  response_tokens: number;
   total_tokens: number;
-  cost_usd: number;
+  total_cost: number;
+  latency_ms: number;
+  status_code: number;
+  error_message: string | null;
+  enhancement_applied: boolean;
+  enhanced_prompt: string | null;
   created_at: string;
-  prompt_text?: string;
-  response_text?: string;
 }
 
-export interface UsageSummary {
+export interface LogsResponse {
+  logs: ProxyLog[];
+  total: number;
+  page: number;
+  limit: number;
   total_spend: number;
-  total_tokens: number;
-  total_calls: number;
-  avg_cost_per_call: number;
-  active_keys: number;
-  provider_breakdown: Record<string, { tokens: number; cost: number; calls: number }>;
-  model_breakdown: Array<{ model: string; tokens: number; cost: number; calls: number }>;
-  chart_data: Array<{ date: string; tokens: number; cost: number; provider: string }>;
-  recent_calls: UsageRecord[];
+  total_requests: number;
 }
 
-export async function trackUsage(data: {
+export interface LogsStats {
+  total_requests: number;
+  total_spend: number;
+  avg_tokens_per_request: number;
+  avg_latency_ms: number;
+  success_rate: number;
+  avg_cost_per_request: number;
+  prompt_tokens_total: number;
+  completion_tokens_total: number;
+}
+
+export interface LogsBreakdown {
+  providers: Record<string, { tokens: number; cost: number; calls: number }>;
+  models: Array<{ model: string; provider: string; tokens: number; cost: number; calls: number }>;
+}
+
+export interface ChartPoint {
+  date: string;
+  tokens: number;
+  cost: number;
   provider: string;
-  model: string;
-  prompt_tokens: number;
-  completion_tokens: number;
-  cost_usd: number;
-  prompt_text?: string;
-  response_text?: string;
-}) {
-  return request("/api/v1/usage/track", { method: "POST", body: data });
+  calls?: number;
 }
 
-export async function getUsageSummary(): Promise<UsageSummary> {
-  return request("/api/v1/usage/summary");
-}
-
-export async function getUsageHistory(params?: {
+export async function getLogs(params?: {
   page?: number;
   limit?: number;
   provider?: string;
   model?: string;
-  start_date?: string;
-  end_date?: string;
-}): Promise<{ records: UsageRecord[]; total: number; page: number; limit: number }> {
-  const qs = new URLSearchParams(params as Record<string, string>).toString();
-  return request(`/api/v1/usage/history${qs ? `?${qs}` : ""}`);
+  search?: string;
+  token?: string | null;
+}): Promise<LogsResponse> {
+  const qs = new URLSearchParams();
+  if (params?.page) qs.set("page", String(params.page));
+  if (params?.limit) qs.set("limit", String(params.limit));
+  if (params?.provider) qs.set("provider", params.provider);
+  if (params?.model) qs.set("model", params.model);
+  if (params?.search) qs.set("search", params.search);
+  const query = qs.toString();
+  return request(`/api/v1/logs/${query ? `?${query}` : ""}`, { token: params?.token });
 }
 
-export async function getChartData(params?: {
-  period?: "7d" | "14d" | "30d";
-}): Promise<UsageSummary["chart_data"]> {
-  const qs = new URLSearchParams(params as Record<string, string>).toString();
-  return request(`/api/v1/usage/chart-data${qs ? `?${qs}` : ""}`);
+export async function getLogsStats(token?: string | null): Promise<LogsStats> {
+  return request("/api/v1/logs/stats", { token });
+}
+
+export async function getLogsBreakdown(token?: string | null): Promise<LogsBreakdown> {
+  return request("/api/v1/logs/breakdown", { token });
+}
+
+export async function getLogsChart(
+  period: "7d" | "14d" | "30d" = "14d",
+  token?: string | null
+): Promise<ChartPoint[]> {
+  return request(`/api/v1/logs/chart?period=${period}`, { token });
 }
 
 // ─── API Keys ────────────────────────────────────────────────────────────────
@@ -98,7 +198,7 @@ export async function getChartData(params?: {
 export interface ApiKey {
   id: string;
   provider: string;
-  key_label: string;
+  key_label: string | null;
   key_last4: string;
   active: boolean;
   created_at: string;
@@ -106,20 +206,20 @@ export interface ApiKey {
   total_spent?: number;
 }
 
-export async function listApiKeys(): Promise<ApiKey[]> {
-  return request("/api/v1/keys/");
+export async function listApiKeys(token?: string | null): Promise<ApiKey[]> {
+  return request("/api/v1/keys/", { token });
 }
 
 export async function addApiKey(data: {
   provider: string;
   api_key: string;
   key_label?: string;
-}): Promise<ApiKey> {
-  return request("/api/v1/keys/", { method: "POST", body: data });
+}, token?: string | null): Promise<ApiKey> {
+  return request("/api/v1/keys/", { method: "POST", body: data, token });
 }
 
-export async function deleteApiKey(id: string): Promise<void> {
-  return request(`/api/v1/keys/${id}`, { method: "DELETE" });
+export async function deleteApiKey(id: string, token?: string | null): Promise<void> {
+  await request(`/api/v1/keys/${id}`, { method: "DELETE", token });
 }
 
 // ─── Analyzer ────────────────────────────────────────────────────────────────
@@ -157,8 +257,8 @@ export async function analyzePrompt(data: {
   prompt: string;
   model: string;
   provider: string;
-}): Promise<AnalyzeResult> {
-  return request("/api/v1/analyze/prompt", { method: "POST", body: data });
+}, token?: string | null): Promise<AnalyzeResult> {
+  return request("/api/v1/analyze/prompt", { method: "POST", body: data, token });
 }
 
 export async function optimizePrompt(data: {
@@ -166,16 +266,46 @@ export async function optimizePrompt(data: {
   model: string;
   provider: string;
   target_tokens?: number;
-}): Promise<OptimizeResult> {
-  return request("/api/v1/analyze/optimize", { method: "POST", body: data });
+}, token?: string | null): Promise<OptimizeResult> {
+  return request("/api/v1/analyze/optimize", { method: "POST", body: data, token });
 }
 
-// ─── Stats ───────────────────────────────────────────────────────────────────
+// ─── Usage (legacy) ─────────────────────────────────────────────────────────
 
-export async function getRealtimeStats(): Promise<{
-  tokens_today: number;
-  cost_today: number;
-  calls_today: number;
-}> {
-  return request("/api/v1/stats/realtime");
+export interface UsageRecord {
+  id: string;
+  provider: string;
+  model: string;
+  prompt_tokens: number;
+  completion_tokens: number;
+  total_tokens: number;
+  cost_usd: number;
+  created_at: string;
+  prompt_text?: string;
+  response_text?: string;
+}
+
+export async function getUsageSummary(token?: string | null) {
+  return request("/api/v1/usage/summary", { token });
+}
+
+export async function getUsageHistory(params?: {
+  page?: number;
+  limit?: number;
+  provider?: string;
+  model?: string;
+}, token?: string | null) {
+  const qs = new URLSearchParams();
+  if (params?.page) qs.set("page", String(params.page));
+  if (params?.limit) qs.set("limit", String(params.limit));
+  if (params?.provider) qs.set("provider", params.provider);
+  if (params?.model) qs.set("model", params.model);
+  const query = qs.toString();
+  return request(`/api/v1/usage/history${query ? `?${query}` : ""}`, { token });
+}
+
+// ─── Stats ──────────────────────────────────────────────────────────────────
+
+export async function getRealtimeStats(token?: string | null) {
+  return request("/api/v1/stats/realtime", { token });
 }

@@ -11,7 +11,6 @@ import { TokenHighlighter } from "@/components/analyzer/token-highlighter";
 import { formatCurrency, formatNumber } from "@/lib/utils";
 import {
   Wand2,
-  Zap,
   TrendingDown,
   Loader2,
   Lightbulb,
@@ -21,10 +20,10 @@ import {
   Sparkles,
   Target,
   MessageSquare,
+  RefreshCw,
 } from "lucide-react";
-import type { TokenScore } from "@/lib/api";
+import { analyzePrompt, optimizePrompt, type TokenScore } from "@/lib/api";
 
-// ─── Providers & Models ────────────────────────────────────────────────────────
 const PROVIDERS = [
   { value: "openai", label: "OpenAI" },
   { value: "anthropic", label: "Anthropic" },
@@ -35,11 +34,13 @@ const MODELS: Record<string, Array<{ value: string; label: string }>> = {
   openai: [
     { value: "gpt-4o", label: "GPT-4o" },
     { value: "gpt-4o-mini", label: "GPT-4o Mini" },
+    { value: "gpt-4-turbo", label: "GPT-4 Turbo" },
     { value: "gpt-3.5-turbo", label: "GPT-3.5 Turbo" },
   ],
   anthropic: [
-    { value: "claude-3-5-sonnet", label: "Claude 3.5 Sonnet" },
+    { value: "claude-3-5-sonnet-20241022", label: "Claude 3.5 Sonnet" },
     { value: "claude-3-5-haiku", label: "Claude 3.5 Haiku" },
+    { value: "claude-3-opus", label: "Claude 3 Opus" },
   ],
   gemini: [
     { value: "gemini-2.0-flash", label: "Gemini 2.0 Flash" },
@@ -48,134 +49,132 @@ const MODELS: Record<string, Array<{ value: string; label: string }>> = {
   ],
 };
 
-// ─── Demo Analysis Generator ───────────────────────────────────────────────────
-function generateAnalysis(prompt: string, provider: string, model: string) {
-  const words = prompt.split(/\s+/);
-  const tokens = Math.ceil(words.length * 1.3);
-  const wordCount = words.length;
-  const charCount = prompt.length;
-
-  const inputPrices: Record<string, number> = {
-    openai: model === "gpt-4o" ? 5 : 0.15,
-    anthropic: 3,
-    gemini: model === "gemini-1.5-flash" ? 0.075 : 1.25,
-  };
-  const outputPrices: Record<string, number> = {
-    openai: model === "gpt-4o" ? 15 : 0.6,
-    anthropic: 15,
-    gemini: model === "gemini-1.5-flash" ? 0.30 : 5,
-  };
-
-  const ip = (inputPrices[provider] || 1) / 1_000_000;
-  const op = (outputPrices[provider] || 3) / 1_000_000;
-  const estInput = tokens * ip;
-  const estOutput = Math.ceil(tokens * 0.6) * op;
-
-  // Generate token scores with warm color scheme
-  const tokenScores: TokenScore[] = words.map((word) => {
-    const clean = word.replace(/[.,!?;:'"()[\]{}]/g, "");
-    const score = Math.random();
-    const importance: "very_high" | "high" | "medium" | "low" =
-      score > 0.65 ? "very_high" : score > 0.4 ? "high" : score > 0.2 ? "medium" : "low";
-    return { token: clean, score, importance };
-  });
-
-  // Compute a prompt score
-  const avgScore = tokenScores.reduce((s, t) => s + t.score, 0) / tokenScores.length;
-  const clarity = Math.min(100, Math.floor(50 + avgScore * 50 + (wordCount < 100 ? 20 : 0)));
-  const conciseness = Math.min(100, Math.floor(100 - (tokens - 100) * 0.5));
-  const specificity = Math.min(100, Math.floor(30 + avgScore * 70));
-  const efficiency = Math.min(100, Math.floor(100 - Math.max(0, tokens - 500) * 0.2));
-  const overallScore = Math.floor((clarity + conciseness + specificity + efficiency) / 4);
-
-  return {
-    tokens,
-    word_count: wordCount,
-    char_count: charCount,
-    est_input: estInput,
-    est_output: estOutput,
-    est_total: estInput + estOutput,
-    token_scores: tokenScores,
-    top_important: [...tokenScores].sort((a, b) => b.score - a.score).slice(0, 12),
-    score: overallScore,
-    breakdown: { clarity, conciseness, specificity, efficiency },
-  };
+interface AnalysisResult {
+  tokens: number;
+  word_count: number;
+  char_count: number;
+  estimated_cost_input: number;
+  estimated_cost_output: number;
+  estimated_cost_total: number;
+  token_scores: TokenScore[];
+  top_important: TokenScore[];
+  score?: number;
+  breakdown?: { clarity: number; conciseness: number; specificity: number; efficiency: number };
 }
 
-// ─── Improvement suggestions ─────────────────────────────────────────────────
-function getSuggestions(prompt: string, analysis: ReturnType<typeof generateAnalysis>) {
+interface OptimizeResult {
+  original: string;
+  optimized: string;
+  original_tokens: number;
+  optimized_tokens: number;
+  saved_tokens: number;
+  saved_cost_total: number;
+}
+
+function getSuggestions(analysis: AnalysisResult): Array<{ icon: React.ElementType; title: string; desc: string; impact: "high" | "medium" | "low" }> {
   const suggestions = [];
-  if (analysis.tokens > 2000)
+  if (analysis.tokens > 2000) {
     suggestions.push({
       icon: TrendingDown,
       title: "Reduce token count",
       desc: `Your prompt is ${analysis.tokens} tokens. Consider trimming unnecessary words.`,
       impact: "high",
     });
-  if (analysis.breakdown.clarity < 70)
+  }
+  if (analysis.breakdown && analysis.breakdown.clarity < 70) {
     suggestions.push({
       icon: MessageSquare,
       title: "Improve clarity",
       desc: "Be more explicit about the task. Use step-by-step instructions.",
       impact: "high",
     });
-  if (analysis.breakdown.specificity < 70)
+  }
+  if (analysis.breakdown && analysis.breakdown.specificity < 70) {
     suggestions.push({
       icon: Target,
       title: "Add specificity",
       desc: "Include examples, format requirements, or constraints to guide the model.",
       impact: "medium",
     });
-  if (!prompt.includes("format") && !prompt.includes("output"))
+  }
+  if (!analysis.token_scores.some((t) => t.token.includes("format") || t.token.includes("output"))) {
     suggestions.push({
       icon: Sparkles,
       title: "Specify output format",
       desc: "Tell the model how to structure its response (JSON, bullet points, etc.).",
       impact: "low",
     });
+  }
   return suggestions;
 }
 
-// ─── Page Component ──────────────────────────────────────────────────────────
 export default function AnalyzerPage() {
   const [prompt, setPrompt] = useState("");
   const [provider, setProvider] = useState("openai");
   const [model, setModel] = useState("gpt-4o");
   const [analyzing, setAnalyzing] = useState(false);
-  const [analysis, setAnalysis] = useState<ReturnType<typeof generateAnalysis> | null>(null);
+  const [optimizing, setOptimizing] = useState(false);
+  const [analysis, setAnalysis] = useState<AnalysisResult | null>(null);
+  const [optimized, setOptimized] = useState<OptimizeResult | null>(null);
   const [copied, setCopied] = useState(false);
   const [activeTab, setActiveTab] = useState<"analyze" | "improve">("analyze");
+  const [error, setError] = useState<string | null>(null);
 
   const handleAnalyze = useCallback(async () => {
     if (!prompt.trim()) return;
     setAnalyzing(true);
-    await new Promise((r) => setTimeout(r, 1400));
-    const result = generateAnalysis(prompt, provider, model);
-    setAnalysis(result);
-    setActiveTab("analyze");
-    setAnalyzing(false);
+    setError(null);
+    try {
+      const result = await analyzePrompt({ prompt, model, provider });
+      // Compute score locally
+      const avgScore = result.token_scores.reduce((s, t) => s + t.score, 0) / (result.token_scores.length || 1);
+      const words = prompt.split(/\s+/);
+      const wordCount = words.length;
+      const clarity = Math.min(100, Math.floor(50 + avgScore * 50 + (wordCount < 100 ? 20 : 0)));
+      const conciseness = Math.min(100, Math.floor(100 - Math.max(0, result.tokens - 500) * 0.3));
+      const specificity = Math.min(100, Math.floor(30 + avgScore * 70));
+      const efficiency = Math.min(100, Math.floor(100 - Math.max(0, result.tokens - 800) * 0.15));
+      const overallScore = Math.floor((clarity + conciseness + specificity + efficiency) / 4);
+      setAnalysis({
+        ...result,
+        score: overallScore,
+        breakdown: { clarity, conciseness, specificity, efficiency },
+      });
+      setOptimized(null);
+      setActiveTab("analyze");
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Analysis failed");
+    } finally {
+      setAnalyzing(false);
+    }
   }, [prompt, provider, model]);
 
-  const handleCopy = () => {
-    if (analysis) {
-      navigator.clipboard.writeText(prompt);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+  const handleOptimize = useCallback(async () => {
+    if (!prompt.trim()) return;
+    setOptimizing(true);
+    setError(null);
+    try {
+      const result = await optimizePrompt({ prompt, model, provider });
+      setOptimized(result);
+      setActiveTab("improve");
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Optimization failed");
+    } finally {
+      setOptimizing(false);
     }
-  };
+  }, [prompt, provider, model]);
 
-  const improved = analysis
-    ? analysis.top_important
-        .filter((t) => t.importance !== "low")
-        .map((t) => t.token)
-        .join(" ")
-    : "";
+  const handleCopy = (text: string) => {
+    navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   return (
     <div>
       <Header
         title="Prompt Analyzer"
-        description="Analyze token usage, get TF-IDF insights, and optimize prompts"
+        description="Analyze token usage, get TF-IDF insights, and optimize prompts for cost savings"
       />
 
       <div className="px-8 py-6">
@@ -190,6 +189,7 @@ export default function AnalyzerPage() {
                 setProvider(e.target.value);
                 setModel(MODELS[e.target.value][0].value);
                 setAnalysis(null);
+                setOptimized(null);
               }}
             />
           </div>
@@ -198,7 +198,7 @@ export default function AnalyzerPage() {
             <Select
               options={MODELS[provider]}
               value={model}
-              onChange={(e) => { setModel(e.target.value); setAnalysis(null); }}
+              onChange={(e) => { setModel(e.target.value); setAnalysis(null); setOptimized(null); }}
             />
           </div>
           <Button onClick={handleAnalyze} disabled={!prompt.trim() || analyzing} className="h-10">
@@ -220,7 +220,7 @@ export default function AnalyzerPage() {
                 className="w-full h-48 p-4 rounded-xl border border-black-border bg-bg text-sm font-mono resize-none focus:outline-none focus:ring-2 focus:ring-jaffa/40 transition-all code-scroll"
                 placeholder="Enter your AI prompt here to analyze token usage and get optimization suggestions..."
                 value={prompt}
-                onChange={(e) => { setPrompt(e.target.value); setAnalysis(null); }}
+                onChange={(e) => { setPrompt(e.target.value); setAnalysis(null); setOptimized(null); }}
               />
               <div className="flex items-center justify-between mt-3">
                 <div className="flex gap-4 text-xs opacity-60">
@@ -229,22 +229,27 @@ export default function AnalyzerPage() {
                   <span>{prompt.length} chars</span>
                 </div>
                 {analysis && (
-                  <Button variant="ghost" size="sm" onClick={handleCopy}>
+                  <Button variant="ghost" size="sm" onClick={() => handleCopy(prompt)}>
                     {copied ? <Check size={12} /> : <Copy size={12} />}
                     {copied ? "Copied!" : "Copy"}
                   </Button>
                 )}
               </div>
+              {error && (
+                <div className="mt-3 p-2.5 rounded-lg bg-danger/10 border border-danger/20 text-xs text-danger">
+                  {error}
+                </div>
+              )}
             </div>
 
-            {/* Warm Color Token Map */}
-            {analysis && (
+            {/* Token Map */}
+            {analysis && activeTab === "analyze" && (
               <div className="card animate-fade-in">
                 <div className="flex items-center justify-between mb-3">
                   <div>
                     <h3 className="font-semibold">Token Importance Map</h3>
                     <p className="text-xs opacity-60 mt-0.5">
-                      Warm orange = high impact • Cool gray = low impact
+                      Warm orange = high impact tokens · Gray = low impact
                     </p>
                   </div>
                   <div className="flex gap-3 text-xs">
@@ -264,28 +269,31 @@ export default function AnalyzerPage() {
             )}
 
             {/* Improved version */}
-            {analysis && activeTab === "improve" && (
+            {activeTab === "improve" && optimized && (
               <div className="card animate-slide-up border-jaffa/30">
                 <div className="flex items-center gap-2 mb-3">
-                  <Lightbulb size={16} className="text-jaffa" />
-                  <h3 className="font-semibold">Concise Version</h3>
-                  <Badge className="bg-jaffa-bg text-jaffa-dark border-jaffa/30">
-                    {Math.ceil(analysis.tokens * 0.6)} tokens (saved {Math.floor(analysis.tokens * 0.4)})
+                  <Sparkles size={16} className="text-jaffa" />
+                  <h3 className="font-semibold">Optimized Prompt</h3>
+                  <Badge className="bg-green-bg text-green border-green/20">
+                    Saved {optimized.saved_tokens} tokens
                   </Badge>
                 </div>
-                <div className="p-3 bg-green-bg rounded-lg border border-green/20 font-mono text-sm">
-                  {improved || "Add more words to generate an improved version..."}
+                <div className="p-3 bg-green-bg rounded-lg border border-green/20 font-mono text-sm whitespace-pre-wrap">
+                  {optimized.optimized}
                 </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="mt-2 text-jaffa hover:text-jaffa-dark hover:bg-jaffa-bg"
-                  onClick={() => {
-                    navigator.clipboard.writeText(improved);
-                  }}
-                >
-                  <Copy size={12} /> Copy improved prompt
-                </Button>
+                <div className="flex items-center justify-between mt-3">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-jaffa hover:text-jaffa-dark hover:bg-jaffa-bg"
+                    onClick={() => handleCopy(optimized.optimized)}
+                  >
+                    <Copy size={12} /> Copy optimized prompt
+                  </Button>
+                  <span className="text-xs opacity-60">
+                    {optimized.optimized_tokens} tokens (was {optimized.original_tokens})
+                  </span>
+                </div>
               </div>
             )}
           </div>
@@ -295,9 +303,11 @@ export default function AnalyzerPage() {
             {analysis ? (
               <>
                 {/* Score */}
-                <div className="card">
-                  <PromptRating score={analysis.score} breakdown={analysis.breakdown} />
-                </div>
+                {analysis.score !== undefined && analysis.breakdown && (
+                  <div className="card">
+                    <PromptRating score={analysis.score} breakdown={analysis.breakdown} />
+                  </div>
+                )}
 
                 {/* Token Stats */}
                 <div className="card">
@@ -305,9 +315,9 @@ export default function AnalyzerPage() {
                   <div className="space-y-2.5">
                     {[
                       { label: "Tokens", value: formatNumber(analysis.tokens), mono: true },
-                      { label: "Input Cost", value: formatCurrency(analysis.est_input), mono: true, color: "text-jaffa-dark" },
-                      { label: "Est. Output Cost", value: formatCurrency(analysis.est_output), mono: true },
-                      { label: "Total Cost", value: formatCurrency(analysis.est_total), mono: true, bold: true },
+                      { label: "Input Cost", value: formatCurrency(analysis.estimated_cost_input), mono: true, color: "text-jaffa-dark" },
+                      { label: "Est. Output Cost", value: formatCurrency(analysis.estimated_cost_output), mono: true },
+                      { label: "Total Cost", value: formatCurrency(analysis.estimated_cost_total), mono: true, bold: true },
                     ].map((item) => (
                       <div key={item.label} className="flex justify-between items-center py-2 border-b border-black-border last:border-0">
                         <span className="text-sm opacity-70">{item.label}</span>
@@ -320,32 +330,34 @@ export default function AnalyzerPage() {
                 </div>
 
                 {/* Top Important Tokens */}
-                <div className="card">
-                  <h3 className="font-semibold mb-3">Key Tokens (TF-IDF)</h3>
-                  <div className="flex flex-wrap gap-1.5">
-                    {analysis.top_important.slice(0, 15).map((t, i) => (
-                      <span
-                        key={i}
-                        className={
-                          t.importance === "very_high"
-                            ? "token-very-high"
-                            : t.importance === "high"
-                            ? "token-high"
-                            : t.importance === "medium"
-                            ? "token-medium"
-                            : "token-low"
-                        }
-                        title={`Score: ${t.score.toFixed(4)}`}
-                      >
-                        {t.token}
-                      </span>
-                    ))}
+                {analysis.top_important.length > 0 && (
+                  <div className="card">
+                    <h3 className="font-semibold mb-3">Key Tokens (TF-IDF)</h3>
+                    <div className="flex flex-wrap gap-1.5">
+                      {analysis.top_important.slice(0, 15).map((t, i) => (
+                        <span
+                          key={i}
+                          className={
+                            t.importance === "very_high"
+                              ? "token-very-high"
+                              : t.importance === "high"
+                              ? "token-high"
+                              : t.importance === "medium"
+                              ? "token-medium"
+                              : "token-low"
+                          }
+                          title={`Score: ${t.score.toFixed(4)}`}
+                        >
+                          {t.token}
+                        </span>
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
 
                 {/* Suggestions */}
                 {(() => {
-                  const suggestions = getSuggestions(prompt, analysis);
+                  const suggestions = getSuggestions(analysis);
                   if (!suggestions.length) return null;
                   return (
                     <div className="card">
@@ -374,13 +386,21 @@ export default function AnalyzerPage() {
                   );
                 })()}
 
-                {/* Action */}
+                {/* Actions */}
                 <Button
                   className="w-full"
-                  onClick={() => setActiveTab(activeTab === "analyze" ? "improve" : "analyze")}
+                  onClick={activeTab === "analyze" ? handleOptimize : () => setActiveTab("analyze")}
+                  disabled={activeTab === "analyze" ? optimizing : false}
                 >
-                  <ArrowRight size={14} />
-                  {activeTab === "analyze" ? "Get Improved Version" : "Back to Analysis"}
+                  {activeTab === "analyze" ? (
+                    optimizing ? (
+                      <><RefreshCw size={14} className="animate-spin" /> Optimizing...</>
+                    ) : (
+                      <><Sparkles size={14} /> Get Optimized Version</>
+                    )
+                  ) : (
+                    <ArrowRight size={14} /> Back to Analysis
+                  )}
                 </Button>
               </>
             ) : (

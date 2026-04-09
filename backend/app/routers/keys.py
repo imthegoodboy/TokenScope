@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func
 from app.database import get_session
 from app.models.api_key import APIKey, encrypt_key
-from app.models.proxy import ProxyLog
+from app.models.proxy import ProxyLog, ProxyKey
 from app.models.usage import UsageRecord
 from app.schemas.keys import APIKeyCreate, APIKeyResponse
 from app.middleware.auth import require_user
@@ -53,12 +53,20 @@ async def list_api_keys(
 
     response = []
     for key in keys:
-        # Get proxy log stats for this key
+        # Get proxy log stats for this provider (grouped by provider)
+        pk_ids = await session.execute(
+            select(ProxyKey.id).where(ProxyKey.user_id == user_id, ProxyKey.active == True)  # noqa
+        )
+        proxy_key_ids = [r[0] for r in pk_ids.all()]
+
         log_result = await session.execute(
             select(
                 func.count(ProxyLog.id).label("usage_count"),
                 func.sum(ProxyLog.total_cost).label("total_spent"),
-            ).where(ProxyLog.api_key_id == key.id)
+            ).where(
+                ProxyLog.proxy_key_id.in_(proxy_key_ids),  # type: ignore
+                ProxyLog.provider == key.provider,
+            )
         )
         log_stats = log_result.one_or_none()
 
@@ -69,7 +77,7 @@ async def list_api_keys(
             key_last4=key.key_last4,
             active=key.active,
             created_at=key.created_at,
-            usage_count=log_stats.usage_count if log_stats else 0,
+            usage_count=log_stats.usage_count if log_stats and log_stats.usage_count else 0,
             total_spent=float(log_stats.total_spent or 0) if log_stats else 0.0,
         ))
 

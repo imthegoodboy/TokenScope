@@ -1,6 +1,4 @@
-import time
 import json
-import asyncio
 from fastapi import APIRouter, Request, HTTPException, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
@@ -14,6 +12,7 @@ from app.proxy.forwarder import (
     count_tokens_openai,
 )
 from app.services.cost_service import get_cost
+from app.services.tfidf_service import optimize_prompt
 from datetime import datetime
 
 router = APIRouter(tags=["Proxy"])
@@ -28,39 +27,19 @@ def extract_provider_from_model(model: str) -> str:
     return "openai"
 
 
-async def get_proxy_key_session(
-    request: Request,
-    session: AsyncSession = Depends(get_session),
-) -> tuple[dict, AsyncSession]:
-    """Validate proxy key from Authorization header."""
-    auth = request.headers.get("authorization", "")
-    if not auth or not auth.startswith("Bearer "):
-        raise HTTPException(
-            status_code=401,
-            detail="Missing Authorization header. Use: Bearer tsk_live_xxxxx",
-        )
-
-    raw_key = auth.replace("Bearer ", "")
-    proxy_key = await get_proxy_key(session, raw_key)
-    if not proxy_key:
-        raise HTTPException(status_code=401, detail="Invalid proxy key")
-
-    return proxy_key, session
-
-
 @router.api_route("/v1/chat/completions", methods=["POST"])
 async def chat_completions(
     body: dict,
     request: Request,
     session: AsyncSession = Depends(get_session),
 ):
-    """Proxy chat completion requests. Core of the TokenScope gateway."""
-    # Authenticate
+    """Proxy chat completion requests through TokenScope gateway."""
+    # Authenticate via proxy key
     auth = request.headers.get("authorization", "")
     if not auth or not auth.startswith("Bearer "):
         raise HTTPException(
             status_code=401,
-            detail="Missing Authorization header. Use: Bearer <your_proxy_key>",
+            detail="Missing Authorization header. Use: Bearer <proxy_key>",
         )
 
     raw_key = auth.replace("Bearer ", "")
@@ -77,6 +56,25 @@ async def chat_completions(
     prompt_text = "\n".join(
         f"{m.get('role', 'user')}: {m.get('content', '')}" for m in messages
     )
+    original_messages = messages
+
+    # ── Auto-enhancement ───────────────────────────────────────────────
+    enhanced_prompt = None
+    enhancement_applied = False
+    enhancement_cost = 0.0
+
+    if proxy_key_obj.auto_enhance and prompt_text.strip():
+        try:
+            enhanced_result = optimize_prompt(prompt_text, target_tokens=max(20, len(prompt_text.split()) // 2))
+            if enhanced_result.get("optimized") and enhanced_result["optimized"].strip():
+                enhanced_prompt = enhanced_result["optimized"]
+                enhancement_applied = True
+                # Rebuild messages with enhanced prompt
+                messages = [{"role": "user", "content": enhanced_prompt}]
+        except Exception:
+            # Enhancement failed — use original
+            pass
+    # ─────────────────────────────────────────────────────────────────────
 
     # Count input tokens
     input_tokens = count_tokens_openai(prompt_text, model)
@@ -93,30 +91,29 @@ async def chat_completions(
     if not api_key_obj:
         raise HTTPException(
             status_code=400,
-            detail=f"No active {provider} API key found. Add one in your dashboard at /dashboard/keys",
+            detail=f"No active {provider} API key found. Add one in your dashboard.",
         )
 
-    # Decrypt the provider API key
+    # Decrypt provider API key
     try:
         provider_api_key = api_key_obj.get_decrypted_key()
     except Exception:
-        raise HTTPException(
-            status_code=500,
-            detail="Failed to decrypt API key. Please re-add it.",
-        )
+        raise HTTPException(status_code=500, detail="Failed to decrypt API key.")
 
-    # Extract other params
     temperature = body.get("temperature", 0.7)
     max_tokens = body.get("max_tokens", 2048)
 
-    # ── Log the incoming request ──────────────────────────────────────
+    # ── Create log entry ───────────────────────────────────────────────
     log = ProxyLog(
         proxy_key_id=proxy_key_obj.id,
         user_id=user_id,
         provider=provider,
         model=model,
-        request_prompt=prompt_text,
+        request_prompt=prompt_text[:10000],
         request_tokens=input_tokens,
+        enhanced_prompt=enhanced_prompt,
+        enhancement_applied=enhancement_applied,
+        enhancement_cost=enhancement_cost,
         endpoint="/v1/chat/completions",
         ip_address=request.client.host if request.client else None,
         user_agent=request.headers.get("user-agent"),
@@ -124,7 +121,7 @@ async def chat_completions(
     session.add(log)
     await session.flush()
 
-    # ── Forward to provider ─────────────────────────────────────────
+    # ── Forward to provider ─────────────────────────────────────────────
     try:
         forward_result = await forward_to_provider(
             provider=provider,
@@ -138,7 +135,7 @@ async def chat_completions(
         raw = forward_result["raw"]
         latency_ms = forward_result["latency_ms"]
 
-        # Extract usage from response
+        # Extract usage
         usage = raw.get("usage", {})
         if provider == "anthropic":
             prompt_tok = usage.get("input_tokens", 0) or input_tokens
@@ -153,8 +150,10 @@ async def chat_completions(
 
         total_tokens = prompt_tok + completion_tok
 
-        # Calculate cost
-        total_cost = get_cost(prompt_tok, completion_tok, provider, model)
+        # Calculate costs
+        p_cost = get_cost(prompt_tok, 0, provider, model)
+        c_cost = get_cost(0, completion_tok, provider, model)
+        total_cost = p_cost + c_cost
 
         # Rebuild response for OpenAI format
         response_data = raw
@@ -162,11 +161,11 @@ async def chat_completions(
             response_data = _rebuild_openai_response(provider, raw, model)
 
         # Update log
-        log.response_tokens = completion_tok
         log.prompt_tokens = prompt_tok
+        log.completion_tokens = completion_tok
         log.total_tokens = total_tokens
-        log.prompt_cost = get_cost(prompt_tok, 0, provider, model)
-        log.completion_cost = get_cost(0, completion_tok, provider, model)
+        log.prompt_cost = p_cost
+        log.completion_cost = c_cost
         log.total_cost = total_cost
         log.latency_ms = latency_ms
         log.status_code = 200
@@ -255,7 +254,6 @@ async def completions(
     session: AsyncSession = Depends(get_session),
 ):
     """Proxy text completion requests."""
-    # Similar flow but with prompt text instead of messages
     raise HTTPException(
         status_code=501,
         detail="Text completions not yet supported. Use /v1/chat/completions",
@@ -264,18 +262,22 @@ async def completions(
 
 @router.get("/v1/models")
 async def list_models():
-    """List available models."""
+    """List available models across all providers."""
     return {
         "object": "list",
         "data": [
             {"id": "gpt-4o", "object": "model", "created": 1715720000, "owned_by": "openai"},
             {"id": "gpt-4o-mini", "object": "model", "created": 1715720000, "owned_by": "openai"},
+            {"id": "gpt-4-turbo", "object": "model", "created": 1715720000, "owned_by": "openai"},
             {"id": "gpt-3.5-turbo", "object": "model", "created": 1677649963, "owned_by": "openai"},
+            {"id": "claude-3-5-sonnet-20241022", "object": "model", "created": 1715720000, "owned_by": "anthropic"},
             {"id": "claude-3-5-sonnet", "object": "model", "created": 1715720000, "owned_by": "anthropic"},
             {"id": "claude-3-5-haiku", "object": "model", "created": 1715720000, "owned_by": "anthropic"},
+            {"id": "claude-3-opus", "object": "model", "created": 1715720000, "owned_by": "anthropic"},
             {"id": "gemini-2.0-flash", "object": "model", "created": 1715720000, "owned_by": "google"},
-            {"id": "gemini-1.5-flash", "object": "model", "created": 1715720000, "owned_by": "google"},
             {"id": "gemini-1.5-pro", "object": "model", "created": 1715720000, "owned_by": "google"},
+            {"id": "gemini-1.5-flash", "object": "model", "created": 1715720000, "owned_by": "google"},
+            {"id": "gemini-1.0-pro", "object": "model", "created": 1715720000, "owned_by": "google"},
         ],
     }
 
@@ -283,9 +285,14 @@ async def list_models():
 @router.get("/v1/models/{model_name}", response_model=dict)
 async def get_model(model_name: str):
     """Get info for a specific model."""
+    owned_by = "openai"
+    if any(x in model_name for x in ["claude", "sonnet", "haiku", "opus"]):
+        owned_by = "anthropic"
+    elif "gemini" in model_name:
+        owned_by = "google"
     return {
         "id": model_name,
         "object": "model",
         "created": 1715720000,
-        "owned_by": "openai",
+        "owned_by": owned_by,
     }
