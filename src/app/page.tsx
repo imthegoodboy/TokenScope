@@ -150,16 +150,20 @@ function FooterBrandHeading() {
 
   const playClass = play ? 'footer-word-shine--play' : '';
 
+  const sizeClass = 'text-[clamp(3rem,12vw,9.5rem)] sm:text-[clamp(3.25rem,11vw,10rem)]';
+
   return (
     <h2
       ref={ref}
-      className="relative text-center font-black leading-[0.82] tracking-[-0.045em] sm:leading-[0.8]"
+      className="relative text-center font-black tracking-[-0.04em]"
     >
-      <span className={`footer-word-token relative block text-[clamp(3.25rem,14.5vw,11.5rem)] ${playClass}`}>
+      <span
+        className={`footer-word-token relative block ${sizeClass} pb-[0.12em] pt-[0.1em] leading-[1.05] ${playClass}`}
+      >
         Token
       </span>
       <span
-        className={`footer-word-scope relative -mt-[0.06em] block text-[clamp(3.25rem,14.5vw,11.5rem)] sm:-mt-[0.08em] ${playClass}`}
+        className={`footer-word-scope relative -mt-[0.02em] block ${sizeClass} pb-[0.18em] pt-[0.06em] leading-[1.05] sm:-mt-[0.03em] ${playClass}`}
       >
         Scope
       </span>
@@ -465,6 +469,50 @@ function LandingContent() {
         </div>
       </section>
 
+      {/* New Features Section */}
+      <section className="py-24 relative">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="text-center mb-16">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-orange/10 border border-orange/20 rounded-full mb-6">
+              <Sparkles className="w-4 h-4 text-orange" />
+              <span className="text-sm text-orange font-medium">New Features</span>
+            </div>
+            <h2 className="text-4xl font-bold mb-4">
+              Level Up Your <span className="text-orange">Prompt Game</span>
+            </h2>
+            <p className="text-gray-400 max-w-xl mx-auto">
+              Our new attention score system and browser extension help you write better prompts and save tokens
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-6">
+            {newFeatures.map((feature, i) => (
+              <div
+                key={i}
+                className="group relative p-6 bg-gradient-to-br from-gray-900 to-gray-900/50 border border-gray-800 rounded-2xl hover:border-orange/50 transition-all hover:scale-[1.02]"
+              >
+                <div className={`absolute top-4 right-4 px-2 py-1 rounded-full text-xs font-medium ${
+                  feature.color === 'orange' ? 'bg-orange/20 text-orange' :
+                  feature.color === 'blue' ? 'bg-blue-500/20 text-blue-400' :
+                  'bg-purple-500/20 text-purple-400'
+                }`}>
+                  {feature.badge}
+                </div>
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-4 ${
+                  feature.color === 'orange' ? 'bg-orange/10 text-orange group-hover:bg-orange group-hover:text-black' :
+                  feature.color === 'blue' ? 'bg-blue-500/10 text-blue-400 group-hover:bg-blue-500 group-hover:text-black' :
+                  'bg-purple-500/10 text-purple-400 group-hover:bg-purple-500 group-hover:text-black'
+                } transition-colors`}>
+                  {feature.icon}
+                </div>
+                <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
+                <p className="text-gray-400">{feature.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Testimonials */}
       <section className="py-32">
         <div className="max-w-7xl mx-auto px-4">
@@ -520,7 +568,7 @@ function LandingContent() {
       </section>
 
       {/* Footer — particles, scanlines, Token / Scope wordmark + one-time shine */}
-      <footer className="relative isolate w-full overflow-hidden border-t border-gray-800/90 bg-[#050505]">
+      <footer className="relative isolate w-full bg-[#050505]">
         <div
           className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(ellipse_120%_80%_at_50%_100%,rgba(255,107,0,0.16),transparent_55%)]"
           aria-hidden
@@ -534,10 +582,10 @@ function LandingContent() {
           className="pointer-events-none absolute inset-x-0 bottom-0 z-[3] h-px bg-gradient-to-r from-transparent via-orange/40 to-transparent"
           aria-hidden
         />
-        <div className="relative z-20 mx-auto flex min-h-[min(52vh,560px)] w-full max-w-[100vw] flex-col items-center justify-center px-3 py-16 sm:min-h-[min(48vh,520px)] sm:px-6 md:py-24 lg:py-28">
+        <div className="relative z-20 mx-auto flex w-full max-w-[100vw] flex-col items-center justify-center px-4 pb-20 pt-12 sm:px-6 sm:pb-24 sm:pt-16 md:pb-28 md:pt-20 lg:pb-32 lg:pt-24">
           <Link
             href="/"
-            className="group relative z-10 transition-transform duration-500 ease-out will-change-transform hover:scale-[1.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#050505]"
+            className="group relative z-10 inline-block transition-transform duration-500 ease-out will-change-transform hover:scale-[1.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#050505]"
             aria-label="TokenScope home"
           >
             <FooterBrandHeading />
