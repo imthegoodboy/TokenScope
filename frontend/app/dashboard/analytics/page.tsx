@@ -1,12 +1,13 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useState, useCallback } from "react";
 import dynamic from "next/dynamic";
 import { Header } from "@/components/layout/header";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { formatCurrency } from "@/lib/utils";
-import { TrendingUp, Calendar, Clock, Hash } from "lucide-react";
+import { formatCurrency, formatNumber } from "@/lib/utils";
+import { TrendingUp, Calendar, Clock, Hash, Loader2 } from "lucide-react";
+import { getLogsStats, getLogsBreakdown, getLogsChart, type LogsStats, type LogsBreakdown, type ChartPoint } from "@/lib/api";
 
 const Analytics3D = dynamic(
   () => import("@/components/charts/analytics-3d").then((m) => m.Analytics3D),
@@ -28,46 +29,116 @@ function StatsRow({ title, value, icon: Icon, sub }: { title: string; value: str
   );
 }
 
-function generateAnalyticsData() {
-  const data = [];
-  for (let i = 0; i < 60; i++) {
-    const providers = ["openai", "anthropic", "gemini"];
-    const provider = providers[i % 3];
-    const tokens = Math.floor(Math.random() * 3000) + 200;
-    const cost = tokens * (provider === "openai" ? 0.00003 : provider === "anthropic" ? 0.00005 : 0.00001);
-    data.push({ tokens, cost, provider, model: "various" });
-  }
-  return data;
-}
-
-function generateHeatmapData() {
+function generateHeatmapData(chartData: ChartPoint[]) {
   const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const heatmap: Record<string, Record<number, number>> = {};
+
+  days.forEach((d) => {
+    heatmap[d] = {};
+    for (let h = 0; h < 24; h++) {
+      heatmap[d][h] = 0;
+    }
+  });
+
+  // Distribute chart data across heatmap (for demo, spread evenly)
+  const total = chartData.reduce((sum, d) => sum + (d.calls || 1), 0);
+  chartData.forEach((d, i) => {
+    const dayName = days[new Date(d.date).getDay()];
+    const hour = (i * 3) % 24;
+    heatmap[dayName][hour] += d.calls || 1;
+  });
+
   return days.map((day) =>
     Array.from({ length: 24 }, (_, hour) => ({
       day,
       hour,
-      value: Math.floor(Math.random() * 80 + 5),
+      value: heatmap[day][hour],
     }))
   );
 }
 
 export default function AnalyticsPage() {
-  const scatterData = useMemo(() => generateAnalyticsData(), []);
-  const heatmapData = useMemo(() => generateHeatmapData(), []);
-  const maxHeat = 85;
+  const [stats, setStats] = useState<LogsStats | null>(null);
+  const [breakdown, setBreakdown] = useState<LogsBreakdown | null>(null);
+  const [chartData, setChartData] = useState<ChartPoint[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const loadData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [statsRes, breakdownRes, chartRes] = await Promise.all([
+        getLogsStats(),
+        getLogsBreakdown(),
+        getLogsChart("30d"),
+      ]);
+      setStats(statsRes);
+      setBreakdown(breakdownRes);
+      setChartData(chartRes);
+    } catch (e) {
+      console.error("Failed to load analytics:", e);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadData();
+  }, [loadData]);
+
+  const heatmapData = generateHeatmapData(chartData);
+  const maxHeat = Math.max(...heatmapData.map((row) => Math.max(...row.map((c) => c.value))), 1);
+
+  // Scatter data from chart points
+  const scatterData = chartData.slice(-30).map((d, i) => ({
+    tokens: d.tokens || Math.floor(Math.random() * 3000) + 200,
+    cost: d.cost || 0,
+    provider: d.provider,
+    model: "various",
+  }));
+
+  const avgTokens = stats ? Math.round(stats.avg_tokens_per_request) : 0;
+  const avgCost = stats ? stats.avg_cost_per_request : 0;
+  const total30d = chartData.reduce((sum, d) => sum + d.cost, 0);
 
   return (
     <div>
-      <Header title="Analytics" description="Deep dive into your token usage patterns" />
+      <Header title="Analytics" description="Deep dive into your AI API usage patterns" />
 
       <div className="px-8 py-6 space-y-6">
-        {/* Stats row */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <StatsRow title="Avg Tokens/Call" value="1,240" icon={Hash} sub="across all providers" />
-          <StatsRow title="Most Active Hour" value="2 PM" icon={Clock} sub="peak usage time" />
-          <StatsRow title="Busiest Day" value="Wednesday" icon={Calendar} sub="42% of weekly usage" />
-          <StatsRow title="Cost Trend" value="-8.3%" icon={TrendingUp} sub="vs last 30 days" />
-        </div>
+        {loading ? (
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            {[...Array(4)].map((_, i) => (
+              <Skeleton key={i} className="h-20 rounded-xl" />
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <StatsRow
+              title="Avg Tokens/Call"
+              value={formatNumber(avgTokens)}
+              icon={Hash}
+              sub="across all providers"
+            />
+            <StatsRow
+              title="Avg Cost/Call"
+              value={formatCurrency(avgCost)}
+              icon={TrendingUp}
+              sub="per request"
+            />
+            <StatsRow
+              title="Total Spend"
+              value={formatCurrency(stats?.total_spend || 0)}
+              icon={Calendar}
+              sub="all time"
+            />
+            <StatsRow
+              title="Success Rate"
+              value={`${stats?.success_rate || 100}%`}
+              icon={Clock}
+              sub={`${stats?.total_requests || 0} total requests`}
+            />
+          </div>
+        )}
 
         {/* 3D Scatter */}
         <div className="card">
@@ -90,7 +161,15 @@ export default function AnalyticsPage() {
             </div>
           </div>
           <div className="h-80">
-            <Analytics3D data={scatterData} />
+            {loading ? (
+              <Skeleton className="h-80 rounded-lg" />
+            ) : scatterData.length > 0 ? (
+              <Analytics3D data={scatterData} />
+            ) : (
+              <div className="h-80 flex items-center justify-center text-sm opacity-50">
+                No data available yet
+              </div>
+            )}
           </div>
         </div>
 
@@ -113,7 +192,11 @@ export default function AnalyticsPage() {
                     <div
                       key={hi}
                       className="flex-1 h-6 mx-px rounded-sm transition-all duration-150 hover:ring-2 hover:ring-jaffa/30 cursor-pointer"
-                      style={{ backgroundColor: `rgba(240,127,60,${(cell.value / maxHeat) * 0.65 + 0.05})` }}
+                      style={{
+                        backgroundColor: cell.value > 0
+                          ? `rgba(240,127,60,${Math.max(0.1, (cell.value / maxHeat) * 0.65 + 0.05)})`
+                          : "rgba(0,0,0,0.03)"
+                      }}
                       title={`${cell.day} ${cell.hour}:00 — ${cell.value} calls`}
                     />
                   ))}
@@ -131,54 +214,60 @@ export default function AnalyticsPage() {
         </div>
 
         {/* Token Distribution */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="card">
-            <h3 className="font-bold text-base mb-4">Token Distribution</h3>
-            <div className="space-y-4">
-              {[
-                { label: "Prompt Tokens", value: 62, color: "#F07F3C" },
-                { label: "Completion Tokens", value: 38, color: "#E2DDD7" },
-              ].map((item) => (
-                <div key={item.label}>
-                  <div className="flex justify-between text-xs mb-1.5">
-                    <span className="opacity-60">{item.label}</span>
-                    <span className="font-mono font-semibold">{item.value}%</span>
-                  </div>
-                  <div className="h-2.5 bg-black-border/50 rounded-full overflow-hidden">
-                    <div
-                      className="h-full rounded-full transition-all duration-700"
-                      style={{ width: `${item.value}%`, backgroundColor: item.color }}
-                    />
-                  </div>
-                </div>
-              ))}
+        {stats && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="card">
+              <h3 className="font-bold text-base mb-4">Token Distribution</h3>
+              <div className="space-y-4">
+                {[
+                  { label: "Prompt Tokens", value: stats.prompt_tokens_total, total: stats.prompt_tokens_total + stats.completion_tokens_total, color: "#F07F3C" },
+                  { label: "Completion Tokens", value: stats.completion_tokens_total, total: stats.prompt_tokens_total + stats.completion_tokens_total, color: "#E2DDD7" },
+                ].map((item) => {
+                  const pct = item.total > 0 ? Math.round((item.value / item.total) * 100) : 0;
+                  return (
+                    <div key={item.label}>
+                      <div className="flex justify-between text-xs mb-1.5">
+                        <span className="opacity-60">{item.label} ({formatNumber(item.value)})</span>
+                        <span className="font-mono font-semibold">{pct}%</span>
+                      </div>
+                      <div className="h-2.5 bg-black-border/50 rounded-full overflow-hidden">
+                        <div
+                          className="h-full rounded-full transition-all duration-700"
+                          style={{ width: `${pct}%`, backgroundColor: item.color }}
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-          </div>
 
-          <div className="card">
-            <h3 className="font-bold text-base mb-4">30-Day Projection</h3>
-            <div className="flex items-end gap-0.5 h-24">
-              {Array.from({ length: 20 }, (_, i) => {
-                const h = 20 + Math.sin(i * 0.5) * 40 + Math.random() * 30;
-                return (
-                  <div
-                    key={i}
-                    className="flex-1 bg-jaffa/20 hover:bg-jaffa/40 transition-colors rounded-t-sm"
-                    style={{ height: `${h}%` }}
-                    title={`Day ${i + 1}: ${formatCurrency(h * 0.1)}`}
-                  />
-                );
-              })}
+            <div className="card">
+              <h3 className="font-bold text-base mb-4">30-Day Cost Trend</h3>
+              <div className="flex items-end gap-0.5 h-24">
+                {chartData.slice(-20).map((d, i) => {
+                  const maxCost = Math.max(...chartData.map((x) => x.cost), 0.01);
+                  const h = d.cost > 0 ? Math.max(10, (d.cost / maxCost) * 100) : 4;
+                  return (
+                    <div
+                      key={i}
+                      className="flex-1 bg-jaffa/20 hover:bg-jaffa/40 transition-colors rounded-t-sm"
+                      style={{ height: `${h}%` }}
+                      title={`${d.date}: ${formatCurrency(d.cost)}`}
+                    />
+                  );
+                })}
+              </div>
+              <div className="flex justify-between mt-1 text-[10px] opacity-40">
+                <span>20 days ago</span>
+                <span>Today</span>
+              </div>
+              <p className="text-center mt-3 text-sm font-semibold">
+                30-Day Total: <span className="font-mono text-jaffa">{formatCurrency(total30d)}</span>
+              </p>
             </div>
-            <div className="flex justify-between mt-1 text-[10px] opacity-40">
-              <span>Today</span>
-              <span>30 days</span>
-            </div>
-            <p className="text-center mt-3 text-sm font-semibold">
-              Projected: <span className="font-mono text-jaffa">{formatCurrency(892.4)}</span>
-            </p>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

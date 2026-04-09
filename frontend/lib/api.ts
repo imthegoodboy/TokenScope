@@ -166,7 +166,6 @@ export async function getLogs(params?: {
   provider?: string;
   model?: string;
   search?: string;
-  token?: string | null;
 }): Promise<LogsResponse> {
   const qs = new URLSearchParams();
   if (params?.page) qs.set("page", String(params.page));
@@ -175,22 +174,21 @@ export async function getLogs(params?: {
   if (params?.model) qs.set("model", params.model);
   if (params?.search) qs.set("search", params.search);
   const query = qs.toString();
-  return request(`/api/v1/logs/${query ? `?${query}` : ""}`, { token: params?.token });
+  return request(`/api/v1/logs/${query ? `?${query}` : ""}`);
 }
 
-export async function getLogsStats(token?: string | null): Promise<LogsStats> {
-  return request("/api/v1/logs/stats", { token });
+export async function getLogsStats(): Promise<LogsStats> {
+  return request("/api/v1/logs/stats");
 }
 
-export async function getLogsBreakdown(token?: string | null): Promise<LogsBreakdown> {
-  return request("/api/v1/logs/breakdown", { token });
+export async function getLogsBreakdown(): Promise<LogsBreakdown> {
+  return request("/api/v1/logs/breakdown");
 }
 
 export async function getLogsChart(
   period: "7d" | "14d" | "30d" = "14d",
-  token?: string | null
 ): Promise<ChartPoint[]> {
-  return request(`/api/v1/logs/chart?period=${period}`, { token });
+  return request(`/api/v1/logs/chart?period=${period}`);
 }
 
 // ─── API Keys ────────────────────────────────────────────────────────────────
