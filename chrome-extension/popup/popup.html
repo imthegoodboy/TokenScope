@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TokenScope</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      width: 380px;
+      min-height: 520px;
+      background: #fafafa;
+      color: #000;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 13px;
+      overflow-x: hidden;
+    }
+
+    /* Header */
+    .header {
+      background: #fff;
+      padding: 20px;
+      border-bottom: 1px solid #eee;
+      position: relative;
+    }
+
+    .header-content {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .logo {
+      width: 48px;
+      height: 48px;
+      background: #000;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .title-area {
+      flex: 1;
+    }
+
+    .title {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      color: #000;
+    }
+
+    .title span {
+      color: #666;
+    }
+
+    .subtitle {
+      font-size: 11px;
+      color: #666;
+      margin-top: 2px;
+    }
+
+    /* Toggle Row */
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 16px;
+      background: #fff;
+      border-bottom: 1px solid #eee;
+    }
+
+    .toggle-info {
+      flex: 1;
+    }
+
+    .toggle-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: #000;
+    }
+
+    .toggle-desc {
+      font-size: 10px;
+      color: #999;
+      margin-top: 2px;
+    }
+
+    .toggle-switch {
+      position: relative;
+      width: 44px;
+      height: 24px;
+    }
+
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .toggle-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: #ddd;
+      border-radius: 24px;
+      transition: all 0.2s;
+    }
+
+    .toggle-slider::before {
+      position: absolute;
+      content: '';
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background: #fff;
+      border-radius: 50%;
+      transition: all 0.2s;
+    }
+
+    .toggle-switch input:checked + .toggle-slider {
+      background: #000;
+    }
+
+    .toggle-switch input:checked + .toggle-slider::before {
+      transform: translateX(20px);
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      padding: 16px;
+      background: #fafafa;
+    }
+
+    .stat-card {
+      background: #fff;
+      border: 1px solid #eee;
+      border-radius: 12px;
+      padding: 14px 10px;
+      text-align: center;
+      transition: all 0.2s;
+    }
+
+    .stat-card:hover {
+      border-color: #000;
+    }
+
+    .stat-icon {
+      width: 32px;
+      height: 32px;
+      margin: 0 auto 8px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      background: rgba(0,0,0,0.08);
+    }
+
+    .stat-value {
+      font-size: 20px;
+      font-weight: 700;
+      color: #000;
+    }
+
+    .stat-card:nth-child(2) .stat-value { color: #333; }
+    .stat-card:nth-child(3) .stat-value { color: #666; }
+
+    .stat-label {
+      font-size: 10px;
+      color: #666;
+      margin-top: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* Sections */
+    .section {
+      padding: 16px;
+      border-bottom: 1px solid #eee;
+      background: #fff;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .section-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      color: #999;
+      letter-spacing: 1px;
+      font-weight: 600;
+    }
+
+    /* How it Works */
+    .how-it-works {
+      background: #fafafa;
+      border: 1px solid #eee;
+      border-radius: 12px;
+      padding: 16px;
+    }
+
+    .step {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .step:last-child {
+      margin-bottom: 0;
+    }
+
+    .step-number {
+      width: 24px;
+      height: 24px;
+      background: #000;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+      color: #fff;
+      flex-shrink: 0;
+    }
+
+    .step-content {
+      flex: 1;
+    }
+
+    .step-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: #000;
+      margin-bottom: 2px;
+    }
+
+    .step-desc {
+      font-size: 11px;
+      color: #999;
+      line-height: 1.4;
+    }
+
+    .shortcut {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin-top: 4px;
+    }
+
+    .shortcut kbd {
+      background: #eee;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 2px 6px;
+      font-size: 10px;
+      font-family: monospace;
+      color: #666;
+    }
+
+    /* Optimizer */
+    .optimizer-card {
+      background: #fafafa;
+      border: 1px solid #eee;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .optimizer-header {
+      background: #f5f5f5;
+      padding: 12px 14px;
+      border-bottom: 1px solid #eee;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .optimizer-header span {
+      font-size: 12px;
+      color: #000;
+      font-weight: 600;
+    }
+
+    .optimizer-body {
+      padding: 14px;
+    }
+
+    .prompt-input {
+      width: 100%;
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 12px;
+      color: #000;
+      font-size: 13px;
+      resize: none;
+      height: 70px;
+      font-family: inherit;
+      transition: all 0.2s;
+    }
+
+    .prompt-input:focus {
+      outline: none;
+      border-color: #000;
+      box-shadow: 0 0 0 3px rgba(0,0,0,0.08);
+    }
+
+    .prompt-input::placeholder {
+      color: #ccc;
+    }
+
+    .optimizer-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .btn {
+      flex: 1;
+      padding: 10px 16px;
+      border: none;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .btn-primary {
+      background: #000;
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      background: #333;
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-secondary {
+      background: #f0f0f0;
+      color: #666;
+      flex: 0 0 auto;
+    }
+
+    .btn-secondary:hover {
+      background: #e5e5e5;
+      color: #000;
+    }
+
+    /* Result */
+    .result-card {
+      margin-top: 12px;
+      background: #fafafa;
+      border: 1px solid #000;
+      border-radius: 10px;
+      overflow: hidden;
+      display: none;
+    }
+
+    .result-card.show {
+      display: block;
+      animation: slideIn 0.2s ease;
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(-6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .result-header {
+      background: #f5f5f5;
+      padding: 10px 12px;
+      border-bottom: 1px solid #eee;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .result-label {
+      font-size: 11px;
+      color: #000;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .result-savings {
+      background: rgba(0,0,0,0.08);
+      color: #000;
+      padding: 4px 8px;
+      border-radius: 20px;
+      font-size: 10px;
+      font-weight: 600;
+    }
+
+    .result-body {
+      padding: 12px;
+    }
+
+    .result-text {
+      font-size: 13px;
+      line-height: 1.6;
+      color: #333;
+    }
+
+    .result-meta {
+      display: flex;
+      gap: 16px;
+      margin-top: 12px;
+      padding-top: 10px;
+      border-top: 1px solid #eee;
+    }
+
+    .result-meta-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: #999;
+    }
+
+    .result-meta-item span {
+      color: #000;
+      font-weight: 600;
+    }
+
+    /* History */
+    .history-list {
+      max-height: 180px;
+      overflow-y: auto;
+    }
+
+    .history-item {
+      background: #fafafa;
+      border: 1px solid #eee;
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 8px;
+      transition: all 0.2s;
+    }
+
+    .history-item:hover {
+      border-color: #ddd;
+    }
+
+    .history-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .history-item-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .history-chatbot {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: #999;
+    }
+
+    .history-savings {
+      font-size: 11px;
+      color: #000;
+      font-weight: 600;
+    }
+
+    .history-prompt {
+      font-size: 12px;
+      color: #999;
+      line-height: 1.5;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .history-optimized {
+      font-size: 12px;
+      color: #000;
+      line-height: 1.5;
+      margin-top: 6px;
+      padding-top: 6px;
+      border-top: 1px dashed #ddd;
+    }
+
+    .history-empty {
+      text-align: center;
+      padding: 30px 20px;
+      color: #ccc;
+    }
+
+    .history-empty-icon {
+      font-size: 32px;
+      margin-bottom: 8px;
+      opacity: 0.5;
+    }
+
+    /* Footer */
+    .footer {
+      padding: 16px;
+      background: #fafafa;
+    }
+
+    .open-dashboard {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      padding: 12px;
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      color: #000;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-decoration: none;
+    }
+
+    .open-dashboard:hover {
+      border-color: #000;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #ddd;
+      border-radius: 2px;
+    }
+
+    /* Loading */
+    .spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid #eee;
+      border-top-color: #000;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="header-content">
+      <div class="logo">TS</div>
+      <div class="title-area">
+        <div class="title">Token<span>Scope</span></div>
+        <div class="subtitle">Prompt Optimizer</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="toggle-row">
+      <div class="toggle-info">
+        <div class="toggle-label">Auto Popup</div>
+        <div class="toggle-desc">Show suggestions while typing</div>
+      </div>
+      <label class="toggle-switch">
+        <input type="checkbox" id="auto-toggle" checked>
+        <span class="toggle-slider"></span>
+      </label>
+    </div>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon">P</div>
+      <div class="stat-value" id="total-prompts">0</div>
+      <div class="stat-label">Prompts</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">T</div>
+      <div class="stat-value" id="saved-tokens">0</div>
+      <div class="stat-label">Tokens Saved</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon">$</div>
+      <div class="stat-value" id="saved-cost">$0</div>
+      <div class="stat-label">Cost Saved</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">
+      <div class="section-title">How It Works</div>
+    </div>
+    <div class="how-it-works">
+      <div class="step">
+        <div class="step-number">1</div>
+        <div class="step-content">
+          <div class="step-title">Type anywhere</div>
+          <div class="step-desc">Type your prompt in any text field</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-number">2</div>
+        <div class="step-content">
+          <div class="step-title">AI optimizes</div>
+          <div class="step-desc">We analyze and improve your prompt</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-number">3</div>
+        <div class="step-content">
+          <div class="step-title">Press Tab</div>
+          <div class="step-desc">Accept the optimized version</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">
+      <div class="section-title">Quick Optimize</div>
+    </div>
+    <div class="optimizer-card">
+      <div class="optimizer-body">
+        <textarea class="prompt-input" id="prompt-input" placeholder="Paste your prompt here..."></textarea>
+        <div class="optimizer-actions">
+          <button class="btn btn-primary" id="optimize-btn">
+            <span>✨</span> Optimize
+          </button>
+          <button class="btn btn-secondary" id="clear-btn" title="Clear">
+            ✕
+          </button>
+        </div>
+
+        <div class="result-card" id="result-card">
+          <div class="result-header">
+            <span class="result-label">✨ Optimized</span>
+            <span class="result-savings" id="result-savings-badge">-0%</span>
+          </div>
+          <div class="result-body">
+            <div class="result-text" id="result-text"></div>
+            <div class="result-meta">
+              <div class="result-meta-item">
+                <span>📝</span>
+                <span id="result-tokens">0</span> tokens
+              </div>
+              <div class="result-meta-item">
+                <span>💰</span>
+                <span id="result-cost">$0</span> cost
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">
+      <div class="section-title">Recent Optimizations</div>
+    </div>
+    <div class="history-list" id="history-list">
+      <div class="history-empty">
+        <div class="history-empty-icon">📭</div>
+        <div>No history yet</div>
+        <div style="font-size: 11px; margin-top: 4px;">Optimize your first prompt!</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <a href="http://localhost:3000/dashboard" target="_blank" class="open-dashboard" id="open-dashboard">
+      <span>📊</span> Open Dashboard
+    </a>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
