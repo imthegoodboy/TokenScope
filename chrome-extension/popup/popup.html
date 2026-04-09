@@ -14,8 +14,8 @@
     body {
       width: 380px;
       min-height: 520px;
-      background: #fafafa;
-      color: #000;
+      background: #0a0a0a;
+      color: #fff;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       font-size: 13px;
       overflow-x: hidden;
@@ -23,10 +23,21 @@
 
     /* Header */
     .header {
-      background: #fff;
+      background: linear-gradient(135deg, #FF6B00 0%, #ff8c33 100%);
       padding: 20px;
-      border-bottom: 1px solid #eee;
       position: relative;
+      overflow: hidden;
+    }
+
+    .header::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -50%;
+      width: 100%;
+      height: 100%;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 50%;
     }
 
     .header-content {
@@ -47,7 +58,7 @@
       justify-content: center;
       font-size: 18px;
       font-weight: 700;
-      color: #fff;
+      color: #FF6B00;
     }
 
     .title-area {
@@ -62,13 +73,138 @@
     }
 
     .title span {
-      color: #666;
+      color: rgba(0,0,0,0.6);
     }
 
     .subtitle {
       font-size: 11px;
+      color: rgba(0,0,0,0.7);
+      margin-top: 2px;
+    }
+
+    /* Auth Section */
+    .auth-section {
+      padding: 20px;
+      background: #111;
+      border-bottom: 1px solid #222;
+    }
+
+    .auth-card {
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 12px;
+      padding: 16px;
+    }
+
+    .auth-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .auth-icon {
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, #FF6B00, #ff8c33);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+    }
+
+    .auth-info h3 {
+      font-size: 14px;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .auth-info p {
+      font-size: 11px;
       color: #666;
       margin-top: 2px;
+    }
+
+    .auth-status {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px;
+      background: #222;
+      border-radius: 8px;
+      margin-bottom: 12px;
+    }
+
+    .auth-status-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #666;
+    }
+
+    .status-dot.active {
+      background: #22c55e;
+      box-shadow: 0 0 8px rgba(34, 197, 94, 0.5);
+    }
+
+    .status-text {
+      font-size: 12px;
+      color: #888;
+    }
+
+    .status-text.active {
+      color: #22c55e;
+    }
+
+    .user-email {
+      font-size: 11px;
+      color: #888;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 150px;
+    }
+
+    .auth-btn {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .auth-btn.sign-in {
+      background: linear-gradient(135deg, #FF6B00, #ff8c33);
+      color: #000;
+    }
+
+    .auth-btn.sign-in:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(255, 107, 0, 0.3);
+    }
+
+    .auth-btn.sign-out {
+      background: #333;
+      color: #888;
+    }
+
+    .auth-btn.sign-out:hover {
+      background: #444;
+      color: #fff;
     }
 
     /* Toggle Row */
@@ -77,8 +213,8 @@
       align-items: center;
       justify-content: space-between;
       padding: 14px 16px;
-      background: #fff;
-      border-bottom: 1px solid #eee;
+      background: #111;
+      border-bottom: 1px solid #222;
     }
 
     .toggle-info {
@@ -88,12 +224,12 @@
     .toggle-label {
       font-size: 13px;
       font-weight: 600;
-      color: #000;
+      color: #fff;
     }
 
     .toggle-desc {
       font-size: 10px;
-      color: #999;
+      color: #666;
       margin-top: 2px;
     }
 
@@ -116,7 +252,7 @@
       left: 0;
       right: 0;
       bottom: 0;
-      background: #ddd;
+      background: #333;
       border-radius: 24px;
       transition: all 0.2s;
     }
@@ -128,17 +264,18 @@
       width: 18px;
       left: 3px;
       bottom: 3px;
-      background: #fff;
+      background: #666;
       border-radius: 50%;
       transition: all 0.2s;
     }
 
     .toggle-switch input:checked + .toggle-slider {
-      background: #000;
+      background: #FF6B00;
     }
 
     .toggle-switch input:checked + .toggle-slider::before {
       transform: translateX(20px);
+      background: #000;
     }
 
     /* Stats Grid */
@@ -147,12 +284,12 @@
       grid-template-columns: repeat(3, 1fr);
       gap: 8px;
       padding: 16px;
-      background: #fafafa;
+      background: #0a0a0a;
     }
 
     .stat-card {
-      background: #fff;
-      border: 1px solid #eee;
+      background: #1a1a1a;
+      border: 1px solid #222;
       border-radius: 12px;
       padding: 14px 10px;
       text-align: center;
@@ -160,7 +297,8 @@
     }
 
     .stat-card:hover {
-      border-color: #000;
+      border-color: #FF6B00;
+      transform: translateY(-2px);
     }
 
     .stat-icon {
@@ -172,17 +310,17 @@
       align-items: center;
       justify-content: center;
       font-size: 16px;
-      background: rgba(0,0,0,0.08);
+      background: rgba(255, 107, 0, 0.1);
     }
 
     .stat-value {
-      font-size: 20px;
+      font-size: 18px;
       font-weight: 700;
-      color: #000;
+      color: #FF6B00;
     }
 
-    .stat-card:nth-child(2) .stat-value { color: #333; }
-    .stat-card:nth-child(3) .stat-value { color: #666; }
+    .stat-card:nth-child(2) .stat-value { color: #22c55e; }
+    .stat-card:nth-child(3) .stat-value { color: #3b82f6; }
 
     .stat-label {
       font-size: 10px;
@@ -195,8 +333,8 @@
     /* Sections */
     .section {
       padding: 16px;
-      border-bottom: 1px solid #eee;
-      background: #fff;
+      background: #111;
+      border-bottom: 1px solid #222;
     }
 
     .section-header {
@@ -209,15 +347,15 @@
     .section-title {
       font-size: 11px;
       text-transform: uppercase;
-      color: #999;
+      color: #666;
       letter-spacing: 1px;
       font-weight: 600;
     }
 
     /* How it Works */
     .how-it-works {
-      background: #fafafa;
-      border: 1px solid #eee;
+      background: #1a1a1a;
+      border: 1px solid #222;
       border-radius: 12px;
       padding: 16px;
     }
@@ -236,14 +374,14 @@
     .step-number {
       width: 24px;
       height: 24px;
-      background: #000;
+      background: linear-gradient(135deg, #FF6B00, #ff8c33);
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 11px;
       font-weight: 700;
-      color: #fff;
+      color: #000;
       flex-shrink: 0;
     }
 
@@ -254,54 +392,22 @@
     .step-title {
       font-size: 13px;
       font-weight: 600;
-      color: #000;
+      color: #fff;
       margin-bottom: 2px;
     }
 
     .step-desc {
       font-size: 11px;
-      color: #999;
-      line-height: 1.4;
-    }
-
-    .shortcut {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      margin-top: 4px;
-    }
-
-    .shortcut kbd {
-      background: #eee;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      padding: 2px 6px;
-      font-size: 10px;
-      font-family: monospace;
       color: #666;
+      line-height: 1.4;
     }
 
     /* Optimizer */
     .optimizer-card {
-      background: #fafafa;
-      border: 1px solid #eee;
+      background: #1a1a1a;
+      border: 1px solid #222;
       border-radius: 12px;
       overflow: hidden;
-    }
-
-    .optimizer-header {
-      background: #f5f5f5;
-      padding: 12px 14px;
-      border-bottom: 1px solid #eee;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .optimizer-header span {
-      font-size: 12px;
-      color: #000;
-      font-weight: 600;
     }
 
     .optimizer-body {
@@ -310,11 +416,11 @@
 
     .prompt-input {
       width: 100%;
-      background: #fff;
-      border: 1px solid #ddd;
+      background: #0a0a0a;
+      border: 1px solid #333;
       border-radius: 8px;
       padding: 12px;
-      color: #000;
+      color: #fff;
       font-size: 13px;
       resize: none;
       height: 70px;
@@ -324,12 +430,12 @@
 
     .prompt-input:focus {
       outline: none;
-      border-color: #000;
-      box-shadow: 0 0 0 3px rgba(0,0,0,0.08);
+      border-color: #FF6B00;
+      box-shadow: 0 0 0 3px rgba(255, 107, 0, 0.1);
     }
 
     .prompt-input::placeholder {
-      color: #ccc;
+      color: #555;
     }
 
     .optimizer-actions {
@@ -354,35 +460,39 @@
     }
 
     .btn-primary {
-      background: #000;
-      color: #fff;
+      background: linear-gradient(135deg, #FF6B00, #ff8c33);
+      color: #000;
     }
 
     .btn-primary:hover {
-      background: #333;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(255, 107, 0, 0.3);
     }
 
     .btn-primary:disabled {
       opacity: 0.5;
       cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
     }
 
     .btn-secondary {
-      background: #f0f0f0;
-      color: #666;
+      background: #222;
+      color: #888;
       flex: 0 0 auto;
+      padding: 10px 14px;
     }
 
     .btn-secondary:hover {
-      background: #e5e5e5;
-      color: #000;
+      background: #333;
+      color: #fff;
     }
 
     /* Result */
     .result-card {
       margin-top: 12px;
-      background: #fafafa;
-      border: 1px solid #000;
+      background: #0a0a0a;
+      border: 1px solid #FF6B00;
       border-radius: 10px;
       overflow: hidden;
       display: none;
@@ -399,9 +509,9 @@
     }
 
     .result-header {
-      background: #f5f5f5;
+      background: #1a1a1a;
       padding: 10px 12px;
-      border-bottom: 1px solid #eee;
+      border-bottom: 1px solid #222;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -409,15 +519,15 @@
 
     .result-label {
       font-size: 11px;
-      color: #000;
+      color: #FF6B00;
       font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
 
     .result-savings {
-      background: rgba(0,0,0,0.08);
-      color: #000;
+      background: rgba(255, 107, 0, 0.2);
+      color: #FF6B00;
       padding: 4px 8px;
       border-radius: 20px;
       font-size: 10px;
@@ -431,7 +541,7 @@
     .result-text {
       font-size: 13px;
       line-height: 1.6;
-      color: #333;
+      color: #ccc;
     }
 
     .result-meta {
@@ -439,7 +549,7 @@
       gap: 16px;
       margin-top: 12px;
       padding-top: 10px;
-      border-top: 1px solid #eee;
+      border-top: 1px solid #222;
     }
 
     .result-meta-item {
@@ -447,11 +557,11 @@
       align-items: center;
       gap: 6px;
       font-size: 11px;
-      color: #999;
+      color: #666;
     }
 
     .result-meta-item span {
-      color: #000;
+      color: #FF6B00;
       font-weight: 600;
     }
 
@@ -462,8 +572,8 @@
     }
 
     .history-item {
-      background: #fafafa;
-      border: 1px solid #eee;
+      background: #1a1a1a;
+      border: 1px solid #222;
       border-radius: 10px;
       padding: 12px;
       margin-bottom: 8px;
@@ -471,7 +581,7 @@
     }
 
     .history-item:hover {
-      border-color: #ddd;
+      border-color: #333;
     }
 
     .history-item:last-child {
@@ -490,18 +600,18 @@
       align-items: center;
       gap: 6px;
       font-size: 11px;
-      color: #999;
+      color: #666;
     }
 
     .history-savings {
       font-size: 11px;
-      color: #000;
+      color: #22c55e;
       font-weight: 600;
     }
 
     .history-prompt {
       font-size: 12px;
-      color: #999;
+      color: #666;
       line-height: 1.5;
       display: -webkit-box;
       -webkit-line-clamp: 2;
@@ -511,29 +621,28 @@
 
     .history-optimized {
       font-size: 12px;
-      color: #000;
+      color: #fff;
       line-height: 1.5;
       margin-top: 6px;
       padding-top: 6px;
-      border-top: 1px dashed #ddd;
+      border-top: 1px dashed #333;
     }
 
     .history-empty {
       text-align: center;
       padding: 30px 20px;
-      color: #ccc;
+      color: #444;
     }
 
     .history-empty-icon {
       font-size: 32px;
       margin-bottom: 8px;
-      opacity: 0.5;
     }
 
     /* Footer */
     .footer {
       padding: 16px;
-      background: #fafafa;
+      background: #0a0a0a;
     }
 
     .open-dashboard {
@@ -543,8 +652,8 @@
       gap: 8px;
       width: 100%;
       padding: 12px;
-      background: #fff;
-      border: 1px solid #ddd;
+      background: linear-gradient(135deg, #FF6B00, #ff8c33);
+      border: none;
       border-radius: 10px;
       color: #000;
       font-size: 13px;
@@ -555,7 +664,8 @@
     }
 
     .open-dashboard:hover {
-      border-color: #000;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(255, 107, 0, 0.3);
     }
 
     /* Scrollbar */
@@ -568,7 +678,7 @@
     }
 
     ::-webkit-scrollbar-thumb {
-      background: #ddd;
+      background: #333;
       border-radius: 2px;
     }
 
@@ -576,14 +686,27 @@
     .spinner {
       width: 16px;
       height: 16px;
-      border: 2px solid #eee;
-      border-top-color: #000;
+      border: 2px solid #333;
+      border-top-color: #FF6B00;
       border-radius: 50%;
       animation: spin 0.8s linear infinite;
     }
 
     @keyframes spin {
       to { transform: rotate(360deg); }
+    }
+
+    /* Synced indicator */
+    .synced-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 8px;
+      background: rgba(34, 197, 94, 0.2);
+      color: #22c55e;
+      border-radius: 20px;
+      font-size: 10px;
+      font-weight: 600;
     }
   </style>
 </head>
@@ -593,68 +716,60 @@
       <div class="logo">TS</div>
       <div class="title-area">
         <div class="title">Token<span>Scope</span></div>
-        <div class="subtitle">Prompt Optimizer</div>
+        <div class="subtitle">AI Prompt Optimizer</div>
       </div>
     </div>
   </div>
 
-  <div class="section">
-    <div class="toggle-row">
-      <div class="toggle-info">
-        <div class="toggle-label">Auto Popup</div>
-        <div class="toggle-desc">Show suggestions while typing</div>
+  <div class="auth-section">
+    <div class="auth-card">
+      <div class="auth-header">
+        <div class="auth-icon">🔐</div>
+        <div class="auth-info">
+          <h3>Sync with Dashboard</h3>
+          <p>Connect to see your stats across all devices</p>
+        </div>
       </div>
-      <label class="toggle-switch">
-        <input type="checkbox" id="auto-toggle" checked>
-        <span class="toggle-slider"></span>
-      </label>
+      <div class="auth-status">
+        <div class="auth-status-info">
+          <div class="status-dot" id="auth-dot"></div>
+          <span class="status-text" id="auth-status">Not signed in</span>
+        </div>
+        <span class="user-email" id="user-email"></span>
+      </div>
+      <button class="auth-btn sign-in" id="auth-btn">
+        <span>🔑</span>
+        <span id="auth-btn-text">Sign In</span>
+      </button>
     </div>
+  </div>
+
+  <div class="toggle-row">
+    <div class="toggle-info">
+      <div class="toggle-label">Auto Popup</div>
+      <div class="toggle-desc">Show suggestions while typing</div>
+    </div>
+    <label class="toggle-switch">
+      <input type="checkbox" id="auto-toggle" checked>
+      <span class="toggle-slider"></span>
+    </label>
   </div>
 
   <div class="stats-grid">
     <div class="stat-card">
-      <div class="stat-icon">P</div>
+      <div class="stat-icon">📝</div>
       <div class="stat-value" id="total-prompts">0</div>
       <div class="stat-label">Prompts</div>
     </div>
     <div class="stat-card">
-      <div class="stat-icon">T</div>
+      <div class="stat-icon">✨</div>
       <div class="stat-value" id="saved-tokens">0</div>
       <div class="stat-label">Tokens Saved</div>
     </div>
     <div class="stat-card">
-      <div class="stat-icon">$</div>
+      <div class="stat-icon">💰</div>
       <div class="stat-value" id="saved-cost">$0</div>
       <div class="stat-label">Cost Saved</div>
-    </div>
-  </div>
-
-  <div class="section">
-    <div class="section-header">
-      <div class="section-title">How It Works</div>
-    </div>
-    <div class="how-it-works">
-      <div class="step">
-        <div class="step-number">1</div>
-        <div class="step-content">
-          <div class="step-title">Type anywhere</div>
-          <div class="step-desc">Type your prompt in any text field</div>
-        </div>
-      </div>
-      <div class="step">
-        <div class="step-number">2</div>
-        <div class="step-content">
-          <div class="step-title">AI optimizes</div>
-          <div class="step-desc">We analyze and improve your prompt</div>
-        </div>
-      </div>
-      <div class="step">
-        <div class="step-number">3</div>
-        <div class="step-content">
-          <div class="step-title">Press Tab</div>
-          <div class="step-desc">Accept the optimized version</div>
-        </div>
-      </div>
     </div>
   </div>
 
@@ -711,9 +826,10 @@
   </div>
 
   <div class="footer">
-    <a href="http://localhost:3000/dashboard" target="_blank" class="open-dashboard" id="open-dashboard">
-      <span>📊</span> Open Dashboard
-    </a>
+    <button class="open-dashboard" id="open-dashboard">
+      <span>📊</span>
+      <span id="dashboard-btn-text">Open Dashboard</span>
+    </button>
   </div>
 
   <script src="popup.js"></script>

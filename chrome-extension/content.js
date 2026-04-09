@@ -310,6 +310,13 @@
 
   async function getUserId() {
     try {
+      // First try to get authenticated user
+      const response = await chrome.runtime.sendMessage({ type: 'GET_AUTH_STATUS' });
+      if (response.is_authenticated && response.user_id) {
+        return response.user_id;
+      }
+
+      // Fallback to local storage
       const result = await chrome.storage.local.get('user_id');
       return result.user_id || 'anonymous';
     } catch {
@@ -321,19 +328,49 @@
     try {
       if (!original || !optimized) return;
 
-      const result = await chrome.storage.local.get(['history', 'stats']);
-      const history = result.history || [];
-      const stats = result.stats || { total_prompts: 0, total_saved_tokens: 0, total_saved_cost: 0 };
-
       const originalTokens = (original.split(' ').filter(w => w.length > 0)).length;
       const optimizedTokens = (optimized.split(' ').filter(w => w.length > 0)).length;
       const savedTokens = Math.max(0, originalTokens - optimizedTokens);
+
+      // Try to save to backend first
+      const authStatus = await chrome.runtime.sendMessage({ type: 'GET_AUTH_STATUS' });
+
+      if (authStatus.is_authenticated) {
+        try {
+          await fetch(`${CONFIG.apiBase}/extension/save-optimization`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${authStatus.auth_token}`
+            },
+            body: JSON.stringify({
+              user_id: authStatus.user_id,
+              original_prompt: original,
+              optimized_prompt: optimized,
+              original_tokens: originalTokens,
+              optimized_tokens: optimizedTokens,
+              tokens_saved: savedTokens,
+              cost_saved: 0,
+              target_model: 'chatgpt',
+              source: 'extension'
+            })
+          });
+        } catch (e) {
+          console.log('[TokenScope] Failed to sync to backend, saving locally');
+        }
+      }
+
+      // Always save to local storage as backup
+      const result = await chrome.storage.local.get(['history', 'stats']);
+      const history = result.history || [];
+      const stats = result.stats || { total_prompts: 0, total_saved_tokens: 0, total_saved_cost: 0 };
 
       history.unshift({
         original: String(original),
         optimized: String(optimized),
         saved_tokens: savedTokens,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        source: authStatus.is_authenticated ? 'synced' : 'local'
       });
 
       const trimmed = history.slice(0, 100);

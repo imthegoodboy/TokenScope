@@ -87,6 +87,37 @@ export const api = {
     enhance: (prompt: string, targetModel?: string) =>
       request<any>('/enhance', { method: 'POST', body: { prompt, target_model: targetModel } }),
   },
+
+  extension: {
+    saveOptimization: (data: {
+      user_id: string;
+      original_prompt: string;
+      optimized_prompt: string;
+      original_tokens: number;
+      optimized_tokens: number;
+      tokens_saved: number;
+      cost_saved: number;
+      target_model: string;
+      source: string;
+    }) => request<any>('/extension/save-optimization', { method: 'POST', body: data }),
+
+    getStats: (userId: string) => request<any>(`/extension/stats/${userId}`),
+    getHistory: (userId: string, limit?: number) =>
+      request<any>(`/extension/history/${userId}?limit=${limit || 50}`),
+    getDashboardStats: (userId: string) => request<any>(`/extension/dashboard-stats/${userId}`),
+  },
+
+  scores: {
+    getUserScore: (userId: string) => request<any>(`/scores/${userId}`),
+    getLeaderboard: (limit?: number) => request<any>(`/scores/leaderboard?limit=${limit || 20}`),
+    getGraphData: (userId: string, days?: number) =>
+      request<any>(`/stats/graph/${userId}?days=${days || 30}`),
+    getMistakes: (userId: string) => request<any>(`/stats/mistakes/${userId}`),
+    getImprovements: (userId: string) => request<any>(`/stats/improvements/${userId}`),
+    getRole: (userId: string) => request<any>(`/get-role?user_id=${userId}`),
+    setRole: (userId: string, role: string) =>
+      request<any>('/set-role', { method: 'POST', body: { user_id: userId, role } }),
+  },
 };
 
 export default api;

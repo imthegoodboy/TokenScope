@@ -83,3 +83,93 @@ body {
 .pulse-glow {
   animation: pulse-glow 2s ease-in-out infinite;
 }
+
+/* Home footer wordmark: gradients stay in light/orange range so clipped text is never empty */
+@keyframes footer-token-sweep {
+  0% {
+    background-position: 50% 0%;
+  }
+  100% {
+    background-position: 50% 100%;
+  }
+}
+
+@keyframes footer-scope-sweep {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 100% 50%;
+  }
+}
+
+.footer-word-token {
+  background-image: linear-gradient(
+    180deg,
+    #ffffff 0%,
+    #d4d4d4 38%,
+    #ffffff 55%,
+    #a3a3a3 100%
+  );
+  background-size: 100% 220%;
+  background-repeat: no-repeat;
+  background-position: 50% 40%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+
+.footer-word-token.footer-word-shine--play {
+  animation: footer-token-sweep 2.6s cubic-bezier(0.42, 0.02, 0.2, 1) 1 forwards;
+}
+
+.footer-word-scope {
+  background-image: linear-gradient(
+    100deg,
+    #ff8533 0%,
+    #ff6b00 28%,
+    #ffb366 52%,
+    #ff9a4d 72%,
+    #ff6b00 100%
+  );
+  background-size: 240% 100%;
+  background-repeat: no-repeat;
+  background-position: 30% 50%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+
+.footer-word-scope.footer-word-shine--play {
+  animation: footer-scope-sweep 2.6s cubic-bezier(0.42, 0.02, 0.2, 1) 0.12s 1 forwards;
+}
+
+.footer-crt-scanlines {
+  background: repeating-linear-gradient(
+    0deg,
+    transparent 0px,
+    transparent 2px,
+    rgba(0, 0, 0, 0.17) 2px,
+    rgba(0, 0, 0, 0.17) 3px
+  );
+  opacity: 0.35;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .footer-word-token,
+  .footer-word-token.footer-word-shine--play,
+  .footer-word-scope,
+  .footer-word-scope.footer-word-shine--play {
+    animation: none !important;
+  }
+
+  .footer-word-token {
+    background-position: 50% 45%;
+  }
+
+  .footer-word-scope {
+    background-position: 45% 50%;
+  }
+}

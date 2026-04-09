@@ -10,7 +10,7 @@ export default function SignUpPage() {
         <h1 className="text-2xl font-bold text-white">Create Account</h1>
         <p className="text-gray-400 mt-2">Get started with TokenScope today</p>
       </div>
-      <SignUp />
+      <SignUp fallbackRedirectUrl="/role-selection" signInFallbackRedirectUrl="/role-selection" />
     </div>
   );
 }

@@ -4,7 +4,172 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
-import { ArrowRight, Zap, Shield, TrendingUp, Code, BarChart3, Sparkles, Star, ChevronDown, Play, Check } from 'lucide-react';
+import { ArrowRight, Zap, Shield, TrendingUp, Code, BarChart3, Sparkles, Star, ChevronDown, Play } from 'lucide-react';
+
+type FooterParticle = {
+  x: number;
+  y: number;
+  r: number;
+  vy: number;
+  vx: number;
+  a: number;
+  pulse: number;
+};
+
+function FooterParticles() {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const foot = canvas.parentElement;
+    if (!foot) return;
+
+    const particles: FooterParticle[] = [];
+    let raf = 0;
+    let reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const onReduce = () => {
+      reduceMotion = mq.matches;
+    };
+    mq.addEventListener('change', onReduce);
+
+    function fillParticles(w: number, h: number) {
+      particles.length = 0;
+      const target = Math.floor((w * h) / 16000);
+      const n = Math.min(100, Math.max(30, target));
+      for (let i = 0; i < n; i++) {
+        particles.push({
+          x: Math.random() * w,
+          y: Math.random() * h,
+          r: Math.random() * 1.6 + 0.35,
+          vy: -0.12 - Math.random() * 0.5,
+          vx: (Math.random() - 0.5) * 0.4,
+          a: 0.12 + Math.random() * 0.38,
+          pulse: Math.random() * Math.PI * 2,
+        });
+      }
+    }
+
+    function resize() {
+      const dpr = Math.min(window.devicePixelRatio ?? 1, 2);
+      const w = foot.clientWidth;
+      const h = foot.clientHeight;
+      if (w < 2 || h < 2) return;
+      canvas.width = Math.floor(w * dpr);
+      canvas.height = Math.floor(h * dpr);
+      canvas.style.width = `${w}px`;
+      canvas.style.height = `${h}px`;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      fillParticles(w, h);
+    }
+
+    resize();
+    const ro = new ResizeObserver(resize);
+    ro.observe(foot);
+
+    const tick = () => {
+      const w = foot.clientWidth;
+      const h = foot.clientHeight;
+      ctx.clearRect(0, 0, w, h);
+      if (!reduceMotion) {
+        for (const p of particles) {
+          p.y += p.vy;
+          p.x += p.vx + Math.sin(p.pulse) * 0.12;
+          p.pulse += 0.018;
+          if (p.y < -12) {
+            p.y = h + 12;
+            p.x = Math.random() * w;
+          }
+          if (p.x < -8) p.x = w + 8;
+          if (p.x > w + 8) p.x = -8;
+          const tw = 0.55 + 0.45 * Math.sin(p.pulse * 1.2);
+          const alpha = p.a * tw;
+          ctx.beginPath();
+          ctx.fillStyle = `rgba(255, 107, 0, ${alpha})`;
+          ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+          ctx.fill();
+          if (p.r > 0.75) {
+            ctx.beginPath();
+            ctx.fillStyle = `rgba(255, 255, 255, ${alpha * 0.35})`;
+            ctx.arc(p.x, p.y, p.r * 0.4, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+      }
+      raf = requestAnimationFrame(tick);
+    };
+
+    raf = requestAnimationFrame(tick);
+
+    return () => {
+      mq.removeEventListener('change', onReduce);
+      ro.disconnect();
+      cancelAnimationFrame(raf);
+    };
+  }, []);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      className="pointer-events-none absolute inset-0 z-[1] h-full w-full opacity-70"
+      aria-hidden
+    />
+  );
+}
+
+function FooterBrandHeading() {
+  const ref = useRef<HTMLHeadingElement>(null);
+  const [play, setPlay] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+
+    if (typeof IntersectionObserver === 'undefined') {
+      setPlay(true);
+      return;
+    }
+
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setPlay(true);
+          io.disconnect();
+        }
+      },
+      { threshold: 0.18, rootMargin: '0px 0px -5% 0px' }
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
+  const playClass = play ? 'footer-word-shine--play' : '';
+
+  const sizeClass = 'text-[clamp(3rem,12vw,9.5rem)] sm:text-[clamp(3.25rem,11vw,10rem)]';
+
+  return (
+    <h2
+      ref={ref}
+      className="relative text-center font-black tracking-[-0.04em]"
+    >
+      <span
+        className={`footer-word-token relative block ${sizeClass} pb-[0.12em] pt-[0.1em] leading-[1.05] ${playClass}`}
+      >
+        Token
+      </span>
+      <span
+        className={`footer-word-scope relative -mt-[0.02em] block ${sizeClass} pb-[0.18em] pt-[0.06em] leading-[1.05] sm:-mt-[0.03em] ${playClass}`}
+      >
+        Scope
+      </span>
+    </h2>
+  );
+}
 
 function LandingContent() {
   const router = useRouter();
@@ -54,6 +219,30 @@ function LandingContent() {
       icon: <Shield className="w-6 h-6" />,
       title: 'Secure Storage',
       description: 'Your API keys are stored securely and never exposed',
+    },
+  ];
+
+  const newFeatures = [
+    {
+      icon: <Sparkles className="w-6 h-6" />,
+      title: 'Attention Score System',
+      description: 'Track your prompt optimization quality with a 0-100 score. Get insights on mistakes and improvements.',
+      badge: 'NEW',
+      color: 'orange',
+    },
+    {
+      icon: <BarChart3 className="w-6 h-6" />,
+      title: 'Browser Extension',
+      description: 'Optimize prompts directly in ChatGPT, Claude, and Gemini with real-time suggestions.',
+      badge: 'POPULAR',
+      color: 'blue',
+    },
+    {
+      icon: <TrendingUp className="w-6 h-6" />,
+      title: 'Performance Tiers',
+      description: 'Climb from Beginner to Master tier based on your prompt optimization consistency.',
+      badge: 'EXCLUSIVE',
+      color: 'purple',
     },
   ];
 
@@ -280,6 +469,50 @@ function LandingContent() {
         </div>
       </section>
 
+      {/* New Features Section */}
+      <section className="py-24 relative">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="text-center mb-16">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-orange/10 border border-orange/20 rounded-full mb-6">
+              <Sparkles className="w-4 h-4 text-orange" />
+              <span className="text-sm text-orange font-medium">New Features</span>
+            </div>
+            <h2 className="text-4xl font-bold mb-4">
+              Level Up Your <span className="text-orange">Prompt Game</span>
+            </h2>
+            <p className="text-gray-400 max-w-xl mx-auto">
+              Our new attention score system and browser extension help you write better prompts and save tokens
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-6">
+            {newFeatures.map((feature, i) => (
+              <div
+                key={i}
+                className="group relative p-6 bg-gradient-to-br from-gray-900 to-gray-900/50 border border-gray-800 rounded-2xl hover:border-orange/50 transition-all hover:scale-[1.02]"
+              >
+                <div className={`absolute top-4 right-4 px-2 py-1 rounded-full text-xs font-medium ${
+                  feature.color === 'orange' ? 'bg-orange/20 text-orange' :
+                  feature.color === 'blue' ? 'bg-blue-500/20 text-blue-400' :
+                  'bg-purple-500/20 text-purple-400'
+                }`}>
+                  {feature.badge}
+                </div>
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-4 ${
+                  feature.color === 'orange' ? 'bg-orange/10 text-orange group-hover:bg-orange group-hover:text-black' :
+                  feature.color === 'blue' ? 'bg-blue-500/10 text-blue-400 group-hover:bg-blue-500 group-hover:text-black' :
+                  'bg-purple-500/10 text-purple-400 group-hover:bg-purple-500 group-hover:text-black'
+                } transition-colors`}>
+                  {feature.icon}
+                </div>
+                <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
+                <p className="text-gray-400">{feature.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Testimonials */}
       <section className="py-32">
         <div className="max-w-7xl mx-auto px-4">
@@ -321,40 +554,65 @@ function LandingContent() {
             <br />
             <span className="text-orange">LLM Costs?</span>
           </h2>
-          <p className="text-xl text-gray-400 mb-10 max-w-2xl mx-auto">
-            Join thousands of developers using TokenScope to reduce their AI costs
+          <p className="text-xl text-gray-400 mb-6 max-w-2xl mx-auto">
+            Whether you're a developer looking for API analytics or a user wanting better prompts, TokenScope has you covered.
           </p>
-          <Link
-            href="/sign-up"
-            className="inline-flex items-center gap-2 px-8 py-4 bg-black hover:bg-gray-900 text-white font-semibold rounded-xl transition-colors"
-          >
-            Get Started Free
-            <ArrowRight className="w-5 h-5" />
-          </Link>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
+            <Link
+              href="/sign-up"
+              className="inline-flex items-center gap-2 px-8 py-4 bg-orange hover:bg-orange-light text-black font-semibold rounded-xl transition-colors"
+            >
+              Get Started Free
+              <ArrowRight className="w-5 h-5" />
+            </Link>
+            <Link
+              href="/docs"
+              className="inline-flex items-center gap-2 px-8 py-4 border border-gray-700 hover:border-gray-500 text-gray-300 font-semibold rounded-xl transition-colors"
+            >
+              Learn More
+              <Play className="w-5 h-5" />
+            </Link>
+          </div>
+          <div className="flex items-center justify-center gap-6 text-sm text-gray-500">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-green-500" />
+              Browser Extension
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-blue-500" />
+              Attention Score
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-purple-500" />
+              Performance Tiers
+            </div>
+          </div>
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="py-12 border-t border-gray-800">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-gradient-to-br from-orange to-orange-light rounded-lg flex items-center justify-center">
-                <span className="text-black font-bold text-sm">TS</span>
-              </div>
-              <span className="font-bold">
-                Token<span className="text-orange">Scope</span>
-              </span>
-            </div>
-            <div className="flex items-center gap-6 text-gray-500 text-sm">
-              <Link href="/docs" className="hover:text-white transition-colors">Documentation</Link>
-              <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>
-              <Link href="/terms" className="hover:text-white transition-colors">Terms</Link>
-            </div>
-            <div className="text-gray-500 text-sm">
-              2026 TokenScope. All rights reserved.
-            </div>
-          </div>
+      {/* Footer — particles, scanlines, Token / Scope wordmark + one-time shine */}
+      <footer className="relative isolate w-full bg-[#050505]">
+        <div
+          className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(ellipse_120%_80%_at_50%_100%,rgba(255,107,0,0.16),transparent_55%)]"
+          aria-hidden
+        />
+        <FooterParticles />
+        <div
+          className="footer-crt-scanlines pointer-events-none absolute inset-0 z-[2]"
+          aria-hidden
+        />
+        <div
+          className="pointer-events-none absolute inset-x-0 bottom-0 z-[3] h-px bg-gradient-to-r from-transparent via-orange/40 to-transparent"
+          aria-hidden
+        />
+        <div className="relative z-20 mx-auto flex w-full max-w-[100vw] flex-col items-center justify-center px-4 pb-20 pt-12 sm:px-6 sm:pb-24 sm:pt-16 md:pb-28 md:pt-20 lg:pb-32 lg:pt-24">
+          <Link
+            href="/"
+            className="group relative z-10 inline-block transition-transform duration-500 ease-out will-change-transform hover:scale-[1.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#050505]"
+            aria-label="TokenScope home"
+          >
+            <FooterBrandHeading />
+          </Link>
         </div>
       </footer>
     </div>

@@ -8,12 +8,13 @@ import { LayoutDashboard, FileText, Sparkles, Menu, X } from 'lucide-react';
 import { useState } from 'react';
 import { UserButton } from '@clerk/nextjs';
 
-function DashboardNav() {
+function ExtensionNav() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const navItems = [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/optimizer', label: 'Optimizer', icon: Sparkles },
+    { href: '/extension-dashboard', label: 'Extension', icon: LayoutDashboard },
     { href: '/docs', label: 'Docs', icon: FileText },
   ];
 
@@ -72,7 +73,7 @@ function DashboardNav() {
   );
 }
 
-export default function DashboardLayout({
+export default function ExtensionDashboardLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -82,7 +83,7 @@ export default function DashboardLayout({
 
   useEffect(() => {
     if (isLoaded && !isSignedIn) {
-      router.push('/sign-in');
+      router.push('/sign-in?redirect=extension-dashboard');
     }
   }, [isLoaded, isSignedIn, router]);
 
@@ -99,30 +100,11 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-black text-white">
-      <DashboardNav />
-      <main className="flex-1 pt-16">{children}</main>
-      <footer className="mt-auto border-t border-gray-600 bg-neutral-950 px-4 py-8">
-        <div className="mx-auto flex max-w-7xl flex-col items-center justify-center gap-4 text-center sm:flex-row sm:flex-wrap sm:gap-x-8 sm:gap-y-2 sm:text-left">
-          <Link href="/dashboard" className="text-lg font-bold text-white hover:opacity-90">
-            Token<span className="text-orange">Scope</span>
-          </Link>
-          <nav className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-gray-300">
-            <Link href="/docs" className="hover:text-white">
-              Documentation
-            </Link>
-            <Link href="/optimizer" className="hover:text-white">
-              Optimizer
-            </Link>
-            <Link href="/" className="hover:text-white">
-              Home
-            </Link>
-          </nav>
-          <p className="w-full text-center text-sm text-gray-500 sm:w-auto sm:text-left">
-            2026 TokenScope. All rights reserved.
-          </p>
-        </div>
-      </footer>
-    </div>
+    <>
+      <ExtensionNav />
+      <main className="min-h-screen pt-16 bg-black">
+        {children}
+      </main>
+    </>
   );
 }
