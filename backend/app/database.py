@@ -61,6 +61,22 @@ class Usage(Base):
     cost = Column(Float, default=0.0)
     request_count = Column(Integer, default=0)
 
+class PromptOptimization(Base):
+    __tablename__ = "prompt_optimizations"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(String(255), nullable=False, index=True)
+    original_prompt = Column(Text, nullable=False)
+    optimized_prompt = Column(Text, nullable=False)
+    original_tokens = Column(Integer, default=0)
+    optimized_tokens = Column(Integer, default=0)
+    tokens_saved = Column(Integer, default=0)
+    cost_saved = Column(Float, default=0.0)
+    target_model = Column(String(100), nullable=True)
+    source = Column(String(50), default="extension")  # extension, dashboard, api
+    accepted = Column(Boolean, default=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
 async def init_db():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
