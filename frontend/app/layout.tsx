@@ -14,9 +14,9 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "TokenScope — AI Token Analytics",
+  title: "TokenScope — AI API Gateway & Analytics",
   description:
-    "Track, analyze, and optimize your AI token usage across OpenAI, Anthropic, and Google Gemini.",
+    "One endpoint for OpenAI, Anthropic & Gemini. Track tokens, auto-enhance prompts, and optimize AI spend.",
   icons: {
     icon: "/icon.svg",
   },

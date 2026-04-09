@@ -95,6 +95,7 @@ const config: Config = {
         "slide-up": "slideUp 0.35s ease-out",
         "slide-in-right": "slideInRight 0.3s ease-out",
         "pulse-jaffa": "pulseJaffa 2s ease-in-out infinite",
+        "float": "float 3s ease-in-out infinite",
       },
       keyframes: {
         fadeIn: {
@@ -112,6 +113,10 @@ const config: Config = {
         pulseJaffa: {
           "0%, 100%": { boxShadow: "0 0 0 0 rgba(240,127,60,0.4)" },
           "50%": { boxShadow: "0 0 0 8px rgba(240,127,60,0)" },
+        },
+        float: {
+          "0%, 100%": { transform: "translateY(0px)" },
+          "50%": { transform: "translateY(-8px)" },
         },
       },
     },
