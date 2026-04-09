@@ -23,21 +23,44 @@
 
   // ============ INIT ============
   function init() {
-    createOverlay();
-    setupEventListeners();
-    observeNewInputs();
-    console.log('[TokenScope] Initialized - Ready to optimize!');
+    try {
+      console.log('[TokenScope] Initializing...');
+      createOverlay();
+      setupEventListeners();
+      observeNewInputs();
+      console.log('[TokenScope] Initialized - Ready to optimize!');
+    } catch (error) {
+      console.error('[TokenScope] Init error:', error);
+    }
   }
 
   // ============ CREATE OVERLAY ============
   function createOverlay() {
+    console.log('[TokenScope] Creating overlay...');
     suggestionOverlay = document.createElement('div');
     suggestionOverlay.id = 'tokenscope-overlay';
     suggestionOverlay.innerHTML = getOverlayHTML();
     document.body.appendChild(suggestionOverlay);
+    console.log('[TokenScope] Overlay created and added to DOM');
+  }
 
-    // Event listeners for buttons
-    suggestionOverlay.addEventListener('click', handleOverlayClick);
+  // ============ EVENT LISTENERS ============
+  function setupEventListeners() {
+    try {
+      console.log('[TokenScope] Setting up event listeners...');
+      // Listen for all input events on the page
+      document.addEventListener('input', handleInput, true);
+      document.addEventListener('keydown', handleKeyDown, true);
+
+      // Listen for focus on inputs
+      document.addEventListener('focusin', handleFocus, true);
+
+      // Listen for clicks on overlay
+      suggestionOverlay.addEventListener('click', handleOverlayClick);
+      console.log('[TokenScope] Event listeners set up successfully');
+    } catch (error) {
+      console.error('[TokenScope] Event listener error:', error);
+    }
   }
 
   function getOverlayHTML() {
@@ -131,19 +154,12 @@
           margin-bottom: 14px;
         }
 
-        .ts-section:last-child {
-          margin-bottom: 0;
-        }
-
         .ts-label {
           font-size: 11px;
           text-transform: uppercase;
           color: #666;
           letter-spacing: 0.5px;
           margin-bottom: 6px;
-          display: flex;
-          align-items: center;
-          gap: 6px;
         }
 
         .ts-text {
@@ -153,9 +169,10 @@
           font-size: 13px;
           line-height: 1.5;
           color: #888;
-          max-height: 60px;
+          max-height: 80px;
           overflow: hidden;
           position: relative;
+          word-wrap: break-word;
         }
 
         .ts-text::after {
@@ -164,7 +181,7 @@
           bottom: 0;
           left: 0;
           right: 0;
-          height: 20px;
+          height: 25px;
           background: linear-gradient(transparent, #0a0a0a);
         }
 
@@ -309,7 +326,7 @@
         <div class="ts-header">
           <div class="ts-header-left">
             <div class="ts-logo">TS</div>
-            <span class="ts-title">✨ TokenScope</span>
+            <span class="ts-title">TokenScope</span>
           </div>
           <button class="ts-close" id="ts-close">✕</button>
         </div>
@@ -330,68 +347,110 @@
 
   // ============ EVENT LISTENERS ============
   function setupEventListeners() {
-    // Listen for all input events on the page
-    document.addEventListener('input', handleInput, true);
-    document.addEventListener('keydown', handleKeyDown, true);
+    try {
+      // Listen for all input events on the page
+      document.addEventListener('input', handleInput, true);
+      document.addEventListener('keydown', handleKeyDown, true);
 
-    // Listen for focus on inputs
-    document.addEventListener('focusin', handleFocus, true);
+      // Listen for focus on inputs
+      document.addEventListener('focusin', handleFocus, true);
+
+      // Listen for clicks on overlay
+      suggestionOverlay.addEventListener('click', handleOverlayClick);
+    } catch (error) {
+      console.error('[TokenScope] Event listener error:', error);
+    }
   }
 
   function handleInput(e) {
-    const target = e.target;
+    try {
+      const target = e.target;
+      if (!target) return;
 
-    // Only handle text inputs
-    if (!isTextInput(target)) return;
+      console.log('[TokenScope] Input event fired on:', target.tagName);
 
-    currentInput = target;
+      // Only handle text inputs
+      if (!isTextInput(target)) return;
 
-    // Clear previous timer
-    clearTimeout(debounceTimer);
+      console.log('[TokenScope] Is text input, processing...');
 
-    const text = target.value;
+      currentInput = target;
 
-    // Don't optimize if too short
-    if (text.length < CONFIG.minChars) {
-      hideOverlay();
-      return;
+      // Clear previous timer
+      clearTimeout(debounceTimer);
+
+      // Get text value safely
+      let text = '';
+      if (target.value !== undefined && target.value !== null) {
+        text = String(target.value);
+      } else if (target.textContent !== undefined) {
+        text = target.textContent || '';
+      }
+
+      console.log('[TokenScope] Text length:', text.length);
+
+      if (!text || text.length === 0) {
+        console.log('[TokenScope] Empty text, hiding overlay');
+        hideOverlay();
+        return;
+      }
+
+      // Don't optimize if too short
+      if (text.length < CONFIG.minChars) {
+        console.log('[TokenScope] Text too short:', text.length, '<', CONFIG.minChars);
+        hideOverlay();
+        return;
+      }
+
+      // Start new timer - optimize after 2 seconds of NO typing
+      console.log('[TokenScope] Starting debounce timer...');
+      debounceTimer = setTimeout(() => {
+        console.log('[TokenScope] Debounce complete, calling optimizePrompt');
+        optimizePrompt(text);
+      }, CONFIG.debounceMs);
+    } catch (error) {
+      console.error('[TokenScope] Input handle error:', error);
     }
-
-    // Start new timer - optimize after 2 seconds of NO typing
-    debounceTimer = setTimeout(() => {
-      console.log('[TokenScope] Typing stopped, optimizing...');
-      optimizePrompt(text);
-    }, CONFIG.debounceMs);
   }
 
   function handleKeyDown(e) {
-    // Tab to accept
-    if (e.key === 'Tab' && isVisible) {
-      e.preventDefault();
-      acceptSuggestion();
-      return;
-    }
+    try {
+      if (!isVisible) return;
 
-    // Escape to dismiss
-    if (e.key === 'Escape' && isVisible) {
-      e.preventDefault();
-      hideOverlay();
-      return;
-    }
-
-    // Ctrl+Shift+O to manually trigger
-    if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'o') {
-      e.preventDefault();
-      if (currentInput && currentInput.value.length >= CONFIG.minChars) {
-        optimizePrompt(currentInput.value);
+      // Tab to accept
+      if (e.key === 'Tab') {
+        e.preventDefault();
+        acceptSuggestion();
+        return;
       }
-      return;
+
+      // Escape to dismiss
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        hideOverlay();
+        return;
+      }
+
+      // Ctrl+Shift+O to manually trigger
+      if (e.ctrlKey && e.shiftKey && e.key && e.key.toLowerCase() === 'o') {
+        e.preventDefault();
+        if (currentInput && currentInput.value && currentInput.value.length >= CONFIG.minChars) {
+          optimizePrompt(currentInput.value);
+        }
+        return;
+      }
+    } catch (error) {
+      console.error('[TokenScope] Keydown error:', error);
     }
   }
 
   function handleFocus(e) {
-    if (isTextInput(e.target)) {
-      currentInput = e.target;
+    try {
+      if (e.target && isTextInput(e.target)) {
+        currentInput = e.target;
+      }
+    } catch (error) {
+      console.error('[TokenScope] Focus error:', error);
     }
   }
 
@@ -399,50 +458,40 @@
   function isTextInput(element) {
     if (!element) return false;
 
-    const tagName = element.tagName?.toUpperCase();
-    if (tagName === 'TEXTAREA') return true;
-    if (tagName === 'INPUT') {
-      const type = element.type?.toLowerCase();
-      return !type || type === 'text' || type === 'search' || type === 'url' || type === 'email' || type === 'password';
-    }
-    // contenteditable
-    if (element.isContentEditable || element.getAttribute?.('contenteditable') === 'true') return true;
-
-    // Check for common AI chatbot selectors
-    const className = element.className || '';
-    const id = element.id || '';
-
-    const aiSelectors = [
-      'prompt-input',
-      'text-input',
-      'chat-input',
-      'message-input',
-      'composer',
-      'ProseMirror',
-      'notion',
-      'tiptap'
-    ];
-
-    for (const selector of aiSelectors) {
-      if (className.includes(selector) || id.includes(selector)) {
-        return true;
+    try {
+      const tagName = (element.tagName || '').toUpperCase();
+      if (tagName === 'TEXTAREA') return true;
+      if (tagName === 'INPUT') {
+        const type = (element.type || '').toLowerCase();
+        return !type || type === 'text' || type === 'search' || type === 'url' || type === 'email' || type === 'password';
       }
-    }
 
-    return false;
+      // contenteditable
+      const isEditable = element.isContentEditable || element.getAttribute?.('contenteditable') === 'true';
+      if (isEditable) return true;
+
+      return false;
+    } catch (error) {
+      return false;
+    }
   }
 
   // ============ OPTIMIZATION ============
   async function optimizePrompt(text) {
+    console.log('[TokenScope] optimizePrompt called with text length:', text ? text.length : 0);
+    if (!text || text.length < CONFIG.minChars) return;
     if (isOptimizing || text === lastOptimized) return;
+
     isOptimizing = true;
     optimizedText = '';
     currentText = text;
 
+    console.log('[TokenScope] Showing loading state...');
     // Show loading state
     showLoading();
 
     try {
+      console.log('[TokenScope] Sending API request...');
       const response = await fetch(`${CONFIG.apiBase}/analyze`, {
         method: 'POST',
         headers: {
@@ -455,18 +504,29 @@
         })
       });
 
+      console.log('[TokenScope] Response status:', response.status);
+
       if (!response.ok) {
         throw new Error('Optimization failed');
       }
 
       const data = await response.json();
-      optimizedText = data.suggestion?.text || text;
-      lastOptimized = text;
+      console.log('[TokenScope] API response received:', JSON.stringify(data).substring(0, 200));
 
+      // Handle response safely
+      if (data && data.suggestion && data.suggestion.text) {
+        optimizedText = data.suggestion.text;
+      } else {
+        console.log('[TokenScope] No suggestion in response, using original');
+        optimizedText = text; // Fallback to original
+      }
+
+      lastOptimized = text;
+      console.log('[TokenScope] Calling showSuggestion...');
       showSuggestion(data);
 
     } catch (error) {
-      console.error('[TokenScope] Error:', error);
+      console.error('[TokenScope] Optimization error:', error);
       hideOverlay();
     } finally {
       isOptimizing = false;
@@ -475,199 +535,263 @@
 
   // ============ UI ============
   function showLoading() {
-    const body = suggestionOverlay.querySelector('#ts-body');
-    const hint = suggestionOverlay.querySelector('#ts-hint');
-
-    body.innerHTML = `
-      <div class="ts-loading">
-        <div class="ts-spinner"></div>
-        <span>Analyzing prompt...</span>
-      </div>
-    `;
-
-    positionOverlay();
-    showOverlay();
+    try {
+      const body = suggestionOverlay.querySelector('#ts-body');
+      if (body) {
+        body.innerHTML = `
+          <div class="ts-loading">
+            <div class="ts-spinner"></div>
+            <span>Analyzing prompt...</span>
+          </div>
+        `;
+      }
+      positionOverlay();
+      showOverlay();
+    } catch (error) {
+      console.error('[TokenScope] Show loading error:', error);
+    }
   }
 
   function showSuggestion(data) {
-    const { suggestion, original } = data;
-    const originalTokens = original?.tokens || currentText.split(' ').length;
-    const savedTokens = suggestion?.token_savings || 0;
-    const savingsPercent = originalTokens > 0 ? Math.round((savedTokens / originalTokens) * 100) : 0;
+    try {
+      console.log('[TokenScope] showSuggestion called, data keys:', data ? Object.keys(data) : 'null');
 
-    const body = suggestionOverlay.querySelector('#ts-body');
-    const hint = suggestionOverlay.querySelector('#ts-hint');
+      const body = suggestionOverlay.querySelector('#ts-body');
+      const hint = suggestionOverlay.querySelector('#ts-hint');
+      if (!body) {
+        console.log('[TokenScope] Body element not found!');
+        return;
+      }
+      console.log('[TokenScope] Body element found');
 
-    body.innerHTML = `
-      <div class="ts-section">
-        <div class="ts-label">📝 Original</div>
-        <div class="ts-text">${escapeHtml(truncate(currentText, 150))}</div>
-      </div>
+      // Safe data extraction
+      const suggestion = data?.suggestion || {};
+      const originalTokens = suggestion.token_savings !== undefined
+        ? (currentText.split(' ').length)
+        : (data?.original?.tokens || currentText.split(' ').length);
+      const savedTokens = suggestion.token_savings || 0;
+      const savingsPercent = originalTokens > 0 ? Math.round((savedTokens / originalTokens) * 100) : 0;
 
-      <div class="ts-section">
-        <div class="ts-label">✨ Optimized</div>
-        <div class="ts-text optimized">${escapeHtml(truncate(suggestion.text, 150))}</div>
-      </div>
-
-      <div class="ts-stats">
-        <div class="ts-stat">
-          <span>📝</span>
-          <span class="ts-stat-value orange">-${savedTokens}</span>
-          <span>tokens</span>
+      body.innerHTML = `
+        <div class="ts-section">
+          <div class="ts-label">📝 Original</div>
+          <div class="ts-text">${escapeHtml(truncate(currentText || '', 200))}</div>
         </div>
-        <div class="ts-stat">
-          <span>✨</span>
-          <span class="ts-stat-value green">${savingsPercent}%</span>
-          <span>smaller</span>
-        </div>
-        <div class="ts-stat">
-          <span>💰</span>
-          <span class="ts-stat-value">$${(suggestion.cost_savings || 0).toFixed(6)}</span>
-          <span>saved</span>
-        </div>
-      </div>
 
-      <div class="ts-actions">
-        <button class="ts-btn ts-btn-accept" id="ts-accept">
-          ✓ Accept
-        </button>
-        <button class="ts-btn ts-btn-edit" id="ts-edit">
-          ✏️ Edit
-        </button>
-        <button class="ts-btn ts-btn-dismiss" id="ts-dismiss">
-          ✕
-        </button>
-      </div>
-    `;
+        <div class="ts-section">
+          <div class="ts-label">✨ Optimized</div>
+          <div class="ts-text optimized">${escapeHtml(truncate(optimizedText || currentText || '', 200))}</div>
+        </div>
 
-    positionOverlay();
-    showOverlay();
-    showHint();
+        <div class="ts-stats">
+          <div class="ts-stat">
+            <span>📝</span>
+            <span class="ts-stat-value orange">-${savedTokens}</span>
+            <span>tokens</span>
+          </div>
+          <div class="ts-stat">
+            <span>✨</span>
+            <span class="ts-stat-value green">${savingsPercent}%</span>
+            <span>smaller</span>
+          </div>
+          <div class="ts-stat">
+            <span>💰</span>
+            <span class="ts-stat-value">$${(suggestion.cost_savings || 0).toFixed(6)}</span>
+            <span>saved</span>
+          </div>
+        </div>
+
+        <div class="ts-actions">
+          <button class="ts-btn ts-btn-accept" id="ts-accept">✓ Accept</button>
+          <button class="ts-btn ts-btn-edit" id="ts-edit">✏️ Edit</button>
+          <button class="ts-btn ts-btn-dismiss" id="ts-dismiss">✕</button>
+        </div>
+      `;
+
+      positionOverlay();
+      showOverlay();
+      showHint();
+      console.log('[TokenScope] Overlay shown successfully');
+    } catch (error) {
+      console.error('[TokenScope] Show suggestion error:', error);
+    }
   }
 
   function positionOverlay() {
-    if (!currentInput) return;
+    try {
+      if (!currentInput) {
+        console.log('[TokenScope] positionOverlay: no currentInput');
+        return;
+      }
 
-    const inputRect = currentInput.getBoundingClientRect();
-    const overlayRect = suggestionOverlay.querySelector('.ts-container').getBoundingClientRect();
+      const container = suggestionOverlay.querySelector('.ts-container');
+      if (!container) {
+        console.log('[TokenScope] positionOverlay: no container');
+        return;
+      }
 
-    let top = inputRect.bottom + window.scrollY + 10;
-    let left = inputRect.left + window.scrollX;
+      console.log('[TokenScope] Positioning overlay...');
 
-    // Keep within viewport
-    const maxLeft = window.innerWidth - overlayRect.width - 20;
-    if (left > maxLeft) left = maxLeft;
-    if (left < 20) left = 20;
+      const inputRect = currentInput.getBoundingClientRect();
+      const containerRect = container.getBoundingClientRect();
 
-    // Show above if not enough space below
-    if (top + overlayRect.height > window.innerHeight + window.scrollY) {
-      top = inputRect.top + window.scrollY - overlayRect.height - 10;
+      console.log('[TokenScope] Input rect:', inputRect);
+      console.log('[TokenScope] Container rect:', containerRect);
+
+      let top = inputRect.bottom + window.scrollY + 10;
+      let left = inputRect.left + window.scrollX;
+
+      // Keep within viewport
+      const maxLeft = window.innerWidth - containerRect.width - 20;
+      if (left > maxLeft) left = Math.max(20, maxLeft);
+      if (left < 20) left = 20;
+
+      // Show above if not enough space below
+      if (top + containerRect.height > window.innerHeight + window.scrollY) {
+        top = inputRect.top + window.scrollY - containerRect.height - 10;
+      }
+
+      if (top < window.scrollY) {
+        top = inputRect.bottom + window.scrollY + 10;
+      }
+
+      suggestionOverlay.style.top = `${top}px`;
+      suggestionOverlay.style.left = `${left}px`;
+      console.log('[TokenScope] Overlay positioned at top:', top, 'left:', left);
+    } catch (error) {
+      console.error('[TokenScope] Position error:', error);
     }
-
-    suggestionOverlay.style.top = `${top}px`;
-    suggestionOverlay.style.left = `${left}px`;
   }
 
   function showHint() {
-    const hint = suggestionOverlay.querySelector('#ts-hint');
-    const container = suggestionOverlay.querySelector('.ts-container');
-    const containerRect = container.getBoundingClientRect();
+    try {
+      const hint = suggestionOverlay.querySelector('#ts-hint');
+      const container = suggestionOverlay.querySelector('.ts-container');
+      if (!hint || !container) return;
 
-    hint.style.top = `${containerRect.bottom + 8}px`;
-    hint.style.left = `${containerRect.left}px`;
-    hint.classList.add('visible');
+      const containerRect = container.getBoundingClientRect();
 
-    // Auto-hide hint after 5 seconds
-    setTimeout(() => {
-      hint.classList.remove('visible');
-    }, 5000);
+      hint.style.top = `${containerRect.bottom + 8}px`;
+      hint.style.left = `${containerRect.left}px`;
+      hint.classList.add('visible');
+
+      // Auto-hide hint after 5 seconds
+      setTimeout(() => {
+        hint.classList.remove('visible');
+      }, 5000);
+    } catch (error) {
+      console.error('[TokenScope] Show hint error:', error);
+    }
   }
 
   function showOverlay() {
+    console.log('[TokenScope] showOverlay called, setting isVisible=true');
     suggestionOverlay.classList.add('visible');
     isVisible = true;
   }
 
   function hideOverlay() {
+    console.log('[TokenScope] hideOverlay called');
     suggestionOverlay.classList.remove('visible');
     isVisible = false;
 
-    const hint = suggestionOverlay.querySelector('#ts-hint');
-    if (hint) hint.classList.remove('visible');
+    try {
+      const hint = suggestionOverlay.querySelector('#ts-hint');
+      if (hint) hint.classList.remove('visible');
+    } catch (error) {
+      console.error('[TokenScope] Hide overlay error:', error);
+    }
   }
 
   // ============ ACTIONS ============
   function handleOverlayClick(e) {
-    if (e.target.id === 'ts-close' || e.target.closest('#ts-close')) {
-      hideOverlay();
-      return;
-    }
+    try {
+      const target = e.target;
+      if (!target) return;
 
-    if (e.target.id === 'ts-accept' || e.target.closest('#ts-accept')) {
-      acceptSuggestion();
-      return;
-    }
+      if (target.id === 'ts-close' || target.closest?.('#ts-close')) {
+        hideOverlay();
+        return;
+      }
 
-    if (e.target.id === 'ts-edit' || e.target.closest('#ts-edit')) {
-      editSuggestion();
-      return;
-    }
+      if (target.id === 'ts-accept' || target.closest?.('#ts-accept')) {
+        acceptSuggestion();
+        return;
+      }
 
-    if (e.target.id === 'ts-dismiss' || e.target.closest('#ts-dismiss')) {
-      hideOverlay();
-      return;
+      if (target.id === 'ts-edit' || target.closest?.('#ts-edit')) {
+        editSuggestion();
+        return;
+      }
+
+      if (target.id === 'ts-dismiss' || target.closest?.('#ts-dismiss')) {
+        hideOverlay();
+        return;
+      }
+    } catch (error) {
+      console.error('[TokenScope] Overlay click error:', error);
     }
   }
 
   function acceptSuggestion() {
-    if (!currentInput || !optimizedText) return;
+    try {
+      if (!currentInput || !optimizedText) return;
 
-    // Save to history
-    saveToHistory(currentText, optimizedText);
+      // Save to history
+      saveToHistory(currentText, optimizedText);
 
-    // Replace text
-    currentInput.value = optimizedText;
+      // Replace text
+      currentInput.value = optimizedText;
 
-    // Trigger input event for React/Vue
-    currentInput.dispatchEvent(new Event('input', { bubbles: true }));
+      // Trigger input event for React/Vue
+      currentInput.dispatchEvent(new Event('input', { bubbles: true }));
 
-    // Visual feedback
-    currentInput.style.border = '2px solid #FF6B00';
-    setTimeout(() => {
-      currentInput.style.border = '';
-    }, 1000);
+      // Visual feedback
+      currentInput.style.border = '2px solid #FF6B00';
+      setTimeout(() => {
+        if (currentInput) currentInput.style.border = '';
+      }, 1000);
 
-    hideOverlay();
+      hideOverlay();
 
-    // Reset
-    lastOptimized = '';
-    optimizedText = '';
+      // Reset
+      lastOptimized = '';
+      optimizedText = '';
+    } catch (error) {
+      console.error('[TokenScope] Accept error:', error);
+    }
   }
 
   function editSuggestion() {
-    if (!currentInput || !optimizedText) return;
+    try {
+      if (!currentInput || !optimizedText) return;
 
-    // Put optimized text in input and focus
-    currentInput.value = optimizedText;
-    currentInput.focus();
+      // Put optimized text in input and focus
+      currentInput.value = optimizedText;
+      currentInput.focus();
 
-    // Move cursor to end
-    const len = optimizedText.length;
-    if (currentInput.setSelectionRange) {
-      currentInput.setSelectionRange(len, len);
+      // Move cursor to end
+      const len = optimizedText.length;
+      if (currentInput.setSelectionRange) {
+        currentInput.setSelectionRange(len, len);
+      }
+
+      hideOverlay();
+    } catch (error) {
+      console.error('[TokenScope] Edit error:', error);
     }
-
-    hideOverlay();
   }
 
   // ============ UTILITIES ============
   function truncate(str, length) {
     if (!str) return '';
+    str = String(str);
     if (str.length <= length) return str;
     return str.substring(0, length) + '...';
   }
 
   function escapeHtml(text) {
+    if (!text) return '';
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
@@ -684,18 +808,20 @@
 
   async function saveToHistory(original, optimized) {
     try {
+      if (!original || !optimized) return;
+
       const result = await chrome.storage.local.get(['history', 'stats']);
       const history = result.history || [];
       const stats = result.stats || { total_prompts: 0, total_saved_tokens: 0, total_saved_cost: 0 };
 
-      // Calculate savings
-      const originalTokens = original.split(' ').length;
-      const optimizedTokens = optimized.split(' ').length;
-      const savedTokens = originalTokens - optimizedTokens;
+      // Calculate savings safely
+      const originalTokens = (original.split(' ').filter(w => w.length > 0)).length;
+      const optimizedTokens = (optimized.split(' ').filter(w => w.length > 0)).length;
+      const savedTokens = Math.max(0, originalTokens - optimizedTokens);
 
       history.unshift({
-        original,
-        optimized,
+        original: String(original),
+        optimized: String(optimized),
         saved_tokens: savedTokens,
         timestamp: new Date().toISOString()
       });
@@ -704,40 +830,36 @@
       const trimmed = history.slice(0, 100);
 
       // Update stats
-      stats.total_prompts += 1;
-      stats.total_saved_tokens += Math.max(0, savedTokens);
+      stats.total_prompts = (stats.total_prompts || 0) + 1;
+      stats.total_saved_tokens = (stats.total_saved_tokens || 0) + savedTokens;
 
       await chrome.storage.local.set({ history: trimmed, stats });
 
     } catch (error) {
-      console.error('[TokenScope] Failed to save history:', error);
+      console.error('[TokenScope] Save history error:', error);
     }
   }
 
   // ============ OBSERVER ============
   function observeNewInputs() {
-    const observer = new MutationObserver((mutations) => {
-      mutations.forEach((mutation) => {
-        mutation.addedNodes.forEach((node) => {
-          if (node.nodeType === Node.ELEMENT_NODE) {
-            if (isTextInput(node)) {
+    try {
+      const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+          mutation.addedNodes.forEach((node) => {
+            if (node.nodeType === Node.ELEMENT_NODE) {
               // Already handled by event listeners
             }
-
-            // Check children for inputs
-            const inputs = node.querySelectorAll?.('textarea, input[type="text"], input:not([type])');
-            inputs?.forEach(() => {
-              // Already handled by event listeners
-            });
-          }
+          });
         });
       });
-    });
 
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true
-    });
+      observer.observe(document.body, {
+        childList: true,
+        subtree: true
+      });
+    } catch (error) {
+      console.error('[TokenScope] Observer error:', error);
+    }
   }
 
   // ============ START ============
