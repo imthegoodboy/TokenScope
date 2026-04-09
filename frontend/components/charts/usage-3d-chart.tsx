@@ -59,7 +59,6 @@ function Bar({
         color="#6B6B6B"
         anchorX="center"
         anchorY="middle"
-        font="/fonts/inter.woff"
       >
         {label}
       </Text>

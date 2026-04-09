@@ -3,13 +3,19 @@
 @tailwind utilities;
 
 :root {
-  --cream: #FAF7F2;
+  --bg: #F7F4F0;
   --surface: #FFFFFF;
-  --black: #0A0A0A;
+  --black: #0F0F0F;
   --black-muted: #6B6B6B;
-  --black-border: #E8E4DE;
-  --danger: #DC2626;
-  --success: #16A34A;
+  --black-border: #E2DDD7;
+  --jaffa: #F07F3C;
+  --jaffa-light: #F5A96A;
+  --jaffa-dark: #C4602A;
+  --green: #16563B;
+  --green-light: #22885A;
+  --navy: #002F4B;
+  --danger: #C43030;
+  --warning: #C97A10;
 }
 
 * {
@@ -21,15 +27,15 @@
 html,
 body {
   min-height: 100vh;
-  background-color: var(--cream);
+  background-color: var(--bg);
   color: var(--black);
   font-family: var(--font-inter), system-ui, sans-serif;
   scroll-behavior: smooth;
 }
 
 ::selection {
-  background-color: var(--black);
-  color: var(--cream);
+  background-color: var(--jaffa);
+  color: white;
 }
 
 ::-webkit-scrollbar {
@@ -38,7 +44,7 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--cream);
+  background: var(--bg);
 }
 
 ::-webkit-scrollbar-thumb {
@@ -55,19 +61,18 @@ a {
   text-decoration: none;
 }
 
-/* Focus styles */
 :focus-visible {
-  outline: 2px solid var(--black);
+  outline: 2px solid var(--jaffa);
   outline-offset: 2px;
   border-radius: 4px;
 }
 
-/* Card base */
+/* Card */
 .card {
   @apply bg-surface rounded-card shadow-card border border-black-border/50 p-6;
 }
 
-/* Skeleton loading */
+/* Skeleton */
 @keyframes shimmer {
   0% { background-position: -200% 0; }
   100% { background-position: 200% 0; }
@@ -77,7 +82,7 @@ a {
   background: linear-gradient(
     90deg,
     var(--black-border) 25%,
-    var(--cream) 50%,
+    var(--bg) 50%,
     var(--black-border) 75%
   );
   background-size: 200% 100%;
@@ -85,10 +90,42 @@ a {
   border-radius: 6px;
 }
 
-/* Token highlighting */
-.token-high { background-color: rgba(220, 38, 38, 0.15); color: #DC2626; border-radius: 3px; padding: 0 2px; }
-.token-med  { background-color: rgba(234, 179, 8, 0.15);  color: #92400E; border-radius: 3px; padding: 0 2px; }
-.token-low  { background-color: rgba(22, 163, 74, 0.1);   color: #16A34A; border-radius: 3px; padding: 0 2px; }
+/* Token highlighting — warm color scheme */
+.token-very-high {
+  background-color: rgba(240, 127, 60, 0.35);
+  color: #C4602A;
+  border-radius: 3px;
+  padding: 0 2px;
+  font-weight: 600;
+}
+
+.token-high {
+  background-color: rgba(240, 127, 60, 0.2);
+  color: #C4602A;
+  border-radius: 3px;
+  padding: 0 2px;
+}
+
+.token-medium {
+  background-color: rgba(0, 47, 75, 0.1);
+  color: #002F4B;
+  border-radius: 3px;
+  padding: 0 2px;
+}
+
+.token-low {
+  background-color: rgba(15, 15, 15, 0.05);
+  color: #6B6B6B;
+  border-radius: 3px;
+  padding: 0 2px;
+}
+
+/* Contribution graph colors */
+.contrib-none { background-color: #E2DDD7; }
+.contrib-low { background-color: rgba(240, 127, 60, 0.25); }
+.contrib-medium { background-color: rgba(240, 127, 60, 0.5); }
+.contrib-high { background-color: rgba(240, 127, 60, 0.75); }
+.contrib-very-high { background-color: #F07F3C; }
 
 /* Chart container */
 .chart-container {
@@ -97,7 +134,7 @@ a {
   height: 100%;
 }
 
-/* 3D chart canvas */
+/* 3D canvas */
 .three-canvas {
   width: 100%;
   height: 100%;
@@ -107,3 +144,13 @@ a {
 .three-canvas:active {
   cursor: grabbing;
 }
+
+/* Prompt score badge */
+.score-excellent { background-color: rgba(22, 86, 59, 0.15); color: #16563B; border: 1px solid rgba(22, 86, 59, 0.3); }
+.score-good { background-color: rgba(0, 47, 75, 0.1); color: #002F4B; border: 1px solid rgba(0, 47, 75, 0.2); }
+.score-average { background-color: rgba(201, 122, 16, 0.1); color: #C97A10; border: 1px solid rgba(201, 122, 16, 0.2); }
+.score-poor { background-color: rgba(196, 48, 48, 0.1); color: #C43030; border: 1px solid rgba(196, 48, 48, 0.2); }
+
+/* Scrollbar for code/prompt areas */
+.code-scroll::-webkit-scrollbar { width: 4px; height: 4px; }
+.code-scroll::-webkit-scrollbar-thumb { background: #E2DDD7; border-radius: 2px; }
