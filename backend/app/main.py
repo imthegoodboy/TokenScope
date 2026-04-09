@@ -30,6 +30,7 @@ app.include_router(stats.router, prefix="/api/v1", tags=["Stats"])
 app.include_router(logs.router, prefix="/api/v1", tags=["Logs"])
 app.include_router(usage.router, prefix="/api/v1", tags=["Usage"])
 app.include_router(analyzer.router, prefix="/api/v1", tags=["Analyzer"])
+app.include_router(extension.router, prefix="/api/v1", tags=["Extension"])
 
 @app.get("/")
 async def root():
