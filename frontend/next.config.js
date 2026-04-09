@@ -1,19 +1,6 @@
-const path = require("path");
-
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // R3F pulls in react-reconciler, which needs React's dev internals. Next's resolver
-  // can pick `react.shared-subset` (via the "react-server" export), which has no internals.
   transpilePackages: ["three", "@react-three/fiber", "@react-three/drei"],
-  webpack: (config) => {
-    config.resolve.alias = {
-      ...config.resolve.alias,
-      // Package roots (not index.js) so `react/jsx-dev-runtime` etc. still resolve.
-      react: path.join(__dirname, "node_modules/react"),
-      "react-dom": path.join(__dirname, "node_modules/react-dom"),
-    };
-    return config;
-  },
   reactStrictMode: true,
   images: {
     remotePatterns: [

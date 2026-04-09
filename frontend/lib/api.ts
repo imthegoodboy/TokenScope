@@ -1,15 +1,17 @@
 // API client for TokenScope backend
-// Uses Clerk auth via the AuthProvider context
+// Uses Clerk's useAuth hook for authentication
 
-import { useAuthToken } from "./auth-context";
+import { useAuth } from "@clerk/nextjs";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 // ─── Hook-based request function for client components ───────────────────────
-function useApi() {
-  const { token } = useAuthToken();
+export function useApi() {
+  const { getToken } = useAuth();
 
-  async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
+  async function apiRequest<T>(path: string, options: RequestInit = {}): Promise<T> {
+    const token = await getToken();
+
     const res = await fetch(`${API_URL}${path}`, {
       ...options,
       headers: {
@@ -27,31 +29,10 @@ function useApi() {
     return res.json();
   }
 
-  return { request, token };
+  return { request: apiRequest };
 }
 
-// ─── Export the hook for use in client components ───────────────────────────
-export { useApi };
-
-// ─── Standalone fetcher for simple cases (SSR/server) ───────────────────────
-export async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const res = await fetch(`${API_URL}${path}`, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...options.headers,
-    },
-  });
-
-  if (!res.ok) {
-    const error = await res.json().catch(() => ({ detail: "Request failed" }));
-    throw new Error(error.detail || `HTTP ${res.status}`);
-  }
-
-  return res.json();
-}
-
-// ─── Type exports ───────────────────────────────────────────────────────────
+// ─── Export types ───────────────────────────────────────────────────────────
 
 export interface ProxyKey {
   id: string;

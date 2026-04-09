@@ -11,6 +11,7 @@ import { formatCurrency, formatNumber } from "@/lib/utils";
 import {
   Wand2, TrendingDown, Loader2, Lightbulb, Copy, Check,
   ArrowRight, Sparkles, Target, MessageSquare, RefreshCw,
+  type LucideIcon,
 } from "lucide-react";
 import { useApi, type TokenScore, type AnalyzeResult, type OptimizeResult } from "@/lib/api";
 
@@ -39,7 +40,7 @@ const MODELS: Record<string, Array<{ value: string; label: string }>> = {
   ],
 };
 
-function getSuggestions(analysis: AnalyzeResult & { score: number; breakdown: { clarity: number; conciseness: number; specificity: number; efficiency: number } }): Array<{ icon: React.ElementType; title: string; desc: string; impact: "high" | "medium" | "low" }> {
+function getSuggestions(analysis: AnalyzeResult & { score: number; breakdown: { clarity: number; conciseness: number; specificity: number; efficiency: number } }): Array<{ icon: LucideIcon; title: string; desc: string; impact: "high" | "medium" | "low" }> {
   const suggestions = [];
   if (analysis.tokens > 2000) {
     suggestions.push({ icon: TrendingDown, title: "Reduce token count", desc: `Your prompt is ${analysis.tokens} tokens. Consider trimming unnecessary words.`, impact: "high" as const });

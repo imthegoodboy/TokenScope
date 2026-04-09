@@ -5,7 +5,7 @@ import dynamic from "next/dynamic";
 import { Header } from "@/components/layout/header";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatCurrency, formatNumber } from "@/lib/utils";
-import { TrendingUp, Calendar, Clock, Hash } from "lucide-react";
+import { TrendingUp, Calendar, Clock, Hash, type LucideIcon } from "lucide-react";
 import { useApi, type LogsStats, type LogsBreakdown, type ChartPoint } from "@/lib/api";
 
 const Analytics3D = dynamic(
@@ -13,7 +13,7 @@ const Analytics3D = dynamic(
   { ssr: false, loading: () => <Skeleton className="h-80 rounded-lg" /> }
 );
 
-function StatsRow({ title, value, icon: Icon, sub }: { title: string; value: string; icon: React.ElementType; sub?: string }) {
+function StatsRow({ title, value, icon: Icon, sub }: { title: string; value: string; icon: LucideIcon; sub?: string }) {
   return (
     <div className="flex items-center gap-3 p-4 rounded-xl bg-black/4 border border-black-border/40">
       <div className="w-9 h-9 rounded-lg bg-jaffa/8 flex items-center justify-center">
