@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
-from .routers import proxy, keys, stats, logs, usage, analyzer
+from .routers import proxy, keys, stats, logs, usage, analyzer, extension
 from .database import init_db
 
 @asynccontextmanager
