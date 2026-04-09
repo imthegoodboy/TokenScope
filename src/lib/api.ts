@@ -106,6 +106,18 @@ export const api = {
       request<any>(`/extension/history/${userId}?limit=${limit || 50}`),
     getDashboardStats: (userId: string) => request<any>(`/extension/dashboard-stats/${userId}`),
   },
+
+  scores: {
+    getUserScore: (userId: string) => request<any>(`/scores/${userId}`),
+    getLeaderboard: (limit?: number) => request<any>(`/scores/leaderboard?limit=${limit || 20}`),
+    getGraphData: (userId: string, days?: number) =>
+      request<any>(`/stats/graph/${userId}?days=${days || 30}`),
+    getMistakes: (userId: string) => request<any>(`/stats/mistakes/${userId}`),
+    getImprovements: (userId: string) => request<any>(`/stats/improvements/${userId}`),
+    getRole: (userId: string) => request<any>(`/get-role?user_id=${userId}`),
+    setRole: (userId: string, role: string) =>
+      request<any>('/set-role', { method: 'POST', body: { user_id: userId, role } }),
+  },
 };
 
 export default api;
