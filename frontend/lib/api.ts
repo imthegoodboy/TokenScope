@@ -1,45 +1,60 @@
-import { auth } from "@clerk/nextjs/server";
+import { auth, clerkClient } from "@clerk/nextjs/server";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 // Server-side: get token from Clerk session
 export async function getServerToken(): Promise<string | null> {
-  const { userId } = await auth();
-  if (!userId) return null;
-
   try {
-    const { getToken } = await import("@clerk/nextjs/server");
-    return await getToken();
+    const { userId } = await auth();
+    if (!userId) return null;
+    const cl = await clerkClient();
+    const token = await cl.sessions.getToken(); // get the active session token
+    return token;
   } catch {
     return null;
   }
 }
 
 // Client-side: get Clerk token
+let _clientToken: string | null = null;
+let _tokenPromise: Promise<string | null> | null = null;
+
 export async function getClientToken(): Promise<string | null> {
-  try {
-    const { getToken } = await import("@clerk/nextjs/auth");
-    return await getToken();
-  } catch {
-    return null;
-  }
+  if (_clientToken) return _clientToken;
+  if (_tokenPromise) return _tokenPromise;
+
+  _tokenPromise = (async () => {
+    try {
+      const { getToken } = await import("@clerk/nextjs/auth");
+      const token = await getToken();
+      _clientToken = token;
+      return token;
+    } catch {
+      _tokenPromise = null;
+      return null;
+    }
+  })();
+
+  return _tokenPromise;
+}
+
+// Clear client token (call after sign-out)
+export function clearClientToken(): void {
+  _clientToken = null;
+  _tokenPromise = null;
 }
 
 interface RequestOptions {
   method?: string;
   body?: unknown;
   headers?: Record<string, string>;
-  token?: string | null;
 }
 
-async function request<T>(
-  path: string,
-  options: RequestOptions = {}
-): Promise<T> {
-  const { method = "GET", body, headers = {}, token } = options;
+async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
+  const { method = "GET", body, headers = {} } = options;
 
-  // Get Clerk token if not provided
-  const clerkToken = token ?? await getClientToken();
+  // Get Clerk token automatically
+  const clerkToken = await getClientToken();
 
   const res = await fetch(`${API_URL}${path}`, {
     method,
@@ -176,9 +191,7 @@ export async function getLogsBreakdown(): Promise<LogsBreakdown> {
   return request("/api/v1/logs/breakdown");
 }
 
-export async function getLogsChart(
-  period: "7d" | "14d" | "30d" = "14d",
-): Promise<ChartPoint[]> {
+export async function getLogsChart(period: "7d" | "14d" | "30d" = "14d"): Promise<ChartPoint[]> {
   return request(`/api/v1/logs/chart?period=${period}`);
 }
 
@@ -259,7 +272,7 @@ export async function optimizePrompt(data: {
   return request("/api/v1/analyze/optimize", { method: "POST", body: data });
 }
 
-// ─── Usage (legacy) ─────────────────────────────────────────────────────────
+// ─── Usage ──────────────────────────────────────────────────────────────────
 
 export interface UsageRecord {
   id: string;
