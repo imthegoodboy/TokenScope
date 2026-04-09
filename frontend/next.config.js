@@ -8,8 +8,9 @@ const nextConfig = {
   webpack: (config) => {
     config.resolve.alias = {
       ...config.resolve.alias,
-      react: path.join(__dirname, "node_modules/react/index.js"),
-      "react-dom": path.join(__dirname, "node_modules/react-dom/index.js"),
+      // Package roots (not index.js) so `react/jsx-dev-runtime` etc. still resolve.
+      react: path.join(__dirname, "node_modules/react"),
+      "react-dom": path.join(__dirname, "node_modules/react-dom"),
     };
     return config;
   },

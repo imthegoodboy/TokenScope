@@ -8,7 +8,7 @@ import { Select } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Trash2, CheckCircle2, XCircle, RefreshCw, Key, Loader2 } from "lucide-react";
 import { formatDate, formatCurrency } from "@/lib/utils";
-import { listApiKeys, addApiKey, deleteApiKey, type ApiKey } from "@/lib/api";
+import { useApi, type ApiKey } from "@/lib/api";
 
 const PROVIDERS = [
   { value: "openai", label: "OpenAI" },
@@ -29,6 +29,7 @@ const PROVIDER_LABELS: Record<string, string> = {
 };
 
 export default function APIKeysPage() {
+  const { request } = useApi();
   const [keys, setKeys] = useState<ApiKey[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAdd, setShowAdd] = useState(false);
@@ -41,14 +42,14 @@ export default function APIKeysPage() {
 
   const loadKeys = useCallback(async () => {
     try {
-      const data = await listApiKeys();
+      const data = await request<ApiKey[]>("/api/v1/keys/");
       setKeys(data);
     } catch (e) {
       console.error("Failed to load keys:", e);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [request]);
 
   useEffect(() => {
     loadKeys();
@@ -59,10 +60,13 @@ export default function APIKeysPage() {
     setSaving(true);
     setError(null);
     try {
-      const newKey = await addApiKey({
-        provider,
-        api_key: apiKeyInput.trim(),
-        key_label: label.trim() || `${PROVIDER_LABELS[provider]} Key`,
+      const newKey = await request<ApiKey>("/api/v1/keys/", {
+        method: "POST",
+        body: JSON.stringify({
+          provider,
+          api_key: apiKeyInput.trim(),
+          key_label: label.trim() || `${PROVIDER_LABELS[provider]} Key`,
+        }),
       });
       setKeys((prev) => [newKey, ...prev]);
       setShowAdd(false);
@@ -82,7 +86,7 @@ export default function APIKeysPage() {
       return;
     }
     try {
-      await deleteApiKey(id);
+      await request(`/api/v1/keys/${id}`, { method: "DELETE" });
       setKeys((prev) => prev.filter((k) => k.id !== id));
       setDeleteConfirm(null);
     } catch (e: unknown) {
@@ -103,32 +107,20 @@ export default function APIKeysPage() {
       />
 
       <div className="px-8 py-6">
-        {/* Add key form */}
         {showAdd && (
           <div className="card mb-6 animate-slide-up">
             <h3 className="font-bold text-base mb-5">Add Provider API Key</h3>
             {error && (
-              <div className="mb-4 p-3 rounded-lg bg-danger/10 border border-danger/20 text-sm text-danger">
-                {error}
-              </div>
+              <div className="mb-4 p-3 rounded-lg bg-danger/10 border border-danger/20 text-sm text-danger">{error}</div>
             )}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label className="block text-[11px] font-medium opacity-50 uppercase tracking-wider mb-1.5">
-                  Provider
-                </label>
-                <Select
-                  options={PROVIDERS}
-                  value={provider}
-                  onChange={(e) => setProvider(e.target.value)}
-                />
+                <label className="block text-[11px] font-medium opacity-50 uppercase tracking-wider mb-1.5">Provider</label>
+                <Select options={PROVIDERS} value={provider} onChange={(e) => setProvider(e.target.value)} />
               </div>
               <div className="md:col-span-2">
-                <label className="block text-[11px] font-medium opacity-50 uppercase tracking-wider mb-1.5">
-                  API Key
-                </label>
-                <Input
-                  type="password"
+                <label className="block text-[11px] font-medium opacity-50 uppercase tracking-wider mb-1.5">API Key</label>
+                <Input type="password"
                   placeholder={
                     provider === "openai" ? "sk-..." :
                     provider === "anthropic" ? "sk-ant-..." : "AIza..."
@@ -141,32 +133,21 @@ export default function APIKeysPage() {
             </div>
             <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="md:col-span-2">
-                <label className="block text-[11px] font-medium opacity-50 uppercase tracking-wider mb-1.5">
-                  Label (optional)
-                </label>
-                <Input
-                  placeholder="My Production Key"
-                  value={label}
-                  onChange={(e) => setLabel(e.target.value)}
-                />
+                <label className="block text-[11px] font-medium opacity-50 uppercase tracking-wider mb-1.5">Label (optional)</label>
+                <Input placeholder="My Production Key" value={label} onChange={(e) => setLabel(e.target.value)} />
               </div>
               <div className="flex items-end gap-2">
                 <Button variant="outline" onClick={() => { setShowAdd(false); setError(null); }} className="flex-1 border-black text-black">
                   Cancel
                 </Button>
                 <Button onClick={handleAdd} disabled={!apiKeyInput.trim() || saving} className="flex-1">
-                  {saving ? (
-                    <><RefreshCw size={14} className="animate-spin" /> Saving...</>
-                  ) : (
-                    <>Add Key</>
-                  )}
+                  {saving ? <><RefreshCw size={14} className="animate-spin" /> Saving...</> : <>Add Key</>}
                 </Button>
               </div>
             </div>
           </div>
         )}
 
-        {/* Keys list */}
         <div className="space-y-3">
           {loading ? (
             <div className="card text-center py-20">
@@ -188,31 +169,22 @@ export default function APIKeysPage() {
             </div>
           ) : (
             keys.map((k) => (
-              <div
-                key={k.id}
-                className="card flex items-center justify-between hover:shadow-card-hover transition-all duration-200"
-              >
+              <div key={k.id} className="card flex items-center justify-between hover:shadow-card-hover transition-all duration-200">
                 <div className="flex items-center gap-4">
-                  <div
-                    className="w-11 h-11 rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-sm"
-                    style={{ backgroundColor: PROVIDER_COLORS[k.provider] || "#6B6B6B" }}
-                  >
+                  <div className="w-11 h-11 rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-sm"
+                    style={{ backgroundColor: PROVIDER_COLORS[k.provider] || "#6B6B6B" }}>
                     {k.provider === "openai" ? "OA" : k.provider === "anthropic" ? "AN" : "GM"}
                   </div>
                   <div>
                     <div className="flex items-center gap-2.5">
-                      <h4 className="font-semibold text-base">
-                        {k.key_label || `${PROVIDER_LABELS[k.provider]} Key`}
-                      </h4>
+                      <h4 className="font-semibold text-base">{k.key_label || `${PROVIDER_LABELS[k.provider]} Key`}</h4>
                       <Badge variant={k.active ? "success" : "danger"}>
                         {k.active ? <CheckCircle2 size={10} /> : <XCircle size={10} />}
                         {k.active ? "Active" : "Inactive"}
                       </Badge>
                     </div>
                     <div className="flex items-center gap-2 mt-1">
-                      <span className="font-mono text-xs opacity-50">
-                        ••••{k.key_last4}
-                      </span>
+                      <span className="font-mono text-xs opacity-50">••••{k.key_last4}</span>
                       <span className="opacity-30">·</span>
                       <span className="text-xs opacity-50">{PROVIDER_LABELS[k.provider]}</span>
                       <span className="opacity-30">·</span>
@@ -245,7 +217,6 @@ export default function APIKeysPage() {
           )}
         </div>
 
-        {/* Info */}
         <div className="mt-6 p-4 bg-jaffa/5 rounded-xl border border-jaffa/15">
           <div className="flex items-start gap-3">
             <div className="w-4 h-4 mt-0.5 flex-shrink-0">

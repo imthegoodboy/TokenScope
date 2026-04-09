@@ -6,30 +6,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
-  Plus,
-  Trash2,
-  RefreshCw,
-  Terminal,
-  Copy,
-  Check,
-  Wand2,
-  Zap,
-  ExternalLink,
-  Loader2,
-  Globe,
+  Plus, Trash2, RefreshCw, Terminal, Copy, Check, Wand2, Zap,
+  ExternalLink, Loader2, Globe,
 } from "lucide-react";
 import { formatDate } from "@/lib/utils";
-import {
-  listProxyKeys,
-  createProxyKey,
-  deleteProxyKey,
-  toggleProxyEnhance,
-  type ProxyKey,
-} from "@/lib/api";
+import { useApi, type ProxyKey } from "@/lib/api";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 export default function ProxyKeysPage() {
+  const { request } = useApi();
   const [keys, setKeys] = useState<ProxyKey[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
@@ -42,14 +28,14 @@ export default function ProxyKeysPage() {
 
   const loadKeys = useCallback(async () => {
     try {
-      const data = await listProxyKeys();
+      const data = await request<ProxyKey[]>("/api/v1/proxy-keys/");
       setKeys(data);
     } catch (e) {
       console.error("Failed to load proxy keys:", e);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [request]);
 
   useEffect(() => {
     loadKeys();
@@ -59,11 +45,11 @@ export default function ProxyKeysPage() {
     setCreating(true);
     setError(null);
     try {
-      const result = await createProxyKey(newLabel.trim() || "Default");
-      setKeys((prev) => [
-        { ...result, key: result.key }, // won't be shown in list
-        ...prev,
-      ]);
+      const result = await request<{ id: string; key: string; key_label: string; active: boolean; rate_limit: number; auto_enhance: boolean; created_at: string }>(
+        "/api/v1/proxy-keys/",
+        { method: "POST", body: JSON.stringify({ label: newLabel.trim() || "Default" }) }
+      );
+      setKeys((prev) => [{ ...result, key_label: result.key_label }, ...prev]);
       setShowKeyModal({ id: result.id, key: result.key, label: result.key_label });
       setNewLabel("");
     } catch (e: unknown) {
@@ -80,7 +66,7 @@ export default function ProxyKeysPage() {
       return;
     }
     try {
-      await deleteProxyKey(id);
+      await request(`/api/v1/proxy-keys/${id}`, { method: "DELETE" });
       setKeys((prev) => prev.filter((k) => k.id !== id));
       setDeleteConfirm(null);
     } catch (e: unknown) {
@@ -91,10 +77,11 @@ export default function ProxyKeysPage() {
   const handleToggleEnhance = async (id: string, current: boolean) => {
     setTogglingKey(id);
     try {
-      const result = await toggleProxyEnhance(id, !current);
-      setKeys((prev) =>
-        prev.map((k) => (k.id === id ? { ...k, auto_enhance: result.auto_enhance } : k))
+      const result = await request<{ auto_enhance: boolean }>(
+        `/api/v1/proxy-keys/${id}/toggle-enhance?enabled=${!current}`,
+        { method: "PATCH" }
       );
+      setKeys((prev) => prev.map((k) => k.id === id ? { ...k, auto_enhance: result.auto_enhance } : k));
     } catch (e: unknown) {
       console.error("Failed to toggle enhance:", e);
     } finally {
@@ -108,18 +95,11 @@ export default function ProxyKeysPage() {
     setTimeout(() => setCopiedKey(null), 2000);
   };
 
-  const endpointExample = `${API_URL}/v1/chat/completions`;
-
   return (
     <div>
       <Header
         title="Proxy Keys"
         description="Create API keys for your applications to use the TokenScope gateway"
-        action={
-          <Button onClick={() => setShowKeyModal(null)} size="sm">
-            <Plus size={14} /> Create Proxy Key
-          </Button>
-        }
       />
 
       <div className="px-8 py-6 space-y-6">
@@ -139,7 +119,7 @@ export default function ProxyKeysPage() {
           <div className="bg-bg rounded-xl p-4 font-mono text-xs space-y-2">
             <div className="flex items-center gap-2">
               <span className="text-green font-bold">POST</span>
-              <span className="text-black-soft break-all">{endpointExample}</span>
+              <span className="text-black-soft break-all">{API_URL}/v1/chat/completions</span>
             </div>
             <div className="flex items-start gap-2">
               <span className="text-jaffa font-bold opacity-60">AUTH</span>
@@ -156,9 +136,7 @@ export default function ProxyKeysPage() {
         <div className="card">
           <h3 className="font-semibold mb-4">Create New Proxy Key</h3>
           {error && (
-            <div className="mb-4 p-3 rounded-lg bg-danger/10 border border-danger/20 text-sm text-danger">
-              {error}
-            </div>
+            <div className="mb-4 p-3 rounded-lg bg-danger/10 border border-danger/20 text-sm text-danger">{error}</div>
           )}
           <div className="flex items-end gap-3">
             <div className="flex-1">
@@ -170,11 +148,7 @@ export default function ProxyKeysPage() {
               />
             </div>
             <Button onClick={handleCreate} disabled={creating}>
-              {creating ? (
-                <><RefreshCw size={14} className="animate-spin" /> Creating...</>
-              ) : (
-                <><Plus size={14} /> Create Key</>
-              )}
+              {creating ? <><RefreshCw size={14} className="animate-spin" /> Creating...</> : <><Plus size={14} /> Create Key</>}
             </Button>
           </div>
         </div>
@@ -206,9 +180,7 @@ export default function ProxyKeysPage() {
                   <div>
                     <div className="flex items-center gap-2.5 mb-1">
                       <h4 className="font-semibold text-base">{k.key_label}</h4>
-                      <Badge variant={k.active ? "success" : "danger"}>
-                        {k.active ? "Active" : "Inactive"}
-                      </Badge>
+                      <Badge variant={k.active ? "success" : "danger"}>{k.active ? "Active" : "Inactive"}</Badge>
                     </div>
                     <p className="text-xs opacity-50">Created {formatDate(k.created_at)}</p>
                   </div>
@@ -223,55 +195,38 @@ export default function ProxyKeysPage() {
                   </Button>
                 </div>
 
-                {/* Endpoint URL */}
                 <div className="mb-4">
-                  <label className="block text-[11px] font-medium opacity-50 uppercase tracking-wider mb-2">
-                    Proxy Endpoint
-                  </label>
+                  <label className="block text-[11px] font-medium opacity-50 uppercase tracking-wider mb-2">Proxy Endpoint</label>
                   <div className="flex items-center gap-2">
                     <code className="flex-1 bg-bg border border-black-border rounded-lg px-3 py-2 text-xs font-mono text-black-soft truncate">
-                      {endpointExample}
+                      {API_URL}/v1/chat/completions
                     </code>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => copyToClipboard(endpointExample, `url-${k.id}`)}
-                      className="border-black text-black flex-shrink-0"
-                    >
+                    <Button variant="outline" size="sm"
+                      onClick={() => copyToClipboard(`${API_URL}/v1/chat/completions`, `url-${k.id}`)}
+                      className="border-black text-black flex-shrink-0">
                       {copiedKey === `url-${k.id}` ? <Check size={12} /> : <Copy size={12} />}
                     </Button>
                   </div>
                 </div>
 
-                {/* Settings */}
                 <div className="flex items-center gap-6 pt-4 border-t border-black-border">
                   <div className="flex items-center gap-2">
                     <Terminal size={14} className="text-black-soft" />
                     <span className="text-xs opacity-60">{k.rate_limit} req/min</span>
                   </div>
 
-                  {/* Auto-enhance toggle */}
                   <button
                     onClick={() => handleToggleEnhance(k.id, k.auto_enhance)}
                     disabled={togglingKey === k.id}
                     className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                      k.auto_enhance
-                        ? "bg-green/10 text-green border border-green/20"
-                        : "bg-black/4 text-black-soft border border-transparent hover:bg-black/8"
+                      k.auto_enhance ? "bg-green/10 text-green border border-green/20" : "bg-black/4 text-black-soft border border-transparent hover:bg-black/8"
                     }`}
                   >
-                    {togglingKey === k.id ? (
-                      <RefreshCw size={12} className="animate-spin" />
-                    ) : (
-                      <Wand2 size={12} />
-                    )}
+                    {togglingKey === k.id ? <RefreshCw size={12} className="animate-spin" /> : <Wand2 size={12} />}
                     Auto-Enhance {k.auto_enhance ? "ON" : "OFF"}
                   </button>
 
-                  <a
-                    href="/dashboard/logs"
-                    className="flex items-center gap-1 text-xs text-jaffa hover:text-jaffa-dark transition-colors ml-auto"
-                  >
+                  <a href="/dashboard/logs" className="flex items-center gap-1 text-xs text-jaffa hover:text-jaffa-dark transition-colors ml-auto">
                     View Logs <ExternalLink size={11} />
                   </a>
                 </div>
@@ -287,25 +242,22 @@ export default function ProxyKeysPage() {
           </div>
         )}
 
-        {/* Docs link */}
+        {/* Docs */}
         <div className="p-4 bg-surface rounded-xl border border-black-border">
           <h4 className="font-semibold text-sm mb-2 flex items-center gap-2">
-            <ExternalLink size={14} className="text-jaffa" />
-            API Documentation
+            <ExternalLink size={14} className="text-jaffa" /> API Documentation
           </h4>
-          <p className="text-xs opacity-50 mb-3">
-            Full API reference at the docs page. The proxy endpoint is OpenAI-compatible.
-          </p>
+          <p className="text-xs opacity-50 mb-3">Full API reference at the docs page. The proxy endpoint is OpenAI-compatible.</p>
           <div className="flex flex-wrap gap-2">
             <Badge variant="jaffa">OpenAI Compatible</Badge>
-            <Badge variant="green">Multi-Provider</Badge>
-            <Badge variant="navy">Token Tracking</Badge>
+            <Badge variant="success">Multi-Provider</Badge>
+            <Badge variant="gemini">Token Tracking</Badge>
             <Badge variant="black">Auto-Enhance</Badge>
           </div>
         </div>
       </div>
 
-      {/* Modal for showing the raw key (only shown once) */}
+      {/* Modal for showing the raw key */}
       {showKeyModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-surface border border-black-border rounded-2xl shadow-2xl max-w-md w-full p-6 animate-slide-up">
@@ -321,34 +273,25 @@ export default function ProxyKeysPage() {
 
             <div className="mb-4 p-3 rounded-lg bg-danger/8 border border-danger/15">
               <p className="text-xs font-bold text-danger flex items-center gap-1.5">
-                <Zap size={12} />
-                Save this key now — it will not be shown again!
+                <Zap size={12} /> Save this key now — it will not be shown again!
               </p>
             </div>
 
             <div className="mb-4">
-              <label className="block text-[11px] font-medium opacity-50 uppercase tracking-wider mb-2">
-                Your Proxy Key
-              </label>
+              <label className="block text-[11px] font-medium opacity-50 uppercase tracking-wider mb-2">Your Proxy Key</label>
               <div className="flex items-center gap-2">
                 <code className="flex-1 bg-bg border border-black-border rounded-lg px-3 py-2.5 text-xs font-mono break-all bg-jaffa/5">
                   {showKeyModal.key}
                 </code>
-                <Button
-                  variant="outline"
-                  size="sm"
+                <Button variant="outline" size="sm"
                   onClick={() => copyToClipboard(showKeyModal.key, showKeyModal.id)}
-                  className="border-black text-black flex-shrink-0"
-                >
+                  className="border-black text-black flex-shrink-0">
                   {copiedKey === showKeyModal.id ? <Check size={14} /> : <Copy size={14} />}
                 </Button>
               </div>
             </div>
 
-            <Button
-              className="w-full"
-              onClick={() => setShowKeyModal(null)}
-            >
+            <Button className="w-full" onClick={() => setShowKeyModal(null)}>
               Done, I have saved my key
             </Button>
           </div>

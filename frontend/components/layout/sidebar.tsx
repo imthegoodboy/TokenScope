@@ -11,6 +11,7 @@ import {
   Settings,
   Terminal,
   ListOrdered,
+  Zap,
 } from "lucide-react";
 
 const navItems = [
@@ -18,6 +19,7 @@ const navItems = [
   { href: "/dashboard/proxy-keys", label: "Proxy Keys", icon: Terminal },
   { href: "/dashboard/api-keys", label: "API Keys", icon: Key },
   { href: "/dashboard/logs", label: "Request Logs", icon: ListOrdered },
+  { href: "/dashboard/test-proxy", label: "Test Proxy", icon: Zap },
   { href: "/dashboard/analyzer", label: "Prompt Analyzer", icon: Wand2 },
   { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ];

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from app.database import get_session
@@ -101,7 +101,7 @@ async def delete_proxy_key(
 @router.patch("/{key_id}/toggle-enhance")
 async def toggle_enhance(
     key_id: str,
-    enabled: bool,
+    enabled: bool = Query(..., description="Enable (true) or disable (false) auto-enhancement"),
     user_id: str = Depends(require_user),
     session: AsyncSession = Depends(get_session),
 ):
