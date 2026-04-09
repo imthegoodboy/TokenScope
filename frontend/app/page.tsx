@@ -11,8 +11,6 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import {
   Zap,
-  DollarSign,
-  Cpu,
   ArrowRight,
   BarChart3,
   Wand2,
@@ -20,76 +18,222 @@ import {
   Shield,
   Layers,
   Globe,
-  TrendingUp,
+  Terminal,
+  Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useEffect, useRef, useState } from "react";
 
 const features = [
+  {
+    icon: Terminal,
+    title: "Proxy Gateway",
+    desc: "Route your AI requests through TokenScope. Get a single endpoint for OpenAI, Anthropic & Gemini.",
+    accent: "jaffa",
+  },
   {
     icon: BarChart3,
     title: "3D Usage Dashboard",
     desc: "Interactive 3D visualizations of your token usage. Drag, rotate, and explore your AI spend.",
-    accent: "jaffa",
+    accent: "navy",
   },
   {
     icon: Wand2,
     title: "TF-IDF Prompt Analysis",
-    desc: "Warm color-coded token importance map. Know exactly which words drive your costs.",
+    desc: "Warm color-coded token importance. Know exactly which words drive your costs.",
     accent: "green",
-  },
-  {
-    icon: DollarSign,
-    title: "Cost Tracking",
-    desc: "Real-time cost estimation per call with provider-specific pricing for OpenAI, Anthropic & Gemini.",
-    accent: "navy",
   },
   {
     icon: Layers,
     title: "GitHub-style Activity",
-    desc: "See your API call activity over time with a contribution graph — like GitHub but for AI usage.",
+    desc: "See your API call activity over time with a contribution graph.",
     accent: "jaffa",
   },
   {
     icon: Shield,
     title: "Secure & Private",
-    desc: "API keys stored as SHA-256 hashes. Per-user isolation via Clerk. Your data stays yours.",
+    desc: "API keys encrypted at rest. Per-user isolation. Your data stays yours.",
     accent: "green",
   },
   {
-    icon: Globe,
-    title: "Multi-Provider",
-    desc: "Connect OpenAI, Anthropic Claude, and Google Gemini. All in one unified dashboard.",
+    icon: Sparkles,
+    title: "Auto-Enhance",
+    desc: "Automatically optimize prompts before sending to reduce token usage and save money.",
     accent: "navy",
   },
 ];
 
-const stats = [
-  { label: "Tokens Tracked", value: "12.4M+" },
-  { label: "API Calls", value: "1.2M+" },
-  { label: "Cost Saved", value: "$28K+" },
-  { label: "Users", value: "3,400+" },
-];
+// Particle component
+function Particles() {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const mouseRef = useRef({ x: 0, y: 0 });
+  const particlesRef = useRef<Array<{ x: number; y: number; vx: number; vy: number; size: number; opacity: number }>>([]);
 
-const providers = [
-  { name: "OpenAI", color: "#F07F3C", short: "OA" },
-  { name: "Anthropic", color: "#16563B", short: "AN" },
-  { name: "Google Gemini", color: "#002F4B", short: "GM" },
-];
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    const resize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    resize();
+    window.addEventListener("resize", resize);
+
+    // Initialize particles
+    const particles = Array.from({ length: 50 }, () => ({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      vx: (Math.random() - 0.5) * 0.3,
+      vy: (Math.random() - 0.5) * 0.3,
+      size: Math.random() * 2 + 1,
+      opacity: Math.random() * 0.3 + 0.1,
+    }));
+    particlesRef.current = particles;
+
+    const animate = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      particlesRef.current.forEach((p) => {
+        // Mouse repulsion
+        const dx = mouseRef.current.x - p.x;
+        const dy = mouseRef.current.y - p.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < 150) {
+          p.vx -= (dx / dist) * 0.02;
+          p.vy -= (dy / dist) * 0.02;
+        }
+
+        // Apply velocity
+        p.x += p.vx;
+        p.y += p.vy;
+
+        // Dampen velocity
+        p.vx *= 0.99;
+        p.vy *= 0.99;
+
+        // Wrap around
+        if (p.x < 0) p.x = canvas.width;
+        if (p.x > canvas.width) p.x = 0;
+        if (p.y < 0) p.y = canvas.height;
+        if (p.y > canvas.height) p.y = 0;
+
+        // Draw
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(240, 127, 60, ${p.opacity})`;
+        ctx.fill();
+      });
+
+      // Draw connections
+      particlesRef.current.forEach((a, i) => {
+        particlesRef.current.slice(i + 1).forEach((b) => {
+          const dx = a.x - b.x;
+          const dy = a.y - b.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < 120) {
+            ctx.beginPath();
+            ctx.moveTo(a.x, a.y);
+            ctx.lineTo(b.x, b.y);
+            ctx.strokeStyle = `rgba(240, 127, 60, ${0.05 * (1 - dist / 120)})`;
+            ctx.lineWidth = 0.5;
+            ctx.stroke();
+          }
+        });
+      });
+
+      requestAnimationFrame(animate);
+    };
+
+    const handleMouse = (e: MouseEvent) => {
+      mouseRef.current = { x: e.clientX, y: e.clientY };
+    };
+    window.addEventListener("mousemove", handleMouse);
+
+    animate();
+
+    return () => {
+      window.removeEventListener("resize", resize);
+      window.removeEventListener("mousemove", handleMouse);
+    };
+  }, []);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      className="absolute inset-0 w-full h-full pointer-events-none"
+      style={{ zIndex: 0 }}
+    />
+  );
+}
+
+// Floating badge that follows mouse slightly
+function FloatingBadge() {
+  const [pos, setPos] = useState({ x: 0, y: 0 });
+
+  useEffect(() => {
+    let targetX = 0, targetY = 0;
+    let currentX = 0, currentY = 0;
+
+    const handleMouse = (e: MouseEvent) => {
+      targetX = (e.clientX / window.innerWidth - 0.5) * 20;
+      targetY = (e.clientY / window.innerHeight - 0.5) * 20;
+    };
+    window.addEventListener("mousemove", handleMouse);
+
+    const animate = () => {
+      currentX += (targetX - currentX) * 0.05;
+      currentY += (targetY - currentY) * 0.05;
+      setPos({ x: currentX, y: currentY });
+      requestAnimationFrame(animate);
+    };
+    animate();
+
+    return () => window.removeEventListener("mousemove", handleMouse);
+  }, []);
+
+  return (
+    <div
+      className="absolute pointer-events-none"
+      style={{
+        transform: `translate(${pos.x}px, ${pos.y}px)`,
+        top: "15%",
+        right: "10%",
+        zIndex: 1,
+      }}
+    >
+      <div className="bg-white/80 backdrop-blur-sm border border-black-border rounded-xl px-4 py-2 shadow-lg shadow-black/5 animate-float">
+        <p className="text-xs font-bold text-jaffa">Auto-Enhance Active</p>
+        <p className="text-[10px] text-black-soft mt-0.5">-23% tokens saved</p>
+      </div>
+    </div>
+  );
+}
 
 export default function LandingPage() {
   const router = useRouter();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   return (
-    <div className="min-h-screen bg-bg">
+    <div className="min-h-screen bg-bg relative overflow-hidden">
+      {mounted && <Particles />}
+      {mounted && <FloatingBadge />}
+
       {/* Nav */}
-      <nav className="flex items-center justify-between px-8 py-5 border-b border-black-border bg-bg/80 backdrop-blur-md sticky top-0 z-50">
+      <nav className="relative z-10 flex items-center justify-between px-8 py-5 border-b border-black-border bg-bg/80 backdrop-blur-md sticky top-0">
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 relative">
             <Image src="/logo.svg" alt="TokenScope" width={32} height={32} />
           </div>
           <div>
             <span className="font-bold text-xl tracking-tight leading-none">TokenScope</span>
-            <span className="block text-[10px] text-black-soft tracking-wide uppercase">Token Analytics</span>
+            <span className="block text-[10px] text-black-soft tracking-wide uppercase">API Gateway</span>
           </div>
         </div>
         <SignedOut>
@@ -127,16 +271,16 @@ export default function LandingPage() {
         <div className="relative z-10 max-w-3xl mx-auto">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-jaffa/8 border border-jaffa/20 text-xs font-semibold text-jaffa-dark mb-8 animate-fade-in">
             <Zap size={11} />
-            AI Token Analytics Platform
+            AI API Proxy Gateway
           </div>
           <h1 className="text-5xl md:text-6xl font-bold tracking-tight mb-6 animate-slide-up leading-tight">
-            Track &amp; Optimize
+            One endpoint.
             <br />
-            <span className="text-jaffa">Your AI Spend</span>
+            <span className="text-jaffa">Every AI model.</span>
           </h1>
           <p className="text-base opacity-60 max-w-xl mx-auto mb-10 animate-slide-up leading-relaxed" style={{ animationDelay: "100ms" }}>
-            Connect your OpenAI, Anthropic &amp; Gemini API keys. Track every token,
-            visualize in 3D, and get AI-powered prompt optimization.
+            Route OpenAI, Anthropic & Gemini through a single gateway.
+            Track every token. Auto-enhance prompts. Zero vendor lock-in.
           </p>
           <div className="flex items-center justify-center gap-3 animate-slide-up" style={{ animationDelay: "200ms" }}>
             <SignedOut>
@@ -158,28 +302,65 @@ export default function LandingPage() {
             </SignedIn>
           </div>
 
-          {/* Providers logos */}
-          <div className="flex items-center justify-center gap-6 mt-12 animate-fade-in" style={{ animationDelay: "300ms" }}>
-            <span className="text-xs opacity-40 font-medium uppercase tracking-wider">Supports</span>
-            {providers.map((p) => (
-              <div key={p.name} className="flex items-center gap-2 opacity-50 hover:opacity-80 transition-opacity">
-                <div
-                  className="w-6 h-6 rounded flex items-center justify-center text-white text-[9px] font-bold"
-                  style={{ backgroundColor: p.color }}
-                >
-                  {p.short}
+          {/* Provider logos */}
+          <div className="flex items-center justify-center gap-8 mt-14 animate-fade-in" style={{ animationDelay: "300ms" }}>
+            <span className="text-xs opacity-30 font-medium uppercase tracking-wider">Supports</span>
+            <div className="flex items-center gap-6">
+              <div className="flex items-center gap-2 opacity-60 hover:opacity-100 transition-opacity group cursor-pointer">
+                <div className="w-6 h-6 relative">
+                  <Image
+                    src="https://upload.wikimedia.org/wikipedia/commons/4/4d/OpenAI_Logo.svg"
+                    alt="OpenAI"
+                    width={24}
+                    height={24}
+                    className="object-contain brightness-0 group-hover:brightness-100 transition-all"
+                    style={{ filter: "brightness(0) opacity(0.6) invert(20%) sepia(90%) saturate(2000%) hue-rotate(5deg)" }}
+                    unoptimized
+                  />
                 </div>
-                <span className="text-xs font-medium text-black-soft">{p.name}</span>
+                <span className="text-xs font-medium text-black-soft group-hover:text-black transition-colors">OpenAI</span>
               </div>
-            ))}
+              <div className="flex items-center gap-2 opacity-60 hover:opacity-100 transition-opacity group cursor-pointer">
+                <div className="w-6 h-6 relative">
+                  <Image
+                    src="https://upload.wikimedia.org/wikipedia/commons/1/14/Anthropic.png"
+                    alt="Anthropic"
+                    width={24}
+                    height={24}
+                    className="object-contain brightness-0 group-hover:brightness-100 transition-all"
+                    style={{ filter: "invert(10%) sepia(90%) saturate(500%) hue-rotate(120deg)" }}
+                    unoptimized
+                  />
+                </div>
+                <span className="text-xs font-medium text-black-soft group-hover:text-black transition-colors">Anthropic</span>
+              </div>
+              <div className="flex items-center gap-2 opacity-60 hover:opacity-100 transition-opacity group cursor-pointer">
+                <div className="w-6 h-6 relative">
+                  <Image
+                    src="https://upload.wikimedia.org/wikipedia/commons/d/d9/Google_Gemini_logo_2025.svg"
+                    alt="Google Gemini"
+                    width={24}
+                    height={24}
+                    className="object-contain brightness-0 group-hover:brightness-100 transition-all"
+                    style={{ filter: "invert(20%) sepia(90%) saturate(300%) hue-rotate(180deg)" }}
+                    unoptimized
+                  />
+                </div>
+                <span className="text-xs font-medium text-black-soft group-hover:text-black transition-colors">Gemini</span>
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
       {/* Stats */}
-      <section className="px-8 py-14 border-y border-black-border bg-surface">
-        <div className="max-w-4xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8">
-          {stats.map((s, i) => (
+      <section className="relative z-10 px-8 py-14 border-y border-black-border bg-surface">
+        <div className="max-w-4xl mx-auto grid grid-cols-2 md:grid-cols-3 gap-8">
+          {[
+            { label: "AI Providers", value: "3" },
+            { label: "Proxy Keys", value: "Unlimited" },
+            { label: "Request Logs", value: "Live" },
+          ].map((s, i) => (
             <div key={i} className="text-center">
               <div className="text-3xl font-bold text-jaffa">{s.value}</div>
               <div className="text-sm opacity-60 mt-1">{s.label}</div>
@@ -189,12 +370,12 @@ export default function LandingPage() {
       </section>
 
       {/* Features */}
-      <section className="px-8 py-24">
+      <section className="relative z-10 px-8 py-24">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold mb-4">Everything you need to control AI costs</h2>
+            <h2 className="text-3xl font-bold mb-4">Everything you need for AI routing</h2>
             <p className="opacity-60 max-w-xl mx-auto">
-              From real-time tracking to TF-IDF optimization — complete visibility into your AI usage.
+              From proxy routing to TF-IDF optimization — complete control over your AI API usage.
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -232,14 +413,14 @@ export default function LandingPage() {
       </section>
 
       {/* How it works */}
-      <section className="px-8 py-16 border-y border-black-border bg-surface">
+      <section className="relative z-10 px-8 py-16 border-y border-black-border bg-surface">
         <div className="max-w-4xl mx-auto">
           <h2 className="text-2xl font-bold text-center mb-12">How it works</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {[
-              { step: "01", title: "Add your API key", desc: "Connect OpenAI, Anthropic, or Gemini API keys in seconds. We validate and store them securely." },
-              { step: "02", title: "Track every call", desc: "Every API request is logged with token counts, costs, and timestamps. Per-user isolation." },
-              { step: "03", title: "Optimize & save", desc: "Use TF-IDF analysis to identify high-impact tokens and reduce your AI spend." },
+              { step: "01", title: "Add your API keys", desc: "Connect OpenAI, Anthropic, or Gemini API keys in your dashboard. Encrypted and secure." },
+              { step: "02", title: "Create a proxy key", desc: "Get an OpenAI-compatible endpoint. Use it in your code instead of calling providers directly." },
+              { step: "03", title: "Track & optimize", desc: "Every request is logged. Enable auto-enhance to automatically reduce token usage." },
             ].map((item, i) => (
               <div key={i} className="text-center">
                 <div className="w-12 h-12 rounded-full bg-jaffa text-white font-bold text-lg flex items-center justify-center mx-auto mb-4">
@@ -254,7 +435,7 @@ export default function LandingPage() {
       </section>
 
       {/* CTA */}
-      <section className="px-8 py-20">
+      <section className="relative z-10 px-8 py-20">
         <div className="max-w-2xl mx-auto text-center">
           <div className="card relative overflow-hidden">
             <div className="absolute inset-0 bg-gradient-to-br from-jaffa/5 to-transparent pointer-events-none" />
@@ -262,10 +443,9 @@ export default function LandingPage() {
               <div className="w-14 h-14 rounded-2xl bg-jaffa flex items-center justify-center mx-auto mb-6 shadow-sm">
                 <Key size={24} className="text-white" />
               </div>
-              <h2 className="text-2xl font-bold mb-3">Start tracking in 30 seconds</h2>
+              <h2 className="text-2xl font-bold mb-3">Start routing in 30 seconds</h2>
               <p className="opacity-60 mb-8 text-sm">
-                Add your first API key and see your usage dashboard immediately.
-                No setup, no configuration, just results.
+                Add your API key, create a proxy endpoint, and start tracking. No configuration needed.
               </p>
               <SignedOut>
                 <SignUpButton mode="modal">
@@ -285,12 +465,12 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="px-8 py-8 border-t border-black-border text-center">
+      <footer className="relative z-10 px-8 py-8 border-t border-black-border text-center">
         <div className="flex items-center justify-center gap-2">
           <div className="w-4 h-4 relative">
             <Image src="/icon.svg" alt="" width={16} height={16} />
           </div>
-          <span className="text-xs opacity-40">TokenScope — AI Token Analytics</span>
+          <span className="text-xs opacity-40">TokenScope — AI API Gateway & Analytics</span>
         </div>
       </footer>
     </div>
