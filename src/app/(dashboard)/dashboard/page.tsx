@@ -76,24 +76,44 @@ export default function DashboardPage() {
     setLoading(true);
     setError(null);
     try {
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
+      const baseUrl = apiUrl.replace('/api/v1', '');
       const userId = user.id;
 
-      const [keysRes, statsRes, dailyRes] = await Promise.all([
-        fetch(`${baseUrl}/keys`, {
+      const [keysRes, statsRes, dailyRes, recentLogs] = await Promise.all([
+        fetch(`${apiUrl}/keys`, {
           headers: { 'X-User-Id': userId }
         }).then(r => r.ok ? r.json() : []).catch(() => []),
-        fetch(`${baseUrl}/stats/overview`, {
+        fetch(`${apiUrl}/stats/overview`, {
           headers: { 'X-User-Id': userId }
         }).then(r => r.ok ? r.json() : null).catch(() => null),
-        fetch(`${baseUrl}/stats/daily?days=7`, {
+        fetch(`${apiUrl}/stats/daily?days=7`, {
+          headers: { 'X-User-Id': userId }
+        }).then(r => r.ok ? r.json() : []).catch(() => []),
+        fetch(`${apiUrl}/stats/recent?limit=50`, {
           headers: { 'X-User-Id': userId }
         }).then(r => r.ok ? r.json() : []).catch(() => []),
       ]);
 
+      // Transform recent logs to log format
+      const transformedLogs = recentLogs.map((log: any) => ({
+        type: log.status === 'success' ? 'request' : 'error',
+        proxy_id: log.proxy_id,
+        provider: log.provider,
+        model: log.model,
+        prompt_tokens: log.prompt_tokens,
+        completion_tokens: log.completion_tokens,
+        total_tokens: log.total_tokens,
+        cost: log.cost,
+        latency_ms: log.latency_ms,
+        error: log.error_message,
+        timestamp: log.created_at
+      }));
+
       setKeys(keysRes);
       setStats(statsRes);
       setDailyStats(dailyRes);
+      setLogs(transformedLogs);
     } catch (err) {
       console.error('Failed to load data:', err);
       setError('Failed to connect to backend. Please ensure the API server is running.');
@@ -109,23 +129,35 @@ export default function DashboardPage() {
       eventSourceRef.current.close();
     }
 
-    const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
+    const baseUrl = apiUrl.replace('/api/v1', '');
     const eventSource = new EventSource(`${baseUrl}/logs/stream?user_id=${user.id}`);
     eventSourceRef.current = eventSource;
 
     eventSource.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
+        // Skip heartbeats and disconnected messages
         if (data.type === 'request' || data.type === 'error') {
-          setLogs(prev => [data, ...prev].slice(0, 100));
+          setLogs(prev => {
+            // Check if log already exists
+            const exists = prev.some(l => l.timestamp === data.timestamp);
+            if (exists) return prev;
+            return [data, ...prev].slice(0, 100);
+          });
         }
       } catch (e) {
-        console.error('SSE parse error:', e);
+        // Ignore parse errors for heartbeats
       }
     };
 
     eventSource.onerror = () => {
-      setTimeout(connectSSE, 5000);
+      // Don't auto-reconnect too aggressively
+      setTimeout(() => {
+        if (eventSourceRef.current?.readyState === EventSource.CLOSED) {
+          connectSSE();
+        }
+      }, 10000);
     };
   }, [user]);
 
@@ -408,55 +440,63 @@ export default function DashboardPage() {
           </div>
 
           {/* Live Logs */}
-          <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-4">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold">Live Logs</h2>
-              <span className="flex items-center gap-2 text-sm text-gray-400">
+          <div className="bg-black border border-gray-800 rounded-xl overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-3 bg-gray-900 border-b border-gray-800">
+              <div className="flex items-center gap-3">
+                <div className="flex gap-1.5">
+                  <div className="w-3 h-3 rounded-full bg-red-500" />
+                  <div className="w-3 h-3 rounded-full bg-yellow-500" />
+                  <div className="w-3 h-3 rounded-full bg-green-500" />
+                </div>
+                <h2 className="text-sm font-medium text-gray-400">Live Terminal</h2>
+              </div>
+              <span className="flex items-center gap-2 text-xs">
                 <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-                Live
+                <span className="text-green-500 font-mono">LIVE</span>
               </span>
             </div>
-            <div className="h-[250px] overflow-y-auto space-y-2">
+            <div className="h-[280px] overflow-y-auto p-4 font-mono text-sm">
               {logs.length > 0 ? (
-                logs.slice(0, 20).map((log, i) => (
-                  <div
-                    key={`${log.timestamp}-${i}`}
-                    className="bg-gray-800/50 rounded-lg p-3 text-sm"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <span
-                          className="px-2 py-0.5 rounded text-xs font-medium"
-                          style={{
-                            backgroundColor: `${PROVIDERS[log.provider || 'openai']?.color}20`,
-                            color: PROVIDERS[log.provider || 'openai']?.color,
-                          }}
-                        >
-                          {(log.provider || 'openai').toUpperCase()}
-                        </span>
-                        <span className="text-gray-400 text-xs">{log.model}</span>
+                <div className="space-y-1">
+                  {logs.slice(0, 50).map((log, i) => {
+                    const timestamp = log.timestamp ? new Date(log.timestamp).toLocaleTimeString() : '';
+                    const isError = log.type === 'error';
+                    const isSuccess = log.type === 'request';
+
+                    return (
+                      <div key={`${log.timestamp}-${i}`} className={`animate-fadeIn ${isError ? 'text-red-400' : 'text-green-400'}`}>
+                        <span className="text-gray-600">[{timestamp}]</span>{' '}
+                        <span className={isError ? 'text-red-500' : 'text-green-500'}>
+                          {isError ? '[ERROR]' : '[SUCCESS]'}
+                        </span>{' '}
+                        {isError ? (
+                          <span className="text-red-300">{log.error}</span>
+                        ) : (
+                          <>
+                            <span className="text-orange-400">{log.provider?.toUpperCase()}</span>{' '}
+                            <span className="text-gray-400">/</span>{' '}
+                            <span className="text-cyan-400">{log.model}</span>{' '}
+                            <span className="text-gray-600">-&gt;</span>{' '}
+                            <span className="text-gray-300">tokens:</span>{' '}
+                            <span className="text-blue-400">{log.prompt_tokens}</span>
+                            <span className="text-gray-600">/</span>
+                            <span className="text-purple-400">{log.completion_tokens}</span>{' '}
+                            <span className="text-gray-300">cost:</span>{' '}
+                            <span className="text-yellow-400">${log.cost?.toFixed(4)}</span>{' '}
+                            <span className="text-gray-300">latency:</span>{' '}
+                            <span className="text-gray-400">{log.latency_ms}ms</span>
+                          </>
+                        )}
                       </div>
-                      <span className="text-xs text-gray-500">
-                        {log.timestamp?.slice(11, 19)}
-                      </span>
-                    </div>
-                    {log.type === 'error' ? (
-                      <p className="text-red-400 mt-1 text-xs truncate">{log.error}</p>
-                    ) : (
-                      <div className="flex items-center gap-4 mt-1 text-xs text-gray-400">
-                        <span>In: {log.prompt_tokens?.toLocaleString()}</span>
-                        <span>Out: {log.completion_tokens?.toLocaleString()}</span>
-                        <span className="text-orange">${log.cost?.toFixed(4)}</span>
-                        <span>{log.latency_ms}ms</span>
-                      </div>
-                    )}
-                  </div>
-                ))
+                    );
+                  })}
+                </div>
               ) : (
-                <div className="h-full flex flex-col items-center justify-center text-gray-500">
-                  <Activity className="w-12 h-12 mb-3 opacity-50" />
-                  <p>No requests yet</p>
-                  <p className="text-sm">Test a proxy to see live logs</p>
+                <div className="h-full flex flex-col items-center justify-center text-gray-600">
+                  <div className="text-center">
+                    <p className="text-lg mb-2">$ Awaiting requests...</p>
+                    <p className="text-sm">Make API calls to see live logs</p>
+                  </div>
                 </div>
               )}
             </div>
