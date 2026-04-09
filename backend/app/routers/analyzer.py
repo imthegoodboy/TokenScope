@@ -1,6 +1,8 @@
-from fastapi import APIRouter, Body
+from fastapi import APIRouter, Body, Depends, Request
 from pydantic import BaseModel
 from ..services.tfidf_engine import TFIDFEngine
+from ..database import get_db, PromptOptimization
+from sqlalchemy.ext.asyncio import AsyncSession
 
 router = APIRouter()
 tfidf_engine = TFIDFEngine()
@@ -8,13 +10,15 @@ tfidf_engine = TFIDFEngine()
 class AnalyzeRequest(BaseModel):
     prompt: str
     target_model: str = "chatgpt"
+    user_id: str = "anonymous"
 
 class EnhanceRequest(BaseModel):
     prompt: str
     target_model: str = "chatgpt"
+    user_id: str = "anonymous"
 
 @router.post("/analyze")
-async def analyze_prompt(request: AnalyzeRequest):
+async def analyze_prompt(request: AnalyzeRequest, db: AsyncSession = Depends(get_db)):
     scores = tfidf_engine.analyze(request.prompt)
 
     tokens = request.prompt.split()
@@ -34,6 +38,9 @@ async def analyze_prompt(request: AnalyzeRequest):
     enhanced_tokens = len(enhanced.split())
     enhanced_cost = tfidf_engine.estimate_cost(enhanced, request.target_model)
 
+    # Get user_id from header if not provided in body
+    user_id = request.user_id if request.user_id != "anonymous" else "anonymous"
+
     return {
         "original": {
             "text": request.prompt,
@@ -48,7 +55,8 @@ async def analyze_prompt(request: AnalyzeRequest):
             "token_savings": current_tokens - enhanced_tokens,
             "cost_savings_percent": ((current_cost - enhanced_cost) / current_cost * 100) if current_cost > 0 else 0,
             "cost_savings": round(current_cost - enhanced_cost, 8),
-        }
+        },
+        "user_id": user_id
     }
 
 @router.post("/enhance")
