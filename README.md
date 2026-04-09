@@ -71,7 +71,7 @@ curl -X POST "https://api.openai.com/v1/chat/completions" \
   -d '{"messages": [{"role": "user", "content": "Hello"}]}'
 
 # With TokenScope proxy
-curl -X POST "http://localhost:3000/api/v1/proxy/YOUR_PROXY_ID" \
+curl -X POST "http://localhost:8000/api/v1/proxy/YOUR_PROXY_ID" \
   -d '{"messages": [{"role": "user", "content": "Hello"}]}'
 ```
 
@@ -135,7 +135,4 @@ NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
 ```
 DATABASE_URL=sqlite+aiosqlite:///./tokenscope.db
 ```
-
-## License
-
-MIT
+ 
