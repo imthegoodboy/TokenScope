@@ -6,12 +6,42 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Load initial data
   await Promise.all([
     loadStats(),
-    loadHistory()
+    loadHistory(),
+    loadSettings()
   ]);
 
   // Setup event listeners
   setupEventListeners();
 });
+
+async function loadSettings() {
+  try {
+    const result = await chrome.storage.local.get('settings');
+    const settings = result.settings || { auto_popup: true };
+    document.getElementById('auto-toggle').checked = settings.auto_popup !== false;
+
+    // Sync with content script
+    chrome.runtime.sendMessage({
+      type: 'UPDATE_SETTINGS',
+      payload: settings
+    });
+  } catch (error) {
+    console.error('Failed to load settings:', error);
+  }
+}
+
+async function saveSettings(settings) {
+  try {
+    await chrome.storage.local.set({ settings });
+    // Sync with content script
+    chrome.runtime.sendMessage({
+      type: 'UPDATE_SETTINGS',
+      payload: settings
+    });
+  } catch (error) {
+    console.error('Failed to save settings:', error);
+  }
+}
 
 async function loadStats() {
   try {
@@ -71,6 +101,11 @@ function setupEventListeners() {
     document.getElementById('prompt-input').value = '';
     document.getElementById('result-card').classList.remove('show');
     document.getElementById('optimize-btn').disabled = false;
+  });
+
+  // Auto toggle
+  document.getElementById('auto-toggle').addEventListener('change', (e) => {
+    saveSettings({ auto_popup: e.target.checked });
   });
 
   // Enter to optimize

@@ -42,6 +42,21 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       saveSettings(message.payload).then(() => sendResponse({ success: true }));
       return true;
 
+    case 'UPDATE_SETTINGS':
+      // Broadcast to all tabs
+      chrome.tabs.query({}, (tabs) => {
+        tabs.forEach(tab => {
+          if (tab.id) {
+            chrome.tabs.sendMessage(tab.id, {
+              type: 'SETTINGS_UPDATED',
+              payload: message.payload
+            });
+          }
+        });
+      });
+      sendResponse({ success: true });
+      return true;
+
     case 'GET_HISTORY':
       getHistory().then(history => sendResponse(history));
       return true;
