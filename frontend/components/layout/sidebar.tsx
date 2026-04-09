@@ -12,6 +12,7 @@ import {
   Terminal,
   ListOrdered,
   Zap,
+  BookOpen,
 } from "lucide-react";
 
 const navItems = [
@@ -21,6 +22,7 @@ const navItems = [
   { href: "/dashboard/logs", label: "Request Logs", icon: ListOrdered },
   { href: "/dashboard/test-proxy", label: "Test Proxy", icon: Zap },
   { href: "/dashboard/analyzer", label: "Prompt Analyzer", icon: Wand2 },
+  { href: "/dashboard/docs", label: "Docs", icon: BookOpen },
   { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ];
 

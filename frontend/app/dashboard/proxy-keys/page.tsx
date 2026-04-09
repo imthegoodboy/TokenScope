@@ -20,6 +20,8 @@ export default function ProxyKeysPage() {
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [newLabel, setNewLabel] = useState("");
+  const [newRateLimit, setNewRateLimit] = useState(60);
+  const [newAutoEnhance, setNewAutoEnhance] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
@@ -47,7 +49,11 @@ export default function ProxyKeysPage() {
     try {
       const result = await request<{ id: string; key: string; key_label: string; active: boolean; rate_limit: number; auto_enhance: boolean; created_at: string }>(
         "/api/v1/proxy-keys/",
-        { method: "POST", body: JSON.stringify({ label: newLabel.trim() || "Default" }) }
+        { method: "POST", body: JSON.stringify({
+          label: newLabel.trim() || "Default",
+          rate_limit: newRateLimit,
+          auto_enhance: newAutoEnhance,
+        }) }
       );
       setKeys((prev) => [{ ...result, key_label: result.key_label }, ...prev]);
       setShowKeyModal({ id: result.id, key: result.key, label: result.key_label });
@@ -138,18 +144,49 @@ export default function ProxyKeysPage() {
           {error && (
             <div className="mb-4 p-3 rounded-lg bg-danger/10 border border-danger/20 text-sm text-danger">{error}</div>
           )}
-          <div className="flex items-end gap-3">
-            <div className="flex-1">
-              <Input
-                placeholder="Key label (e.g., Production App)"
-                value={newLabel}
-                onChange={(e) => setNewLabel(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleCreate()}
-              />
+          <div className="space-y-4">
+            <div className="flex items-end gap-3">
+              <div className="flex-1">
+                <label className="block text-[11px] font-medium opacity-50 uppercase tracking-wider mb-1.5">Key Label</label>
+                <Input
+                  placeholder="Key label (e.g., Production App)"
+                  value={newLabel}
+                  onChange={(e) => setNewLabel(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleCreate()}
+                />
+              </div>
             </div>
-            <Button onClick={handleCreate} disabled={creating}>
-              {creating ? <><RefreshCw size={14} className="animate-spin" /> Creating...</> : <><Plus size={14} /> Create Key</>}
-            </Button>
+            <div className="flex flex-wrap items-end gap-4">
+              <div>
+                <label className="block text-[11px] font-medium opacity-50 uppercase tracking-wider mb-1.5">
+                  Rate Limit: {newRateLimit} req/min
+                </label>
+                <input
+                  type="range"
+                  min={10}
+                  max={300}
+                  step={10}
+                  value={newRateLimit}
+                  onChange={(e) => setNewRateLimit(parseInt(e.target.value))}
+                  className="w-48 h-1.5 bg-black-border rounded-full appearance-none cursor-pointer"
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() => setNewAutoEnhance(!newAutoEnhance)}
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-all border ${
+                  newAutoEnhance
+                    ? "bg-green/10 text-green border-green/20"
+                    : "bg-black/4 text-black-soft border-transparent hover:bg-black/8"
+                }`}
+              >
+                <Wand2 size={12} />
+                Auto-Enhance {newAutoEnhance ? "ON" : "OFF"}
+              </button>
+              <Button onClick={handleCreate} disabled={creating} className="ml-auto">
+                {creating ? <><RefreshCw size={14} className="animate-spin" /> Creating...</> : <><Plus size={14} /> Create Key</>}
+              </Button>
+            </div>
           </div>
         </div>
 

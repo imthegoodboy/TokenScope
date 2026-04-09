@@ -49,7 +49,7 @@ async def get_logs(
 ):
     """Get proxy logs for the user's proxy keys."""
     pk_result = await session.execute(
-        select(ProxyKey.id).where(ProxyKey.user_id == user_id, ProxyKey.active == True)  # noqa
+        select(ProxyKey.id).where(ProxyKey.user_id == user_id)
     )
     proxy_key_ids = [r[0] for r in pk_result.all()]
 
@@ -77,7 +77,7 @@ async def get_logs(
 
     query = query.order_by(desc(ProxyLog.created_at)).offset((page - 1) * limit).limit(limit)
     result = await session.execute(query)
-    logs = result.all()
+    logs = result.scalars().all()
 
     stats_result = await session.execute(
         select(
@@ -125,7 +125,7 @@ async def get_stats(
 ):
     """Get overall proxy stats for the user."""
     pk_result = await session.execute(
-        select(ProxyKey.id).where(ProxyKey.user_id == user_id, ProxyKey.active == True)  # noqa
+        select(ProxyKey.id).where(ProxyKey.user_id == user_id)
     )
     proxy_key_ids = [r[0] for r in pk_result.all()]
 
@@ -181,7 +181,7 @@ async def get_breakdown(
 ):
     """Get provider and model breakdown for the user."""
     pk_result = await session.execute(
-        select(ProxyKey.id).where(ProxyKey.user_id == user_id, ProxyKey.active == True)  # noqa
+        select(ProxyKey.id).where(ProxyKey.user_id == user_id)
     )
     proxy_key_ids = [r[0] for r in pk_result.all()]
 
@@ -258,7 +258,6 @@ async def get_chart_data(
                 ProxyLog.proxy_key_id.in_(
                     select(ProxyKey.id).where(
                         ProxyKey.user_id == user_id,
-                        ProxyKey.active == True,  # noqa
                     )
                 )
             ).where(

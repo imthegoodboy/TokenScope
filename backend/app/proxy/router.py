@@ -65,12 +65,29 @@ async def chat_completions(
 
     if proxy_key_obj.auto_enhance and prompt_text.strip():
         try:
-            enhanced_result = optimize_prompt(prompt_text, target_tokens=max(20, len(prompt_text.split()) // 2))
-            if enhanced_result.get("optimized") and enhanced_result["optimized"].strip():
-                enhanced_prompt = enhanced_result["optimized"]
-                enhancement_applied = True
-                # Rebuild messages with enhanced prompt
-                messages = [{"role": "user", "content": enhanced_prompt}]
+            # Only enhance the last user message, preserve system prompt and history
+            last_user_idx = None
+            last_user_content = ""
+            for i in range(len(messages) - 1, -1, -1):
+                if messages[i].get("role") == "user":
+                    last_user_idx = i
+                    last_user_content = messages[i].get("content", "")
+                    break
+
+            if last_user_idx is not None and last_user_content.strip():
+                enhanced_result = optimize_prompt(
+                    last_user_content,
+                    target_tokens=max(20, len(last_user_content.split()) // 2),
+                )
+                if enhanced_result.get("optimized") and enhanced_result["optimized"].strip():
+                    enhanced_prompt = enhanced_result["optimized"]
+                    enhancement_applied = True
+                    # Only replace the last user message content, keep all other messages
+                    messages = list(messages)  # copy
+                    messages[last_user_idx] = {
+                        **messages[last_user_idx],
+                        "content": enhanced_prompt,
+                    }
         except Exception:
             # Enhancement failed — use original
             pass
@@ -87,7 +104,7 @@ async def chat_completions(
             APIKey.active == True,  # noqa
         ).limit(1)
     )
-    api_key_obj = result.one_or_none()
+    api_key_obj = result.scalars().first()
     if not api_key_obj:
         raise HTTPException(
             status_code=400,

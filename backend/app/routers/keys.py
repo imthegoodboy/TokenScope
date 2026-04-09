@@ -49,13 +49,13 @@ async def list_api_keys(
     result = await session.execute(
         select(APIKey).where(APIKey.user_id == user_id).order_by(APIKey.created_at.desc())
     )
-    keys = result.all()
+    keys = result.scalars().all()
 
     response = []
     for key in keys:
         # Get proxy log stats for this provider (grouped by provider)
         pk_ids = await session.execute(
-            select(ProxyKey.id).where(ProxyKey.user_id == user_id, ProxyKey.active == True)  # noqa
+            select(ProxyKey.id).where(ProxyKey.user_id == user_id)
         )
         proxy_key_ids = [r[0] for r in pk_ids.all()]
 
@@ -97,7 +97,7 @@ async def delete_api_key(
             APIKey.user_id == user_id,
         )
     )
-    key = result.one_or_none()
+    key = result.scalars().first()
     if not key:
         raise HTTPException(status_code=404, detail="API key not found")
 

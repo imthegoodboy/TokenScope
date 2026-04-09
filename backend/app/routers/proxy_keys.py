@@ -11,6 +11,8 @@ router = APIRouter(prefix="/proxy-keys", tags=["Proxy Keys"])
 
 class CreateProxyKeyRequest(BaseModel):
     label: str = "Default"
+    rate_limit: int = 60
+    auto_enhance: bool = False
 
 
 class ProxyKeyResponse(BaseModel):
@@ -39,7 +41,11 @@ async def create_key(
     session: AsyncSession = Depends(get_session),
 ):
     """Create a new proxy API key. The raw key is only shown ONCE — store it securely."""
-    proxy_key, raw_key = await create_proxy_key(session, user_id, body.label)
+    proxy_key, raw_key = await create_proxy_key(
+        session, user_id, body.label,
+        rate_limit=body.rate_limit,
+        auto_enhance=body.auto_enhance,
+    )
     return ProxyKeyWithSecretResponse(
         id=proxy_key.id,
         key=raw_key,
@@ -61,7 +67,7 @@ async def list_proxy_keys(
     result = await session.execute(
         select(ProxyKey).where(ProxyKey.user_id == user_id).order_by(ProxyKey.created_at.desc())
     )
-    keys = result.all()
+    keys = result.scalars().all()
     return [
         ProxyKeyResponse(
             id=k.id,
@@ -89,7 +95,7 @@ async def delete_proxy_key(
             ProxyKey.user_id == user_id,
         )
     )
-    key = result.one_or_none()
+    key = result.scalars().first()
     if not key:
         raise HTTPException(status_code=404, detail="Proxy key not found")
 
@@ -113,7 +119,7 @@ async def toggle_enhance(
             ProxyKey.user_id == user_id,
         )
     )
-    key = result.one_or_none()
+    key = result.scalars().first()
     if not key:
         raise HTTPException(status_code=404, detail="Proxy key not found")
 
