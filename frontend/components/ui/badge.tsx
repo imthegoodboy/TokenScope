@@ -9,11 +9,13 @@ const badgeVariants = cva(
       variant: {
         default: "border-black-border bg-black/5 text-black",
         black: "bg-black text-white border-transparent",
-        success: "border-success/30 bg-success/10 text-success",
+        success: "border-green/30 bg-green-bg text-green",
         danger: "border-danger/30 bg-danger/10 text-danger",
-        openai: "border-[#10A37F]/30 bg-[#10A37F]/10 text-[#10A37F]",
-        anthropic: "border-[#D4A574]/30 bg-[#D4A574]/10 text-[#A0673A]",
-        gemini: "border-[#4285F4]/30 bg-[#4285F4]/10 text-[#4285F4]",
+        warning: "border-warning/30 bg-warning/10 text-warning",
+        jaffa: "bg-jaffa-bg text-jaffa-dark border-jaffa/30",
+        openai: "bg-jaffa-bg text-jaffa-dark border-jaffa/30",
+        anthropic: "bg-green-bg text-green border-green/30",
+        gemini: "bg-navy-bg text-navy border-navy/30",
       },
     },
     defaultVariants: {

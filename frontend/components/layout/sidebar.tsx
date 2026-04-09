@@ -11,13 +11,14 @@ import {
   BarChart3,
   Settings,
   Zap,
+  GitBranch,
 } from "lucide-react";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/dashboard/keys", label: "API Keys", icon: Key },
-  { href: "/dashboard/analyzer", label: "Analyzer", icon: Wand2 },
-  { href: "/dashboard/history", label: "History", icon: History },
+  { href: "/dashboard/analyzer", label: "Prompt Analyzer", icon: Wand2 },
+  { href: "/dashboard/history", label: "Usage History", icon: History },
   { href: "/dashboard/analytics", label: "Analytics", icon: BarChart3 },
   { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ];
@@ -29,13 +30,15 @@ export function Sidebar() {
     <aside className="w-60 min-h-screen bg-surface border-r border-black-border flex flex-col">
       {/* Logo */}
       <div className="px-6 py-6 border-b border-black-border">
-        <Link href="/dashboard" className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center">
+        <Link href="/dashboard" className="flex items-center gap-2.5">
+          <div className="w-8 h-8 bg-jaffa rounded-lg flex items-center justify-center shadow-sm">
             <Zap size={16} className="text-white" strokeWidth={2.5} />
           </div>
-          <span className="font-semibold text-lg text-black tracking-tight">
-            TokenScope
-          </span>
+          <div>
+            <span className="font-semibold text-lg text-black tracking-tight">
+              TokenScope
+            </span>
+          </div>
         </Link>
       </div>
 
@@ -54,7 +57,7 @@ export function Sidebar() {
               className={cn(
                 "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
                 isActive
-                  ? "bg-black text-white"
+                  ? "bg-jaffa text-white shadow-sm"
                   : "text-black-muted hover:text-black hover:bg-black/5"
               )}
             >
@@ -65,14 +68,19 @@ export function Sidebar() {
         })}
       </nav>
 
-      {/* Footer */}
+      {/* Footer - Plan */}
       <div className="px-4 py-4 border-t border-black-border">
-        <div className="px-3 py-2 rounded-lg bg-black/5">
-          <p className="text-xs font-medium text-black">Free Plan</p>
-          <div className="mt-1.5 h-1.5 bg-black-border rounded-full overflow-hidden">
-            <div className="h-full bg-black rounded-full" style={{ width: "12%" }} />
+        <div className="px-3 py-2.5 rounded-lg bg-jaffa-bg border border-jaffa/20">
+          <div className="flex items-center justify-between mb-1.5">
+            <p className="text-xs font-semibold text-jaffa-dark">Free Plan</p>
+            <p className="text-xs text-jaffa-dark opacity-70">3/25 keys</p>
           </div>
-          <p className="text-xs text-black-muted mt-1">3 of 25 API keys used</p>
+          <div className="h-1.5 bg-jaffa/20 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-jaffa rounded-full transition-all duration-500"
+              style={{ width: "12%" }}
+            />
+          </div>
         </div>
       </div>
     </aside>
