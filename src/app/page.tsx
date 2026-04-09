@@ -151,11 +151,11 @@ function FooterBrandHeading() {
   const playClass = play ? 'footer-word-shine--play' : '';
 
   return (
-    <h2 className="relative text-center font-black leading-[0.82] tracking-[-0.045em] sm:leading-[0.8]">
-      <span
-        ref={ref}
-        className={`footer-word-token relative block text-[clamp(3.25rem,14.5vw,11.5rem)] ${playClass}`}
-      >
+    <h2
+      ref={ref}
+      className="relative text-center font-black leading-[0.82] tracking-[-0.045em] sm:leading-[0.8]"
+    >
+      <span className={`footer-word-token relative block text-[clamp(3.25rem,14.5vw,11.5rem)] ${playClass}`}>
         Token
       </span>
       <span

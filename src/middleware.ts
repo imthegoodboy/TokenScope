@@ -3,12 +3,14 @@ import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 const isProtectedRoute = createRouteMatcher([
   '/dashboard(.*)',
   '/extension-dashboard',
+  '/user-dashboard',
   '/api/v1/keys(.*)',
   '/api/v1/stats(.*)',
   '/api/v1/logs(.*)',
   '/api/v1/usage(.*)',
   '/api/v1/analyzer(.*)',
   '/api/v1/extension(.*)',
+  '/api/v1/scores(.*)',
 ]);
 
 // Pages that require NO auth (public pages)
@@ -19,6 +21,7 @@ const isPublicRoute = createRouteMatcher([
   '/docs',
   '/optimizer',
   '/extension-auth',
+  '/role-selection',
 ]);
 
 export default clerkMiddleware(async (auth, req) => {
