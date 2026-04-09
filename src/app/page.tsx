@@ -218,6 +218,30 @@ function LandingContent() {
     },
   ];
 
+  const newFeatures = [
+    {
+      icon: <Sparkles className="w-6 h-6" />,
+      title: 'Attention Score System',
+      description: 'Track your prompt optimization quality with a 0-100 score. Get insights on mistakes and improvements.',
+      badge: 'NEW',
+      color: 'orange',
+    },
+    {
+      icon: <BarChart3 className="w-6 h-6" />,
+      title: 'Browser Extension',
+      description: 'Optimize prompts directly in ChatGPT, Claude, and Gemini with real-time suggestions.',
+      badge: 'POPULAR',
+      color: 'blue',
+    },
+    {
+      icon: <TrendingUp className="w-6 h-6" />,
+      title: 'Performance Tiers',
+      description: 'Climb from Beginner to Master tier based on your prompt optimization consistency.',
+      badge: 'EXCLUSIVE',
+      color: 'purple',
+    },
+  ];
+
   const testimonials = [
     {
       name: 'Sarah Chen',
