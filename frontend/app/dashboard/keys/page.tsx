@@ -179,53 +179,53 @@ export default function KeysPage() {
               </Button>
             </div>
           ) : (
-            keys.map((key) => (
+            keys.map((k) => (
               <div
-                key={key.id}
+                key={k.id}
                 className="card flex items-center justify-between hover:shadow-card-hover transition-all duration-200"
               >
                 <div className="flex items-center gap-4">
                   <div
                     className="w-11 h-11 rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-sm"
-                    style={{ backgroundColor: PROVIDER_COLORS[key.provider] || "#6B6B6B" }}
+                    style={{ backgroundColor: PROVIDER_COLORS[k.provider] || "#6B6B6B" }}
                   >
-                    {key.provider === "openai" ? "OA" : key.provider === "anthropic" ? "AN" : "GM"}
+                    {k.provider === "openai" ? "OA" : k.provider === "anthropic" ? "AN" : "GM"}
                   </div>
                   <div>
                     <div className="flex items-center gap-2.5">
-                      <h4 className="font-semibold text-base">{key.key_label}</h4>
-                      <Badge variant={key.active ? "success" : "danger">
-                        {key.active ? <CheckCircle2 size={10} /> : <XCircle size={10} />}
-                        {key.active ? "Active" : "Inactive"}
+                      <h4 className="font-semibold text-base">{k.key_label}</h4>
+                      <Badge variant={k.active ? "success" : "danger"}>
+                        {k.active ? <CheckCircle2 size={10} /> : <XCircle size={10} />}
+                        {k.active ? "Active" : "Inactive"}
                       </Badge>
                     </div>
                     <div className="flex items-center gap-2 mt-1">
-                      <span className="font-mono text-xs opacity-50">••••{key.key_last4}</span>
+                      <span className="font-mono text-xs opacity-50">••••{k.key_last4}</span>
                       <span className="opacity-30">·</span>
-                      <span className="text-xs opacity-50">{PROVIDER_LABELS[key.provider]}</span>
+                      <span className="text-xs opacity-50">{PROVIDER_LABELS[k.provider]}</span>
                       <span className="opacity-30">·</span>
-                      <span className="text-xs opacity-40">{formatDate(key.created_at)}</span>
+                      <span className="text-xs opacity-40">{formatDate(k.created_at)}</span>
                     </div>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-5">
-                  {key.usage_count !== undefined && (
+                  {k.usage_count !== undefined && (
                     <div className="text-right">
-                      <p className="font-mono font-semibold text-sm">{key.usage_count} calls</p>
-                      {key.total_spent !== undefined && (
-                        <p className="font-mono text-xs opacity-50">${key.total_spent.toFixed(2)}</p>
+                      <p className="font-mono font-semibold text-sm">{k.usage_count} calls</p>
+                      {k.total_spent !== undefined && (
+                        <p className="font-mono text-xs opacity-50">${k.total_spent.toFixed(2)}</p>
                       )}
                     </div>
                   )}
                   <Button
-                    variant={deleteConfirm === key.id ? "danger" : "ghost"}
+                    variant={deleteConfirm === k.id ? "danger" : "ghost"}
                     size="sm"
-                    onClick={() => handleDelete(key.id)}
-                    className={deleteConfirm === key.id ? "text-white" : "text-black-soft"}
+                    onClick={() => handleDelete(k.id)}
+                    className={deleteConfirm === k.id ? "text-white" : "text-black-soft"}
                   >
                     <Trash2 size={14} />
-                    {deleteConfirm === key.id ? "Confirm?" : ""}
+                    {deleteConfirm === k.id ? "Confirm?" : ""}
                   </Button>
                 </div>
               </div>

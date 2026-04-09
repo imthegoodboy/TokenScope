@@ -20,7 +20,6 @@ const config: Config = {
           soft: "#9B9590",
           muted: "#6B6B6B",
           border: "#E2DDD7",
-          DEFAULT: "#0F0F0F",
         },
         // Accent colors
         jaffa: {
