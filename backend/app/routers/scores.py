@@ -300,43 +300,6 @@ async def get_improvements_summary(user_id: str, db: AsyncSession = Depends(get_
 
 # ============ USER ROLE ENDPOINTS ============
 
-class UserRole(BaseModel):
-    user_id: str
-    role: str  # 'developer' or 'user'
-    created_at: datetime
-
-# Store roles in a simple table
-class UserRoleTable(Base):
-    __tablename__ = "user_roles"
-
-    id = Column(Integer, primary_key=True, autoincrement=True)
-    user_id = Column(String(255), nullable=False, unique=True, index=True)
-    role = Column(String(50), nullable=False)  # developer, user
-    created_at = Column(DateTime, default=datetime.utcnow)
-
-@router.post("/set-role")
-async def set_user_role(user_id: str, role: str, db: AsyncSession = Depends(get_db)):
-    """Set user's role (developer or user)."""
-    if role not in ['developer', 'user']:
-        raise HTTPException(status_code=400, detail="Role must be 'developer' or 'user'")
-
-    from sqlalchemy import insert
-    from ..database import Base
-
-    # Check if table exists, if not create it
-    # For now, we'll just upsert
-    result = await db.execute(select(UserRoleTable).where(UserRoleTable.user_id == user_id))
-    existing = result.scalar_one_or_none()
-
-    if existing:
-        existing.role = role
-    else:
-        new_role = UserRoleTable(user_id=user_id, role=role)
-        db.add(new_role)
-
-    await db.commit()
-    return {"success": True, "role": role}
-
 @router.get("/get-role")
 async def get_user_role(user_id: str, db: AsyncSession = Depends(get_db)):
     """Get user's role."""
