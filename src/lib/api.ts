@@ -87,6 +87,25 @@ export const api = {
     enhance: (prompt: string, targetModel?: string) =>
       request<any>('/enhance', { method: 'POST', body: { prompt, target_model: targetModel } }),
   },
+
+  extension: {
+    saveOptimization: (data: {
+      user_id: string;
+      original_prompt: string;
+      optimized_prompt: string;
+      original_tokens: number;
+      optimized_tokens: number;
+      tokens_saved: number;
+      cost_saved: number;
+      target_model: string;
+      source: string;
+    }) => request<any>('/extension/save-optimization', { method: 'POST', body: data }),
+
+    getStats: (userId: string) => request<any>(`/extension/stats/${userId}`),
+    getHistory: (userId: string, limit?: number) =>
+      request<any>(`/extension/history/${userId}?limit=${limit || 50}`),
+    getDashboardStats: (userId: string) => request<any>(`/extension/dashboard-stats/${userId}`),
+  },
 };
 
 export default api;
