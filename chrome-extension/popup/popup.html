@@ -13,7 +13,7 @@
 
     body {
       width: 380px;
-      min-height: 500px;
+      min-height: 520px;
       background: #0a0a0a;
       color: #fff;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -50,17 +50,17 @@
     }
 
     .logo {
-      width: 44px;
-      height: 44px;
+      width: 48px;
+      height: 48px;
       background: linear-gradient(135deg, #FF6B00, #FF8533);
-      border-radius: 12px;
+      border-radius: 14px;
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 18px;
       font-weight: 800;
       color: #000;
-      box-shadow: 0 4px 15px rgba(255,107,0,0.3);
+      box-shadow: 0 4px 20px rgba(255,107,0,0.3);
     }
 
     .title-area {
@@ -68,7 +68,7 @@
     }
 
     .title {
-      font-size: 18px;
+      font-size: 20px;
       font-weight: 700;
       letter-spacing: -0.5px;
     }
@@ -158,6 +158,73 @@
       color: #666;
       letter-spacing: 1px;
       font-weight: 600;
+    }
+
+    /* How it Works */
+    .how-it-works {
+      background: linear-gradient(135deg, #141414, #0f0f0f);
+      border: 1px solid #222;
+      border-radius: 12px;
+      padding: 16px;
+    }
+
+    .step {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .step:last-child {
+      margin-bottom: 0;
+    }
+
+    .step-number {
+      width: 24px;
+      height: 24px;
+      background: linear-gradient(135deg, #FF6B00, #FF8533);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+      color: #000;
+      flex-shrink: 0;
+    }
+
+    .step-content {
+      flex: 1;
+    }
+
+    .step-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: #fff;
+      margin-bottom: 2px;
+    }
+
+    .step-desc {
+      font-size: 11px;
+      color: #666;
+      line-height: 1.4;
+    }
+
+    .shortcut {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin-top: 4px;
+    }
+
+    .shortcut kbd {
+      background: #222;
+      border: 1px solid #333;
+      border-radius: 4px;
+      padding: 2px 6px;
+      font-size: 10px;
+      font-family: monospace;
+      color: #ccc;
     }
 
     /* Optimizer */
@@ -338,7 +405,7 @@
 
     /* History */
     .history-list {
-      max-height: 200px;
+      max-height: 180px;
       overflow-y: auto;
     }
 
@@ -475,7 +542,7 @@
       <div class="logo">TS</div>
       <div class="title-area">
         <div class="title">Token<span>Scope</span></div>
-        <div class="subtitle">AI Prompt Optimizer</div>
+        <div class="subtitle">VS Code-style Prompt Optimizer</div>
       </div>
     </div>
   </div>
@@ -495,6 +562,35 @@
       <div class="stat-icon">💰</div>
       <div class="stat-value" id="saved-cost">$0</div>
       <div class="stat-label">Cost Saved</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">
+      <div class="section-title">How It Works</div>
+    </div>
+    <div class="how-it-works">
+      <div class="step">
+        <div class="step-number">1</div>
+        <div class="step-content">
+          <div class="step-title">Type anywhere</div>
+          <div class="step-desc">Type your prompt in any text field on any website</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-number">2</div>
+        <div class="step-content">
+          <div class="step-title">AI analyzes</div>
+          <div class="step-desc">TokenScope automatically optimizes your prompt using TF-IDF</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-number">3</div>
+        <div class="step-content">
+          <div class="step-title">Press <span class="shortcut"><kbd>Tab</kbd></span></div>
+          <div class="step-desc">Accept the optimized version instantly</div>
+        </div>
+      </div>
     </div>
   </div>
 
