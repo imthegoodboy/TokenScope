@@ -284,16 +284,16 @@ export default function LandingPage() {
           </p>
           <div className="flex items-center justify-center gap-3 animate-slide-up" style={{ animationDelay: "200ms" }}>
             <SignedOut>
-              <>
-                <SignUpButton mode="modal">
-                  <Button size="lg">
-                    Start Free <ArrowRight size={16} />
-                  </Button>
-                </SignUpButton>
-                <Button variant="outline" size="lg" onClick={() => router.push("/dashboard")}>
-                  View Demo
+              <SignUpButton mode="modal">
+                <Button size="lg">
+                  Start Free <ArrowRight size={16} />
                 </Button>
-              </>
+              </SignUpButton>
+              <SignInButton mode="modal">
+                <Button variant="outline" size="lg">
+                  Sign In
+                </Button>
+              </SignInButton>
             </SignedOut>
             <SignedIn>
               <Button size="lg" onClick={() => router.push("/dashboard")}>
@@ -308,43 +308,22 @@ export default function LandingPage() {
             style={{ animationDelay: "300ms" }}
           >
             <div
-              className="flex size-10 sm:size-11 items-center justify-center opacity-[0.75] hover:opacity-100 transition-opacity"
+              className="flex size-10 sm:size-11 items-center justify-center opacity-[0.55] hover:opacity-90 transition-opacity"
               title="OpenAI"
             >
-              <Image
-                src="https://upload.wikimedia.org/wikipedia/commons/6/66/OpenAI_logo_2025_%28symbol%29.svg"
-                alt="OpenAI"
-                width={44}
-                height={44}
-                className="h-full w-full object-contain object-center"
-                unoptimized
-              />
+              <Image src="/openai.svg" alt="OpenAI" width={36} height={36} />
             </div>
             <div
-              className="flex size-10 sm:size-11 items-center justify-center opacity-[0.75] hover:opacity-100 transition-opacity"
+              className="flex size-10 sm:size-11 items-center justify-center opacity-[0.55] hover:opacity-90 transition-opacity"
               title="Anthropic"
             >
-              <Image
-                src="https://upload.wikimedia.org/wikipedia/commons/1/14/Anthropic.png"
-                alt="Anthropic"
-                width={44}
-                height={44}
-                className="h-full w-full object-contain object-center"
-                unoptimized
-              />
+              <Image src="/anthropic.svg" alt="Anthropic" width={36} height={36} />
             </div>
             <div
-              className="flex size-10 sm:size-11 items-center justify-center opacity-[0.75] hover:opacity-100 transition-opacity"
+              className="flex size-10 sm:size-11 items-center justify-center opacity-[0.55] hover:opacity-90 transition-opacity"
               title="Google Gemini"
             >
-              <Image
-                src="https://upload.wikimedia.org/wikipedia/commons/1/1d/Google_Gemini_icon_2025.svg"
-                alt="Google Gemini"
-                width={44}
-                height={44}
-                className="h-full w-full object-contain object-center"
-                unoptimized
-              />
+              <Image src="/gemini.svg" alt="Google Gemini" width={36} height={36} />
             </div>
           </div>
         </div>

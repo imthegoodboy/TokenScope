@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Download, Trash2, Shield, Bell, User } from "lucide-react";
+import { Download, Shield, Bell, User } from "lucide-react";
 import { useUser } from "@clerk/nextjs";
 
 export default function SettingsPage() {
@@ -61,7 +61,7 @@ export default function SettingsPage() {
                 </div>
               </div>
             </div>
-            <Button size="sm">Save Changes</Button>
+            <p className="text-xs opacity-40">Profile changes are managed through Clerk.</p>
           </div>
         </div>
 
@@ -134,9 +134,9 @@ export default function SettingsPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium">Two-Factor Auth</p>
-                <p className="text-xs opacity-60">Add 2FA via Clerk settings</p>
+                <p className="text-xs opacity-60">Manage 2FA through your Clerk account settings</p>
               </div>
-              <Button variant="outline" size="sm">Enable 2FA</Button>
+              <Badge className="bg-navy bg-opacity-10 text-navy border-0">Via Clerk</Badge>
             </div>
           </div>
         </div>
@@ -150,32 +150,20 @@ export default function SettingsPage() {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium">Export All Data</p>
-                <p className="text-xs opacity-60">Download all your usage data as JSON</p>
+                <p className="text-sm font-medium">Usage Data</p>
+                <p className="text-xs opacity-60">View all your token usage and cost data in the Logs page</p>
               </div>
-              <Button variant="outline" size="sm">
-                <Download size={14} /> Export JSON
-              </Button>
+              <a href="/dashboard/logs">
+                <Button variant="outline" size="sm">View Logs</Button>
+              </a>
             </div>
             <Separator />
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium">Export as CSV</p>
-                <p className="text-xs opacity-60">Download usage history as CSV</p>
+                <p className="text-sm font-medium">Account Deletion</p>
+                <p className="text-xs opacity-60">To delete your account, contact support or manage via Clerk</p>
               </div>
-              <Button variant="outline" size="sm">
-                <Download size={14} /> Export CSV
-              </Button>
-            </div>
-            <Separator />
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-danger">Delete Account</p>
-                <p className="text-xs opacity-60">Permanently delete your account and all data</p>
-              </div>
-              <Button className="bg-danger hover:bg-danger/90 text-white border-0" size="sm">
-                <Trash2 size={14} /> Delete
-              </Button>
+              <Badge className="bg-black/5 text-black-soft border-0">Contact Support</Badge>
             </div>
           </div>
         </div>

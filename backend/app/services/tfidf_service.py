@@ -67,7 +67,9 @@ def compute_tfidf_scores(prompt: str, user_history: List[str] = None) -> List[di
 
 def _score_to_importance(score: float) -> str:
     """Convert TF-IDF score to importance level."""
-    if score > 0.3:
+    if score > 0.5:
+        return "very_high"
+    elif score > 0.3:
         return "high"
     elif score > 0.1:
         return "medium"

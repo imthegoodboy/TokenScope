@@ -33,7 +33,7 @@ async def get_proxy_key(db: AsyncSession, key: str) -> Optional[ProxyKey]:
             ProxyKey.active == True  # noqa
         )
     )
-    return result.one_or_none()
+    return result.scalars().first()
 
 
 async def get_user_provider_key(db: AsyncSession, user_id: str, provider: str) -> Optional[APIKey]:
@@ -45,10 +45,16 @@ async def get_user_provider_key(db: AsyncSession, user_id: str, provider: str) -
             APIKey.active == True  # noqa
         ).limit(1)
     )
-    return result.one_or_none()
+    return result.scalars().first()
 
 
-async def create_proxy_key(db: AsyncSession, user_id: str, label: str = "Default Key") -> tuple[ProxyKey, str]:
+async def create_proxy_key(
+    db: AsyncSession,
+    user_id: str,
+    label: str = "Default Key",
+    rate_limit: int = 60,
+    auto_enhance: bool = False,
+) -> tuple[ProxyKey, str]:
     """Create a new proxy key for a user. Returns the key object and the raw key."""
     raw_key = generate_proxy_key()
     key_hash = hash_proxy_key(raw_key)
@@ -56,6 +62,8 @@ async def create_proxy_key(db: AsyncSession, user_id: str, label: str = "Default
         user_id=user_id,
         key_hash=key_hash,
         key_label=label,
+        rate_limit=rate_limit,
+        auto_enhance=auto_enhance,
     )
     db.add(proxy_key)
     await db.commit()

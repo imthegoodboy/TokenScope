@@ -21,6 +21,15 @@ TOKEN_PRICING = {
 }
 
 
+def _normalize_model(model: str) -> str:
+    """Normalize model name for pricing lookup (strip date suffixes etc.)."""
+    model = model.lower()
+    # Strip date suffixes like -20241022
+    import re
+    model = re.sub(r"-\d{8}$", "", model)
+    return model
+
+
 def get_cost(
     prompt_tokens: int,
     completion_tokens: int,
@@ -29,7 +38,8 @@ def get_cost(
 ) -> float:
     """Calculate cost in USD."""
     provider = provider.lower()
-    model_pricing = TOKEN_PRICING.get(provider, {}).get(model.lower())
+    normalized = _normalize_model(model)
+    model_pricing = TOKEN_PRICING.get(provider, {}).get(normalized)
 
     if not model_pricing:
         # Default fallback pricing
@@ -53,7 +63,8 @@ def estimate_cost(
 
     tokens = count_tokens(text, provider, model)
     provider = provider.lower()
-    model_pricing = TOKEN_PRICING.get(provider, {}).get(model.lower())
+    normalized = _normalize_model(model)
+    model_pricing = TOKEN_PRICING.get(provider, {}).get(normalized)
 
     if not model_pricing:
         price = 1.0 / 1_000_000 if not is_completion else 3.0 / 1_000_000
