@@ -1,32 +1,18 @@
-import { auth, clerkClient } from "@clerk/nextjs/server";
-
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
-// Server-side: get token from Clerk session
-export async function getServerToken(): Promise<string | null> {
-  try {
-    const { userId } = await auth();
-    if (!userId) return null;
-    const cl = await clerkClient();
-    const token = await cl.sessions.getToken(); // get the active session token
-    return token;
-  } catch {
-    return null;
-  }
-}
-
-// Client-side: get Clerk token
+// Client-side: get Clerk session token using the standard approach
 let _clientToken: string | null = null;
 let _tokenPromise: Promise<string | null> | null = null;
 
 export async function getClientToken(): Promise<string | null> {
+  if (typeof window === "undefined") return null;
   if (_clientToken) return _clientToken;
   if (_tokenPromise) return _tokenPromise;
 
   _tokenPromise = (async () => {
     try {
-      const { getToken } = await import("@clerk/nextjs/auth");
-      const token = await getToken();
+      const mod = await import("@clerk/nextjs/auth");
+      const token = await mod.getToken();
       _clientToken = token;
       return token;
     } catch {
@@ -38,7 +24,6 @@ export async function getClientToken(): Promise<string | null> {
   return _tokenPromise;
 }
 
-// Clear client token (call after sign-out)
 export function clearClientToken(): void {
   _clientToken = null;
   _tokenPromise = null;
