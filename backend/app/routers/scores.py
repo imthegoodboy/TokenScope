@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, desc, func
 from pydantic import BaseModel
 from datetime import datetime, timedelta
-from ..database import get_db, PromptOptimization, UserScore, ProxyKey
+from ..database import get_db, PromptOptimization, UserScore, ProxyKey, UserRole
 from ..services.scoring_engine import scoring_engine
 import json
 
