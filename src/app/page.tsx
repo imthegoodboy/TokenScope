@@ -495,7 +495,7 @@ function LandingContent() {
         </div>
       </section>
 
-      {/* Footer — particles, scanlines, shine + glitch wordmark */}
+      {/* Footer — particles, scanlines, Token / Scope wordmark + one-time shine */}
       <footer className="relative isolate w-full overflow-hidden border-t border-gray-800/90 bg-[#050505]">
         <div
           className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(ellipse_120%_80%_at_50%_100%,rgba(255,107,0,0.16),transparent_55%)]"
