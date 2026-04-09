@@ -41,12 +41,12 @@ export function formatDateTime(date: string | Date): string {
 export function getProviderColor(provider: string): string {
   switch (provider.toLowerCase()) {
     case "openai":
-      return "#10A37F";
+      return "#F07F3C";
     case "anthropic":
-      return "#D4A574";
+      return "#16563B";
     case "gemini":
     case "google":
-      return "#4285F4";
+      return "#002F4B";
     default:
       return "#6B6B6B";
   }

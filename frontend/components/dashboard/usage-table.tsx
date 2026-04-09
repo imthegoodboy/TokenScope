@@ -1,6 +1,6 @@
 "use client";
 
-import { formatCurrency, formatNumber, getProviderColor } from "@/lib/utils";
+import { formatCurrency, formatNumber } from "@/lib/utils";
 
 interface ModelUsage {
   model: string;
@@ -21,43 +21,43 @@ export function UsageTable({ models }: UsageTableProps) {
       <table className="w-full">
         <thead>
           <tr className="border-b border-black-border">
-            <th className="text-left text-xs font-medium text-black-muted uppercase tracking-wider py-2 pr-4">
+            <th className="text-left text-[11px] font-medium opacity-50 uppercase tracking-wider py-2.5 pr-4">
               Model
             </th>
-            <th className="text-right text-xs font-medium text-black-muted uppercase tracking-wider py-2 px-4">
+            <th className="text-right text-[11px] font-medium opacity-50 uppercase tracking-wider py-2.5 px-4">
               Calls
             </th>
-            <th className="text-right text-xs font-medium text-black-muted uppercase tracking-wider py-2 px-4">
+            <th className="text-right text-[11px] font-medium opacity-50 uppercase tracking-wider py-2.5 px-4">
               Tokens
             </th>
-            <th className="text-right text-xs font-medium text-black-muted uppercase tracking-wider py-2 px-4">
+            <th className="text-right text-[11px] font-medium opacity-50 uppercase tracking-wider py-2.5 px-4">
               Cost
             </th>
-            <th className="text-right text-xs font-medium text-black-muted uppercase tracking-wider py-2 pl-4">
+            <th className="text-right text-[11px] font-medium opacity-50 uppercase tracking-wider py-2.5 pl-4">
               Share
             </th>
           </tr>
         </thead>
         <tbody className="divide-y divide-black-border">
           {models.map((m) => (
-            <tr key={m.model} className="hover:bg-black/2 transition-colors">
+            <tr key={m.model} className="hover:bg-black/3 transition-colors">
               <td className="py-3 pr-4">
-                <span className="font-mono text-sm font-medium text-black">
+                <span className="font-mono text-sm font-medium">
                   {m.model}
                 </span>
               </td>
               <td className="py-3 px-4 text-right">
-                <span className="font-mono text-sm text-black">
+                <span className="font-mono text-sm opacity-80">
                   {formatNumber(m.calls)}
                 </span>
               </td>
               <td className="py-3 px-4 text-right">
-                <span className="font-mono text-sm text-black">
+                <span className="font-mono text-sm font-medium">
                   {formatNumber(m.tokens)}
                 </span>
               </td>
               <td className="py-3 px-4 text-right">
-                <span className="font-mono text-sm font-medium text-black">
+                <span className="font-mono text-sm font-semibold text-jaffa-dark">
                   {formatCurrency(m.cost)}
                 </span>
               </td>
@@ -65,13 +65,11 @@ export function UsageTable({ models }: UsageTableProps) {
                 <div className="flex items-center justify-end gap-2">
                   <div className="w-24 h-1.5 bg-black/5 rounded-full overflow-hidden">
                     <div
-                      className="h-full bg-black rounded-full transition-all duration-500"
-                      style={{
-                        width: `${(m.tokens / maxTokens) * 100}%`,
-                      }}
+                      className="h-full bg-jaffa rounded-full transition-all duration-500"
+                      style={{ width: `${(m.tokens / maxTokens) * 100}%` }}
                     />
                   </div>
-                  <span className="font-mono text-xs text-black-muted w-10 text-right">
+                  <span className="font-mono text-xs opacity-50 w-8 text-right">
                     {((m.tokens / maxTokens) * 100).toFixed(0)}%
                   </span>
                 </div>

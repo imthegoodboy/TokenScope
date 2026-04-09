@@ -8,10 +8,11 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default: "bg-jaffa text-white hover:bg-jaffa-dark active:scale-[0.98] shadow-sm",
-        outline: "border border-black-border bg-transparent text-black hover:bg-black/5 active:scale-[0.98]",
-        ghost: "text-black hover:bg-black/5 active:scale-[0.98]",
-        danger: "bg-danger text-white hover:bg-danger/90 active:scale-[0.98]",
+        outline: "border-2 border-black text-black bg-transparent hover:bg-black/5 active:scale-[0.98]",
+        ghost: "text-black bg-transparent hover:bg-black/5 active:scale-[0.98]",
+        danger: "bg-danger text-white hover:bg-danger/90 active:scale-[0.98] shadow-sm",
         jaffa: "bg-jaffa text-white hover:bg-jaffa-dark active:scale-[0.98] shadow-sm",
+        secondary: "bg-black/8 text-black border border-black/10 hover:bg-black/12 active:scale-[0.98]",
       },
       size: {
         default: "h-10 px-4 py-2",

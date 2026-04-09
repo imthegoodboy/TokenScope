@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
@@ -10,8 +11,6 @@ import {
   History,
   BarChart3,
   Settings,
-  Zap,
-  GitBranch,
 } from "lucide-react";
 
 const navItems = [
@@ -29,21 +28,30 @@ export function Sidebar() {
   return (
     <aside className="w-60 min-h-screen bg-surface border-r border-black-border flex flex-col">
       {/* Logo */}
-      <div className="px-6 py-6 border-b border-black-border">
-        <Link href="/dashboard" className="flex items-center gap-2.5">
-          <div className="w-8 h-8 bg-jaffa rounded-lg flex items-center justify-center shadow-sm">
-            <Zap size={16} className="text-white" strokeWidth={2.5} />
+      <div className="px-6 py-5 border-b border-black-border">
+        <Link href="/dashboard" className="flex items-center gap-3">
+          <div className="w-9 h-9 relative flex-shrink-0">
+            <Image
+              src="/logo.svg"
+              alt="TokenScope"
+              width={36}
+              height={36}
+              className="w-full h-full"
+            />
           </div>
           <div>
-            <span className="font-semibold text-lg text-black tracking-tight">
+            <span className="font-bold text-base text-black tracking-tight leading-none block">
               TokenScope
+            </span>
+            <span className="text-[10px] text-black-soft mt-0.5 block tracking-wide uppercase">
+              Token Analytics
             </span>
           </div>
         </Link>
       </div>
 
       {/* Nav */}
-      <nav className="flex-1 px-3 py-4 space-y-1">
+      <nav className="flex-1 px-3 py-4 space-y-0.5">
         {navItems.map((item) => {
           const isActive =
             item.href === "/dashboard"
@@ -58,7 +66,7 @@ export function Sidebar() {
                 "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
                 isActive
                   ? "bg-jaffa text-white shadow-sm"
-                  : "text-black-muted hover:text-black hover:bg-black/5"
+                  : "text-black-soft hover:text-black hover:bg-black/4"
               )}
             >
               <item.icon size={16} strokeWidth={2} />
@@ -70,12 +78,12 @@ export function Sidebar() {
 
       {/* Footer - Plan */}
       <div className="px-4 py-4 border-t border-black-border">
-        <div className="px-3 py-2.5 rounded-lg bg-jaffa-bg border border-jaffa/20">
-          <div className="flex items-center justify-between mb-1.5">
-            <p className="text-xs font-semibold text-jaffa-dark">Free Plan</p>
-            <p className="text-xs text-jaffa-dark opacity-70">3/25 keys</p>
+        <div className="px-3 py-3 rounded-xl bg-jaffa/8 border border-jaffa/20">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[11px] font-bold text-jaffa-dark">Free Plan</span>
+            <span className="text-[10px] text-jaffa-dark/60">3/25 keys</span>
           </div>
-          <div className="h-1.5 bg-jaffa/20 rounded-full overflow-hidden">
+          <div className="h-1.5 bg-jaffa/15 rounded-full overflow-hidden">
             <div
               className="h-full bg-jaffa rounded-full transition-all duration-500"
               style={{ width: "12%" }}

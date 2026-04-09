@@ -6,9 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Plus, Trash2, CheckCircle2, XCircle, Copy, RefreshCw } from "lucide-react";
-import { cn, formatDate } from "@/lib/utils";
+import { Plus, Trash2, CheckCircle2, XCircle, RefreshCw, Key } from "lucide-react";
+import { formatDate } from "@/lib/utils";
 import { useUsageStore } from "@/store/usage-store";
 import type { ApiKey } from "@/lib/api";
 
@@ -20,34 +19,22 @@ const PROVIDERS = [
 
 const DEMO_KEYS: ApiKey[] = [
   {
-    id: "1",
-    provider: "openai",
-    key_label: "Production Key",
-    key_last4: "sk-or",
-    active: true,
+    id: "1", provider: "openai", key_label: "Production Key",
+    key_last4: "sk-or", active: true,
     created_at: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-    usage_count: 892,
-    total_spent: 67.4,
+    usage_count: 892, total_spent: 67.4,
   },
   {
-    id: "2",
-    provider: "anthropic",
-    key_label: "Claude Production",
-    key_last4: "sk-ant",
-    active: true,
+    id: "2", provider: "anthropic", key_label: "Claude Production",
+    key_last4: "sk-ant", active: true,
     created_at: new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString(),
-    usage_count: 540,
-    total_spent: 31.8,
+    usage_count: 540, total_spent: 31.8,
   },
   {
-    id: "3",
-    provider: "gemini",
-    key_label: "Gemini Dev",
-    key_last4: "AIza",
-    active: true,
+    id: "3", provider: "gemini", key_label: "Gemini Dev",
+    key_last4: "AIza", active: true,
     created_at: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-    usage_count: 124,
-    total_spent: 6.13,
+    usage_count: 124, total_spent: 6.13,
   },
 ];
 
@@ -77,7 +64,6 @@ export default function KeysPage() {
   const handleAdd = async () => {
     if (!apiKey.trim()) return;
     setValidating(true);
-    // Simulate validation
     await new Promise((r) => setTimeout(r, 1500));
     const newKey: ApiKey = {
       id: Math.random().toString(),
@@ -122,10 +108,10 @@ export default function KeysPage() {
         {/* Add key form */}
         {showAdd && (
           <div className="card mb-6 animate-slide-up">
-            <h3 className="font-semibold text-black mb-4">Add New API Key</h3>
+            <h3 className="font-bold text-base mb-5">Add New API Key</h3>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label className="block text-xs font-medium text-black-muted mb-1.5">
+                <label className="block text-[11px] font-medium opacity-50 uppercase tracking-wider mb-1.5">
                   Provider
                 </label>
                 <Select
@@ -135,29 +121,24 @@ export default function KeysPage() {
                 />
               </div>
               <div className="md:col-span-2">
-                <label className="block text-xs font-medium text-black-muted mb-1.5">
+                <label className="block text-[11px] font-medium opacity-50 uppercase tracking-wider mb-1.5">
                   API Key
                 </label>
-                <div className="flex gap-2">
-                  <Input
-                    type="password"
-                    placeholder={
-                      provider === "openai"
-                        ? "sk-..."
-                        : provider === "anthropic"
-                        ? "sk-ant-..."
-                        : "AIza..."
-                    }
-                    value={apiKey}
-                    onChange={(e) => setApiKey(e.target.value)}
-                    className="flex-1 font-mono"
-                  />
-                </div>
+                <Input
+                  type="password"
+                  placeholder={
+                    provider === "openai" ? "sk-..." :
+                    provider === "anthropic" ? "sk-ant-..." : "AIza..."
+                  }
+                  value={apiKey}
+                  onChange={(e) => setApiKey(e.target.value)}
+                  className="font-mono"
+                />
               </div>
             </div>
             <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="md:col-span-2">
-                <label className="block text-xs font-medium text-black-muted mb-1.5">
+                <label className="block text-[11px] font-medium opacity-50 uppercase tracking-wider mb-1.5">
                   Label (optional)
                 </label>
                 <Input
@@ -167,18 +148,12 @@ export default function KeysPage() {
                 />
               </div>
               <div className="flex items-end gap-2">
-                <Button
-                  variant="outline"
-                  onClick={() => setShowAdd(false)}
-                  className="flex-1"
-                >
+                <Button variant="outline" onClick={() => setShowAdd(false)} className="flex-1 border-black text-black">
                   Cancel
                 </Button>
                 <Button onClick={handleAdd} disabled={!apiKey || validating} className="flex-1">
                   {validating ? (
-                    <>
-                      <RefreshCw size={14} className="animate-spin" /> Validating...
-                    </>
+                    <><RefreshCw size={14} className="animate-spin" /> Validating...</>
                   ) : (
                     <>Add Key</>
                   )}
@@ -189,14 +164,14 @@ export default function KeysPage() {
         )}
 
         {/* Keys list */}
-        <div className="space-y-4">
+        <div className="space-y-3">
           {keys.length === 0 ? (
-            <div className="card text-center py-16">
-              <div className="w-12 h-12 rounded-full bg-black/5 flex items-center justify-center mx-auto mb-4">
-                <Plus size={20} className="text-black-muted" />
+            <div className="card text-center py-20">
+              <div className="w-14 h-14 rounded-2xl bg-jaffa/8 flex items-center justify-center mx-auto mb-4">
+                <Key size={24} className="text-jaffa" />
               </div>
-              <h3 className="font-semibold text-black mb-2">No API keys yet</h3>
-              <p className="text-sm text-black-muted mb-4">
+              <h3 className="font-bold text-lg mb-2">No API keys yet</h3>
+              <p className="text-sm opacity-50 mb-6">
                 Add your first API key to start tracking usage.
               </p>
               <Button onClick={() => setShowAdd(true)}>
@@ -211,59 +186,35 @@ export default function KeysPage() {
               >
                 <div className="flex items-center gap-4">
                   <div
-                    className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-sm"
+                    className="w-11 h-11 rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-sm"
                     style={{ backgroundColor: PROVIDER_COLORS[key.provider] || "#6B6B6B" }}
                   >
-                    {key.provider === "openai"
-                      ? "OA"
-                      : key.provider === "anthropic"
-                      ? "AN"
-                      : "GM"}
+                    {key.provider === "openai" ? "OA" : key.provider === "anthropic" ? "AN" : "GM"}
                   </div>
                   <div>
-                    <div className="flex items-center gap-2">
-                      <h4 className="font-medium text-black">{key.key_label}</h4>
-                      <Badge
-                        variant={
-                          key.active
-                            ? "success"
-                            : "danger"
-                        }
-                      >
-                        {key.active ? (
-                          <CheckCircle2 size={10} />
-                        ) : (
-                          <XCircle size={10} />
-                        )}{" "}
+                    <div className="flex items-center gap-2.5">
+                      <h4 className="font-semibold text-base">{key.key_label}</h4>
+                      <Badge variant={key.active ? "success" : "danger">
+                        {key.active ? <CheckCircle2 size={10} /> : <XCircle size={10} />}
                         {key.active ? "Active" : "Inactive"}
                       </Badge>
                     </div>
-                    <div className="flex items-center gap-3 mt-1">
-                      <span className="font-mono text-xs text-black-muted">
-                        ••••{key.key_last4}
-                      </span>
-                      <span className="text-xs text-black-muted">•</span>
-                      <span className="text-xs text-black-muted capitalize">
-                        {PROVIDER_LABELS[key.provider] || key.provider}
-                      </span>
-                      <span className="text-xs text-black-muted">•</span>
-                      <span className="text-xs text-black-muted">
-                        Added {formatDate(key.created_at)}
-                      </span>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="font-mono text-xs opacity-50">••••{key.key_last4}</span>
+                      <span className="opacity-30">·</span>
+                      <span className="text-xs opacity-50">{PROVIDER_LABELS[key.provider]}</span>
+                      <span className="opacity-30">·</span>
+                      <span className="text-xs opacity-40">{formatDate(key.created_at)}</span>
                     </div>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-6">
+                <div className="flex items-center gap-5">
                   {key.usage_count !== undefined && (
                     <div className="text-right">
-                      <p className="text-sm font-mono font-medium text-black">
-                        {key.usage_count} calls
-                      </p>
+                      <p className="font-mono font-semibold text-sm">{key.usage_count} calls</p>
                       {key.total_spent !== undefined && (
-                        <p className="text-xs text-black-muted">
-                          ${key.total_spent.toFixed(2)} spent
-                        </p>
+                        <p className="font-mono text-xs opacity-50">${key.total_spent.toFixed(2)}</p>
                       )}
                     </div>
                   )}
@@ -271,6 +222,7 @@ export default function KeysPage() {
                     variant={deleteConfirm === key.id ? "danger" : "ghost"}
                     size="sm"
                     onClick={() => handleDelete(key.id)}
+                    className={deleteConfirm === key.id ? "text-white" : "text-black-soft"}
                   >
                     <Trash2 size={14} />
                     {deleteConfirm === key.id ? "Confirm?" : ""}
@@ -282,10 +234,18 @@ export default function KeysPage() {
         </div>
 
         {/* Info */}
-        <div className="mt-6 p-4 bg-black/5 rounded-lg border border-black-border">
-          <p className="text-xs text-black-muted">
-            <strong className="text-black">Security:</strong> API keys are stored as SHA-256 hashes and never sent in plain text. We only store the last 4 characters for identification. Free plan supports up to 3 API keys.
-          </p>
+        <div className="mt-6 p-4 bg-jaffa/5 rounded-xl border border-jaffa/15">
+          <div className="flex items-start gap-3">
+            <div className="w-4 h-4 mt-0.5 flex-shrink-0">
+              <svg viewBox="0 0 16 16" fill="none" className="w-full h-full text-jaffa">
+                <path d="M8 1a4 4 0 100 8 4 4 0 000-8zm0 6a2 2 0 110-4 2 2 0 010 4z" fill="currentColor" opacity=".5"/>
+                <path d="M8 11a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1z" fill="currentColor"/>
+              </svg>
+            </div>
+            <p className="text-xs opacity-60">
+              <strong className="opacity-80">Security:</strong> API keys are stored as SHA-256 hashes and never sent in plain text. Only the last 8 characters are stored for identification. Free plan supports up to 3 API keys.
+            </p>
+          </div>
         </div>
       </div>
     </div>

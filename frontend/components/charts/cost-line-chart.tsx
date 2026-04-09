@@ -33,16 +33,16 @@ export function CostLineChart({ data }: CostLineChartProps) {
   return (
     <ResponsiveContainer width="100%" height="100%">
       <LineChart data={chartData} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="#E8E4DE" vertical={false} />
+        <CartesianGrid strokeDasharray="3 3" stroke="#E2DDD7" vertical={false} />
         <XAxis
           dataKey="label"
-          tick={{ fontSize: 11, fill: "#6B6B6B" }}
+          tick={{ fontSize: 11, fill: "#9B9590" }}
           tickLine={false}
           axisLine={false}
           interval="preserveStartEnd"
         />
         <YAxis
-          tick={{ fontSize: 11, fill: "#6B6B6B" }}
+          tick={{ fontSize: 11, fill: "#9B9590" }}
           tickLine={false}
           axisLine={false}
           tickFormatter={(v) => `$${v.toFixed(0)}`}
@@ -50,23 +50,23 @@ export function CostLineChart({ data }: CostLineChartProps) {
         <Tooltip
           contentStyle={{
             backgroundColor: "#FFFFFF",
-            border: "1px solid #E8E4DE",
-            borderRadius: "8px",
+            border: "1px solid #E2DDD7",
+            borderRadius: "10px",
             fontSize: "12px",
-            color: "#0A0A0A",
+            color: "#0F0F0F",
             boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
           }}
           labelStyle={{ fontWeight: 600, marginBottom: 4 }}
           formatter={(value: number) => [`$${value.toFixed(4)}`, "Cost"]}
-          cursor={{ stroke: "#0A0A0A", strokeWidth: 1, strokeDasharray: "4 4" }}
+          cursor={{ stroke: "#F07F3C", strokeWidth: 1, strokeDasharray: "4 4" }}
         />
         <Line
           type="monotone"
           dataKey="cost"
-          stroke="#0A0A0A"
-          strokeWidth={2}
+          stroke="#F07F3C"
+          strokeWidth={2.5}
           dot={false}
-          activeDot={{ r: 4, fill: "#0A0A0A", stroke: "#FAF7F2", strokeWidth: 2 }}
+          activeDot={{ r: 5, fill: "#F07F3C", stroke: "#FFFFFF", strokeWidth: 2 }}
         />
       </LineChart>
     </ResponsiveContainer>

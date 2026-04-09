@@ -82,7 +82,7 @@ function Scene({ data }: { data: ChartDataPoint[] }) {
     <>
       <ambientLight intensity={0.6} />
       <directionalLight position={[5, 10, 5]} intensity={0.8} castShadow />
-      <pointLight position={[-5, 5, -5]} intensity={0.3} color="#FAF7F2" />
+      <pointLight position={[-5, 5, -5]} intensity={0.3} color="#F7F4F0" />
 
       <group position={[-totalWidth / 2, 0, 0]}>
         {data.map((d, i) => {

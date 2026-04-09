@@ -47,16 +47,16 @@ function Scene({ data }: { data: ScatterPoint[] }) {
   const maxCost = Math.max(...data.map((d) => d.cost));
 
   const providerColors: Record<string, string> = {
-    openai: "#10A37F",
-    anthropic: "#D4A574",
-    gemini: "#4285F4",
+    openai: "#F07F3C",
+    anthropic: "#16563B",
+    gemini: "#002F4B",
   };
 
   return (
     <>
       <ambientLight intensity={0.5} />
       <directionalLight position={[5, 10, 5]} intensity={0.7} castShadow />
-      <pointLight position={[-3, 5, -3]} intensity={0.3} color="#FAF7F2" />
+      <pointLight position={[-3, 5, -3]} intensity={0.3} color="#F7F4F0" />
 
       {data.map((d, i) => {
         const x = (d.tokens / maxTokens) * 4 - 2;

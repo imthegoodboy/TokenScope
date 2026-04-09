@@ -1,6 +1,13 @@
 import { create } from "zustand";
 import type { UsageSummary, UsageRecord, ApiKey } from "@/lib/api";
 
+interface CacheEntry<T> {
+  data: T;
+  timestamp: number;
+}
+
+const CACHE_TTL = 30_000; // 30 seconds
+
 interface UsageState {
   summary: UsageSummary | null;
   history: UsageRecord[];
@@ -9,6 +16,10 @@ interface UsageState {
   error: string | null;
   selectedProvider: string | null;
   dateRange: { start: string | null; end: string | null };
+
+  // Cache
+  _summaryCache: CacheEntry<UsageSummary> | null;
+  _historyCache: CacheEntry<{ records: UsageRecord[]; total: number }> | null;
 
   setSummary: (summary: UsageSummary) => void;
   setHistory: (records: UsageRecord[]) => void;
@@ -19,9 +30,11 @@ interface UsageState {
   setDateRange: (range: { start: string | null; end: string | null }) => void;
   addUsageRecord: (record: UsageRecord) => void;
   removeApiKey: (id: string) => void;
+  invalidateSummary: () => void;
+  isCacheValid: () => boolean;
 }
 
-export const useUsageStore = create<UsageState>((set) => ({
+export const useUsageStore = create<UsageState>((set, get) => ({
   summary: null,
   history: [],
   apiKeys: [],
@@ -29,9 +42,13 @@ export const useUsageStore = create<UsageState>((set) => ({
   error: null,
   selectedProvider: null,
   dateRange: { start: null, end: null },
+  _summaryCache: null,
+  _historyCache: null,
 
-  setSummary: (summary) => set({ summary }),
-  setHistory: (history) => set({ history }),
+  setSummary: (summary) =>
+    set({ summary, _summaryCache: { data: summary, timestamp: Date.now() } }),
+  setHistory: (history) =>
+    set({ history }),
   setApiKeys: (apiKeys) => set({ apiKeys }),
   setLoading: (isLoading) => set({ isLoading }),
   setError: (error) => set({ error }),
@@ -45,4 +62,11 @@ export const useUsageStore = create<UsageState>((set) => ({
     set((state) => ({
       apiKeys: state.apiKeys.filter((k) => k.id !== id),
     })),
+  invalidateSummary: () =>
+    set({ _summaryCache: null }),
+  isCacheValid: () => {
+    const cache = get()._summaryCache;
+    if (!cache) return false;
+    return Date.now() - cache.timestamp < CACHE_TTL;
+  },
 }));

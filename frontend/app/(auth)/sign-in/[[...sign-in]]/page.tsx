@@ -1,16 +1,19 @@
 import { SignIn } from "@clerk/nextjs";
 import Link from "next/link";
-import { Zap } from "lucide-react";
+import Image from "next/image";
 
 export default function SignInPage() {
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-bg">
       <div className="px-8 py-6">
-        <Link href="/" className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-jaffa rounded-lg flex items-center justify-center">
-            <Zap size={16} className="text-white" strokeWidth={2.5} />
+        <Link href="/" className="flex items-center gap-2.5">
+          <div className="w-8 h-8 relative">
+            <Image src="/logo.svg" alt="TokenScope" width={32} height={32} />
           </div>
-          <span className="font-semibold text-lg tracking-tight">TokenScope</span>
+          <div>
+            <span className="font-bold text-lg tracking-tight leading-none">TokenScope</span>
+            <span className="block text-[10px] text-black-soft tracking-wide uppercase">Token Analytics</span>
+          </div>
         </Link>
       </div>
 
@@ -18,9 +21,7 @@ export default function SignInPage() {
         <div className="w-full max-w-md">
           <div className="text-center mb-8">
             <h1 className="text-2xl font-bold mb-2">Welcome back</h1>
-            <p className="text-sm opacity-60">
-              Sign in to track your AI token usage
-            </p>
+            <p className="text-sm opacity-60">Sign in to track your AI token usage</p>
           </div>
           <SignIn />
         </div>

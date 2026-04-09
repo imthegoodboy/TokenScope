@@ -24,13 +24,17 @@
   margin: 0;
 }
 
-html,
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   min-height: 100vh;
   background-color: var(--bg);
   color: var(--black);
   font-family: var(--font-inter), system-ui, sans-serif;
-  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 ::selection {
@@ -39,8 +43,8 @@ body {
 }
 
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {
@@ -53,7 +57,7 @@ body {
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--black-muted);
+  background: #C8C3BD;
 }
 
 a {
@@ -67,12 +71,12 @@ a {
   border-radius: 4px;
 }
 
-/* Card */
+/* Cards */
 .card {
-  @apply bg-surface rounded-card shadow-card border border-black-border/50 p-6;
+  @apply bg-surface rounded-card border border-black-border/50 p-6;
 }
 
-/* Skeleton */
+/* Skeleton loader */
 @keyframes shimmer {
   0% { background-position: -200% 0; }
   100% { background-position: 200% 0; }
@@ -81,60 +85,83 @@ a {
 .skeleton {
   background: linear-gradient(
     90deg,
-    var(--black-border) 25%,
-    var(--bg) 50%,
-    var(--black-border) 75%
+    #E2DDD7 25%,
+    #F7F4F0 50%,
+    #E2DDD7 75%
   );
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
   border-radius: 6px;
 }
 
-/* Token highlighting — warm color scheme */
+/* ─── Token Highlighting (Warm Color Scheme) ─── */
 .token-very-high {
   background-color: rgba(240, 127, 60, 0.35);
   color: #C4602A;
-  border-radius: 3px;
-  padding: 0 2px;
-  font-weight: 600;
+  border-radius: 4px;
+  padding: 1px 3px;
+  font-weight: 700;
 }
 
 .token-high {
-  background-color: rgba(240, 127, 60, 0.2);
+  background-color: rgba(240, 127, 60, 0.18);
   color: #C4602A;
-  border-radius: 3px;
-  padding: 0 2px;
+  border-radius: 4px;
+  padding: 1px 3px;
+  font-weight: 600;
 }
 
 .token-medium {
-  background-color: rgba(0, 47, 75, 0.1);
+  background-color: rgba(0, 47, 75, 0.08);
   color: #002F4B;
-  border-radius: 3px;
-  padding: 0 2px;
+  border-radius: 4px;
+  padding: 1px 3px;
+  font-weight: 500;
 }
 
 .token-low {
-  background-color: rgba(15, 15, 15, 0.05);
-  color: #6B6B6B;
-  border-radius: 3px;
-  padding: 0 2px;
+  background-color: rgba(15, 15, 15, 0.04);
+  color: #9B9590;
+  border-radius: 4px;
+  padding: 1px 3px;
 }
 
-/* Contribution graph colors */
+/* ─── Contribution Graph ─── */
 .contrib-none { background-color: #E2DDD7; }
-.contrib-low { background-color: rgba(240, 127, 60, 0.25); }
-.contrib-medium { background-color: rgba(240, 127, 60, 0.5); }
-.contrib-high { background-color: rgba(240, 127, 60, 0.75); }
+.contrib-low { background-color: rgba(240, 127, 60, 0.2); }
+.contrib-medium { background-color: rgba(240, 127, 60, 0.45); }
+.contrib-high { background-color: rgba(240, 127, 60, 0.7); }
 .contrib-very-high { background-color: #F07F3C; }
 
-/* Chart container */
+/* ─── Score Badges ─── */
+.score-excellent {
+  background-color: rgba(22, 86, 59, 0.1);
+  color: #16563B;
+  border: 1px solid rgba(22, 86, 59, 0.25);
+}
+.score-good {
+  background-color: rgba(0, 47, 75, 0.08);
+  color: #002F4B;
+  border: 1px solid rgba(0, 47, 75, 0.2);
+}
+.score-average {
+  background-color: rgba(201, 122, 16, 0.08);
+  color: #C97A10;
+  border: 1px solid rgba(201, 122, 16, 0.2);
+}
+.score-poor {
+  background-color: rgba(196, 48, 48, 0.08);
+  color: #C43030;
+  border: 1px solid rgba(196, 48, 48, 0.2);
+}
+
+/* ─── Charts ─── */
 .chart-container {
   position: relative;
   width: 100%;
   height: 100%;
 }
 
-/* 3D canvas */
 .three-canvas {
   width: 100%;
   height: 100%;
@@ -145,12 +172,31 @@ a {
   cursor: grabbing;
 }
 
-/* Prompt score badge */
-.score-excellent { background-color: rgba(22, 86, 59, 0.15); color: #16563B; border: 1px solid rgba(22, 86, 59, 0.3); }
-.score-good { background-color: rgba(0, 47, 75, 0.1); color: #002F4B; border: 1px solid rgba(0, 47, 75, 0.2); }
-.score-average { background-color: rgba(201, 122, 16, 0.1); color: #C97A10; border: 1px solid rgba(201, 122, 16, 0.2); }
-.score-poor { background-color: rgba(196, 48, 48, 0.1); color: #C43030; border: 1px solid rgba(196, 48, 48, 0.2); }
-
-/* Scrollbar for code/prompt areas */
+/* ─── Code Scroll Areas ─── */
+.code-scroll {
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
 .code-scroll::-webkit-scrollbar { width: 4px; height: 4px; }
 .code-scroll::-webkit-scrollbar-thumb { background: #E2DDD7; border-radius: 2px; }
+
+/* ─── Page Transitions ─── */
+.page-enter {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* ─── Hover Scale ─── */
+.hover-lift {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.hover-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+/* ─── Divider ─── */
+.divider {
+  height: 1px;
+  background: #E2DDD7;
+  margin: 16px 0;
+}
