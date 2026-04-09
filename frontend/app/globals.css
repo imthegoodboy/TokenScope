@@ -1,0 +1,109 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --cream: #FAF7F2;
+  --surface: #FFFFFF;
+  --black: #0A0A0A;
+  --black-muted: #6B6B6B;
+  --black-border: #E8E4DE;
+  --danger: #DC2626;
+  --success: #16A34A;
+}
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+html,
+body {
+  min-height: 100vh;
+  background-color: var(--cream);
+  color: var(--black);
+  font-family: var(--font-inter), system-ui, sans-serif;
+  scroll-behavior: smooth;
+}
+
+::selection {
+  background-color: var(--black);
+  color: var(--cream);
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--cream);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--black-border);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--black-muted);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* Focus styles */
+:focus-visible {
+  outline: 2px solid var(--black);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Card base */
+.card {
+  @apply bg-surface rounded-card shadow-card border border-black-border/50 p-6;
+}
+
+/* Skeleton loading */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--black-border) 25%,
+    var(--cream) 50%,
+    var(--black-border) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 6px;
+}
+
+/* Token highlighting */
+.token-high { background-color: rgba(220, 38, 38, 0.15); color: #DC2626; border-radius: 3px; padding: 0 2px; }
+.token-med  { background-color: rgba(234, 179, 8, 0.15);  color: #92400E; border-radius: 3px; padding: 0 2px; }
+.token-low  { background-color: rgba(22, 163, 74, 0.1);   color: #16A34A; border-radius: 3px; padding: 0 2px; }
+
+/* Chart container */
+.chart-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+/* 3D chart canvas */
+.three-canvas {
+  width: 100%;
+  height: 100%;
+  cursor: grab;
+}
+
+.three-canvas:active {
+  cursor: grabbing;
+}
