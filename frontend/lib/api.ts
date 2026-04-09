@@ -127,7 +127,7 @@ export async function deleteApiKey(id: string): Promise<void> {
 export interface TokenScore {
   token: string;
   score: number;
-  importance: "high" | "medium" | "low";
+  importance: "very_high" | "high" | "medium" | "low";
 }
 
 export interface AnalyzeResult {
