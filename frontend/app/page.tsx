@@ -302,51 +302,51 @@ export default function LandingPage() {
             </SignedIn>
           </div>
 
-          {/* Provider logos */}
-          <div className="flex items-center justify-center gap-8 mt-14 animate-fade-in" style={{ animationDelay: "300ms" }}>
+          {/* Provider logos — icons only, uniform height */}
+          <div
+            className="flex flex-col sm:flex-row items-center justify-center gap-5 sm:gap-10 mt-14 md:mt-16 animate-fade-in"
+            style={{ animationDelay: "300ms" }}
+          >
             <span className="text-xs opacity-30 font-medium uppercase tracking-wider">Supports</span>
-            <div className="flex items-center gap-6">
-              <div className="flex items-center gap-2 opacity-60 hover:opacity-100 transition-opacity group cursor-pointer">
-                <div className="w-6 h-6 relative">
-                  <Image
-                    src="https://upload.wikimedia.org/wikipedia/commons/4/4d/OpenAI_Logo.svg"
-                    alt="OpenAI"
-                    width={24}
-                    height={24}
-                    className="object-contain brightness-0 group-hover:brightness-100 transition-all"
-                    style={{ filter: "brightness(0) opacity(0.6) invert(20%) sepia(90%) saturate(2000%) hue-rotate(5deg)" }}
-                    unoptimized
-                  />
-                </div>
-                <span className="text-xs font-medium text-black-soft group-hover:text-black transition-colors">OpenAI</span>
+            <div className="flex items-center justify-center gap-10 md:gap-14">
+              <div
+                className="flex h-16 md:h-[4.5rem] w-[7.5rem] md:w-[9rem] items-center justify-center opacity-[0.72] hover:opacity-100 transition-opacity"
+                title="OpenAI"
+              >
+                <Image
+                  src="https://upload.wikimedia.org/wikipedia/commons/4/4d/OpenAI_Logo.svg"
+                  alt="OpenAI"
+                  width={200}
+                  height={72}
+                  className="max-h-full w-auto max-w-full object-contain object-center"
+                  unoptimized
+                />
               </div>
-              <div className="flex items-center gap-2 opacity-60 hover:opacity-100 transition-opacity group cursor-pointer">
-                <div className="w-6 h-6 relative">
-                  <Image
-                    src="https://upload.wikimedia.org/wikipedia/commons/1/14/Anthropic.png"
-                    alt="Anthropic"
-                    width={24}
-                    height={24}
-                    className="object-contain brightness-0 group-hover:brightness-100 transition-all"
-                    style={{ filter: "invert(10%) sepia(90%) saturate(500%) hue-rotate(120deg)" }}
-                    unoptimized
-                  />
-                </div>
-                <span className="text-xs font-medium text-black-soft group-hover:text-black transition-colors">Anthropic</span>
+              <div
+                className="flex h-16 md:h-[4.5rem] w-16 md:w-[4.5rem] items-center justify-center opacity-[0.72] hover:opacity-100 transition-opacity"
+                title="Anthropic"
+              >
+                <Image
+                  src="https://upload.wikimedia.org/wikipedia/commons/1/14/Anthropic.png"
+                  alt="Anthropic"
+                  width={72}
+                  height={72}
+                  className="h-full w-full object-contain object-center"
+                  unoptimized
+                />
               </div>
-              <div className="flex items-center gap-2 opacity-60 hover:opacity-100 transition-opacity group cursor-pointer">
-                <div className="w-6 h-6 relative">
-                  <Image
-                    src="https://upload.wikimedia.org/wikipedia/commons/d/d9/Google_Gemini_logo_2025.svg"
-                    alt="Google Gemini"
-                    width={24}
-                    height={24}
-                    className="object-contain brightness-0 group-hover:brightness-100 transition-all"
-                    style={{ filter: "invert(20%) sepia(90%) saturate(300%) hue-rotate(180deg)" }}
-                    unoptimized
-                  />
-                </div>
-                <span className="text-xs font-medium text-black-soft group-hover:text-black transition-colors">Gemini</span>
+              <div
+                className="flex h-16 md:h-[4.5rem] w-[7.5rem] md:w-[9rem] items-center justify-center opacity-[0.72] hover:opacity-100 transition-opacity"
+                title="Google Gemini"
+              >
+                <Image
+                  src="https://upload.wikimedia.org/wikipedia/commons/d/d9/Google_Gemini_logo_2025.svg"
+                  alt="Google Gemini"
+                  width={200}
+                  height={72}
+                  className="max-h-full w-auto max-w-full object-contain object-center"
+                  unoptimized
+                />
               </div>
             </div>
           </div>
