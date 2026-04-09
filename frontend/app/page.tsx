@@ -1,9 +1,9 @@
 "use client";
 
-import { SignInButton, SignUpButton, SignedIn, SignedOut } from "@clerk/nextjs";
+import { SignInButton, SignUpButton, SignedIn, SignedOut, useAuth } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { Zap, TrendingUp, DollarSign, Cpu, ArrowRight, BarChart3, Wand2, Key } from "lucide-react";
+import { Zap, DollarSign, Cpu, ArrowRight, BarChart3, Wand2, Key } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const features = [
@@ -38,15 +38,13 @@ const stats = [
 
 export default function LandingPage() {
   const router = useRouter();
+  const { userId } = useAuth();
 
   useEffect(() => {
-    // Check if user is already signed in
-    import("@clerk/nextjs").then(({ auth }) => {
-      auth().then(({ userId }) => {
-        if (userId) router.replace("/dashboard");
-      });
-    });
-  }, [router]);
+    if (userId) {
+      router.replace("/dashboard");
+    }
+  }, [userId, router]);
 
   return (
     <div className="min-h-screen bg-cream">
