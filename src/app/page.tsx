@@ -148,13 +148,19 @@ function FooterBrandHeading() {
     return () => io.disconnect();
   }, []);
 
+  const playClass = play ? 'footer-word-shine--play' : '';
+
   return (
-    <h2
-      ref={ref}
-      className={`footer-brand-shine relative text-center font-black leading-[0.82] tracking-[-0.045em] sm:leading-[0.8] ${play ? 'footer-brand-shine--play' : ''}`}
-    >
-      <span className="relative block text-[clamp(3.25rem,14.5vw,11.5rem)]">Token</span>
-      <span className="relative -mt-[0.06em] block text-[clamp(3.25rem,14.5vw,11.5rem)] sm:-mt-[0.08em]">
+    <h2 className="relative text-center font-black leading-[0.82] tracking-[-0.045em] sm:leading-[0.8]">
+      <span
+        ref={ref}
+        className={`footer-word-token relative block text-[clamp(3.25rem,14.5vw,11.5rem)] ${playClass}`}
+      >
+        Token
+      </span>
+      <span
+        className={`footer-word-scope relative -mt-[0.06em] block text-[clamp(3.25rem,14.5vw,11.5rem)] sm:-mt-[0.08em] ${playClass}`}
+      >
         Scope
       </span>
     </h2>
