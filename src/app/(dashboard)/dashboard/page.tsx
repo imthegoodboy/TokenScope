@@ -235,8 +235,9 @@ export default function DashboardPage() {
   };
 
   const getProxyUrl = (proxyId: string) => {
-    if (typeof window === 'undefined') return '';
-    return `${window.location.origin.replace('/dashboard', '')}/api/v1/proxy/${proxyId}`;
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
+    const baseUrl = apiUrl.replace('/api/v1', '');
+    return `${baseUrl}/api/v1/proxy/${proxyId}`;
   };
 
   const chartData = dailyStats.map(day => ({
