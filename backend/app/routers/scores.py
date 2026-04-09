@@ -340,7 +340,7 @@ async def set_user_role(user_id: str, role: str, db: AsyncSession = Depends(get_
 @router.get("/get-role")
 async def get_user_role(user_id: str, db: AsyncSession = Depends(get_db)):
     """Get user's role."""
-    result = await db.execute(select(UserRoleTable).where(UserRoleTable.user_id == user_id))
+    result = await db.execute(select(UserRole).where(UserRole.user_id == user_id))
     role_record = result.scalar_one_or_none()
 
     if not role_record:
