@@ -33,12 +33,5 @@ Build a smart LLM token usage dashboard with token-level importance highlighting
 | Migration       | Alembic                                 |
 | Testing         | pytest + pytest-asyncio                |
 
-### Infrastructure
-| Layer       | Technology                    |
-|-------------|-------------------------------|
-| Deploy FE   | Vercel                        |
-| Deploy BE   | Railway / Fly.io / AWS        |
-| Container   | Docker + Docker Compose       |
-| CI/CD       | GitHub Actions                |
-
+ 
 ---
