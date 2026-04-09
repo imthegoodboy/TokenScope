@@ -4,15 +4,14 @@ interface RequestOptions {
   method?: string;
   body?: unknown;
   headers?: Record<string, string>;
+  token?: string | null;
 }
 
 async function request<T>(
   path: string,
   options: RequestOptions = {}
 ): Promise<T> {
-  const { method = "GET", body, headers = {} } = options;
-
-  const token = await getClerkToken();
+  const { method = "GET", body, headers = {}, token } = options;
 
   const res = await fetch(`${API_URL}${path}`, {
     method,
@@ -30,17 +29,6 @@ async function request<T>(
   }
 
   return res.json();
-}
-
-async function getClerkToken(): Promise<string | null> {
-  try {
-    const { auth } = await import("@clerk/nextjs/ssr.server.js");
-    const { getAuth } = await import("@clerk/nextjs");
-    // In client components we'll use useAuth hook instead
-    return null;
-  } catch {
-    return null;
-  }
 }
 
 // ─── Usage ───────────────────────────────────────────────────────────────────
