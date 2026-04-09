@@ -74,36 +74,27 @@ export interface ProxyKeyWithSecret extends ProxyKey {
   key: string; // raw proxy key (only shown once)
 }
 
-export async function listProxyKeys(token?: string | null): Promise<ProxyKey[]> {
-  return request("/api/v1/proxy-keys/", { token });
+export async function listProxyKeys(): Promise<ProxyKey[]> {
+  return request("/api/v1/proxy-keys/");
 }
 
-export async function createProxyKey(
-  label: string,
-  token?: string | null
-): Promise<ProxyKeyWithSecret> {
+export async function createProxyKey(label: string): Promise<ProxyKeyWithSecret> {
   return request("/api/v1/proxy-keys/", {
     method: "POST",
     body: { label },
-    token,
   });
 }
 
-export async function deleteProxyKey(
-  keyId: string,
-  token?: string | null
-): Promise<void> {
-  await request(`/api/v1/proxy-keys/${keyId}`, { method: "DELETE", token });
+export async function deleteProxyKey(keyId: string): Promise<void> {
+  await request(`/api/v1/proxy-keys/${keyId}`, { method: "DELETE" });
 }
 
 export async function toggleProxyEnhance(
   keyId: string,
   enabled: boolean,
-  token?: string | null
 ): Promise<{ auto_enhance: boolean }> {
   return request(`/api/v1/proxy-keys/${keyId}/toggle-enhance?enabled=${enabled}`, {
     method: "PATCH",
-    token,
   });
 }
 
@@ -204,20 +195,20 @@ export interface ApiKey {
   total_spent?: number;
 }
 
-export async function listApiKeys(token?: string | null): Promise<ApiKey[]> {
-  return request("/api/v1/keys/", { token });
+export async function listApiKeys(): Promise<ApiKey[]> {
+  return request("/api/v1/keys/");
 }
 
 export async function addApiKey(data: {
   provider: string;
   api_key: string;
   key_label?: string;
-}, token?: string | null): Promise<ApiKey> {
-  return request("/api/v1/keys/", { method: "POST", body: data, token });
+}): Promise<ApiKey> {
+  return request("/api/v1/keys/", { method: "POST", body: data });
 }
 
-export async function deleteApiKey(id: string, token?: string | null): Promise<void> {
-  await request(`/api/v1/keys/${id}`, { method: "DELETE", token });
+export async function deleteApiKey(id: string): Promise<void> {
+  await request(`/api/v1/keys/${id}`, { method: "DELETE" });
 }
 
 // ─── Analyzer ────────────────────────────────────────────────────────────────
@@ -255,8 +246,8 @@ export async function analyzePrompt(data: {
   prompt: string;
   model: string;
   provider: string;
-}, token?: string | null): Promise<AnalyzeResult> {
-  return request("/api/v1/analyze/prompt", { method: "POST", body: data, token });
+}): Promise<AnalyzeResult> {
+  return request("/api/v1/analyze/prompt", { method: "POST", body: data });
 }
 
 export async function optimizePrompt(data: {
@@ -264,8 +255,8 @@ export async function optimizePrompt(data: {
   model: string;
   provider: string;
   target_tokens?: number;
-}, token?: string | null): Promise<OptimizeResult> {
-  return request("/api/v1/analyze/optimize", { method: "POST", body: data, token });
+}): Promise<OptimizeResult> {
+  return request("/api/v1/analyze/optimize", { method: "POST", body: data });
 }
 
 // ─── Usage (legacy) ─────────────────────────────────────────────────────────
@@ -283,8 +274,8 @@ export interface UsageRecord {
   response_text?: string;
 }
 
-export async function getUsageSummary(token?: string | null) {
-  return request("/api/v1/usage/summary", { token });
+export async function getUsageSummary() {
+  return request("/api/v1/usage/summary");
 }
 
 export async function getUsageHistory(params?: {
@@ -292,18 +283,18 @@ export async function getUsageHistory(params?: {
   limit?: number;
   provider?: string;
   model?: string;
-}, token?: string | null) {
+}) {
   const qs = new URLSearchParams();
   if (params?.page) qs.set("page", String(params.page));
   if (params?.limit) qs.set("limit", String(params.limit));
   if (params?.provider) qs.set("provider", params.provider);
   if (params?.model) qs.set("model", params.model);
   const query = qs.toString();
-  return request(`/api/v1/usage/history${query ? `?${query}` : ""}`, { token });
+  return request(`/api/v1/usage/history${query ? `?${query}` : ""}`);
 }
 
 // ─── Stats ──────────────────────────────────────────────────────────────────
 
-export async function getRealtimeStats(token?: string | null) {
-  return request("/api/v1/stats/realtime", { token });
+export async function getRealtimeStats() {
+  return request("/api/v1/stats/realtime");
 }
