@@ -8,7 +8,9 @@
       "Bash(npm install:*)",
       "Bash(pip install:*)",
       "Bash(python -c \"from app.main import app; print\\('Backend OK'\\)\")",
-      "Bash(npm run:*)"
+      "Bash(npm run:*)",
+      "Bash(python -c \"from backend.app.database import PromptOptimization; print\\('Database models OK'\\)\")",
+      "Bash(python -c \"from backend.app.routers.extension import router; print\\('Extension router OK'\\)\")"
     ]
   }
 }

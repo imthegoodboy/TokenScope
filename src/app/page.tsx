@@ -4,7 +4,123 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
-import { ArrowRight, Zap, Shield, TrendingUp, Code, BarChart3, Sparkles, Star, ChevronDown, Play, Check } from 'lucide-react';
+import { ArrowRight, Zap, Shield, TrendingUp, Code, BarChart3, Sparkles, Star, ChevronDown, Play } from 'lucide-react';
+
+type FooterParticle = {
+  x: number;
+  y: number;
+  r: number;
+  vy: number;
+  vx: number;
+  a: number;
+  pulse: number;
+};
+
+function FooterParticles() {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    const foot = canvas.parentElement;
+    if (!foot) return;
+
+    const particles: FooterParticle[] = [];
+    let raf = 0;
+    let reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    const mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const onReduce = () => {
+      reduceMotion = mq.matches;
+    };
+    mq.addEventListener('change', onReduce);
+
+    function fillParticles(w: number, h: number) {
+      particles.length = 0;
+      const target = Math.floor((w * h) / 16000);
+      const n = Math.min(100, Math.max(30, target));
+      for (let i = 0; i < n; i++) {
+        particles.push({
+          x: Math.random() * w,
+          y: Math.random() * h,
+          r: Math.random() * 1.6 + 0.35,
+          vy: -0.12 - Math.random() * 0.5,
+          vx: (Math.random() - 0.5) * 0.4,
+          a: 0.12 + Math.random() * 0.38,
+          pulse: Math.random() * Math.PI * 2,
+        });
+      }
+    }
+
+    function resize() {
+      const dpr = Math.min(window.devicePixelRatio ?? 1, 2);
+      const w = foot.clientWidth;
+      const h = foot.clientHeight;
+      if (w < 2 || h < 2) return;
+      canvas.width = Math.floor(w * dpr);
+      canvas.height = Math.floor(h * dpr);
+      canvas.style.width = `${w}px`;
+      canvas.style.height = `${h}px`;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      fillParticles(w, h);
+    }
+
+    resize();
+    const ro = new ResizeObserver(resize);
+    ro.observe(foot);
+
+    const tick = () => {
+      const w = foot.clientWidth;
+      const h = foot.clientHeight;
+      ctx.clearRect(0, 0, w, h);
+      if (!reduceMotion) {
+        for (const p of particles) {
+          p.y += p.vy;
+          p.x += p.vx + Math.sin(p.pulse) * 0.12;
+          p.pulse += 0.018;
+          if (p.y < -12) {
+            p.y = h + 12;
+            p.x = Math.random() * w;
+          }
+          if (p.x < -8) p.x = w + 8;
+          if (p.x > w + 8) p.x = -8;
+          const tw = 0.55 + 0.45 * Math.sin(p.pulse * 1.2);
+          const alpha = p.a * tw;
+          ctx.beginPath();
+          ctx.fillStyle = `rgba(255, 107, 0, ${alpha})`;
+          ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+          ctx.fill();
+          if (p.r > 0.75) {
+            ctx.beginPath();
+            ctx.fillStyle = `rgba(255, 255, 255, ${alpha * 0.35})`;
+            ctx.arc(p.x, p.y, p.r * 0.4, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+      }
+      raf = requestAnimationFrame(tick);
+    };
+
+    raf = requestAnimationFrame(tick);
+
+    return () => {
+      mq.removeEventListener('change', onReduce);
+      ro.disconnect();
+      cancelAnimationFrame(raf);
+    };
+  }, []);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      className="pointer-events-none absolute inset-0 z-[1] h-full w-full opacity-70"
+      aria-hidden
+    />
+  );
+}
 
 function LandingContent() {
   const router = useRouter();
@@ -334,27 +450,34 @@ function LandingContent() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="py-12 border-t border-gray-800">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-gradient-to-br from-orange to-orange-light rounded-lg flex items-center justify-center">
-                <span className="text-black font-bold text-sm">TS</span>
-              </div>
-              <span className="font-bold">
-                Token<span className="text-orange">Scope</span>
+      {/* Footer — particles, scanlines, shine + glitch wordmark */}
+      <footer className="relative isolate w-full overflow-hidden border-t border-gray-800/90 bg-[#050505]">
+        <div
+          className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(ellipse_120%_80%_at_50%_100%,rgba(255,107,0,0.16),transparent_55%)]"
+          aria-hidden
+        />
+        <FooterParticles />
+        <div
+          className="footer-crt-scanlines pointer-events-none absolute inset-0 z-[2]"
+          aria-hidden
+        />
+        <div
+          className="pointer-events-none absolute inset-x-0 bottom-0 z-[3] h-px bg-gradient-to-r from-transparent via-orange/40 to-transparent"
+          aria-hidden
+        />
+        <div className="relative z-20 mx-auto flex min-h-[min(52vh,560px)] w-full max-w-[100vw] flex-col items-center justify-center px-3 py-16 sm:min-h-[min(48vh,520px)] sm:px-6 md:py-24 lg:py-28">
+          <Link
+            href="/"
+            className="group relative z-10 transition-transform duration-500 ease-out will-change-transform hover:scale-[1.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#050505]"
+            aria-label="TokenScope home"
+          >
+            <h2 className="footer-brand-shine footer-brand-glitch relative text-center font-black leading-[0.82] tracking-[-0.045em] sm:leading-[0.8]">
+              <span className="relative block text-[clamp(3.25rem,14.5vw,11.5rem)]">Token</span>
+              <span className="relative -mt-[0.06em] block text-[clamp(3.25rem,14.5vw,11.5rem)] sm:-mt-[0.08em]">
+                Scope
               </span>
-            </div>
-            <div className="flex items-center gap-6 text-gray-500 text-sm">
-              <Link href="/docs" className="hover:text-white transition-colors">Documentation</Link>
-              <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>
-              <Link href="/terms" className="hover:text-white transition-colors">Terms</Link>
-            </div>
-            <div className="text-gray-500 text-sm">
-              2026 TokenScope. All rights reserved.
-            </div>
-          </div>
+            </h2>
+          </Link>
         </div>
       </footer>
     </div>

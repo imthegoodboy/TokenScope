@@ -182,4 +182,50 @@ async def get_dashboard_stats(user_id: str, db: AsyncSession = Depends(get_db)):
         }
     }
 
+class SyncRequest(BaseModel):
+    user_id: str
+    stats: dict
+    history: list
+
+@router.post("/extension/sync")
+async def sync_extension_data(
+    request: SyncRequest,
+    db: AsyncSession = Depends(get_db)
+):
+    """Sync local extension data to backend."""
+    try:
+        saved_count = 0
+
+        for item in request.history:
+            # Check if already exists
+            existing = await db.execute(
+                select(PromptOptimization).where(
+                    PromptOptimization.user_id == request.user_id,
+                    PromptOptimization.original_prompt == item.get('original', ''),
+                    PromptOptimization.created_at >= datetime.utcnow() - timedelta(minutes=5)
+                )
+            )
+
+            if existing.scalar() is None:
+                optimization = PromptOptimization(
+                    user_id=request.user_id,
+                    original_prompt=item.get('original', ''),
+                    optimized_prompt=item.get('optimized', ''),
+                    original_tokens=item.get('original', '').split().__len__() if item.get('original') else 0,
+                    optimized_tokens=item.get('optimized', '').split().__len__() if item.get('optimized') else 0,
+                    tokens_saved=item.get('saved_tokens', 0),
+                    cost_saved=item.get('saved_cost', 0.0),
+                    target_model='chatgpt',
+                    source='extension',
+                    accepted=True
+                )
+                db.add(optimization)
+                saved_count += 1
+
+        await db.commit()
+        return {"success": True, "saved_count": saved_count}
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
 # Update the main.py to include this router

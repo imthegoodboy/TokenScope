@@ -77,6 +77,45 @@ class PromptOptimization(Base):
     accepted = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
+    # New fields for attention score calculation
+    prompt_quality_score = Column(Float, default=0.0)  # Score 0-100 for prompt quality
+    complexity_score = Column(Float, default=0.0)  # How complex was the prompt
+    efficiency_score = Column(Float, default=0.0)  # How efficient was the optimization
+    mistakes_made = Column(JSON, nullable=True)  # Array of mistake types identified
+    improvements_made = Column(JSON, nullable=True)  # Array of improvements applied
+    attention_score = Column(Float, default=0.0)  # Final attention score 0-100
+
+class UserScore(Base):
+    __tablename__ = "user_scores"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(String(255), nullable=False, unique=True, index=True)
+    total_prompts = Column(Integer, default=0)
+    total_optimizations = Column(Integer, default=0)
+    total_tokens_saved = Column(Integer, default=0)
+    total_cost_saved = Column(Float, default=0.0)
+
+    # Scoring fields
+    average_quality_score = Column(Float, default=0.0)
+    average_efficiency_score = Column(Float, default=0.0)
+    attention_score = Column(Float, default=50.0)  # Default 50, ranges 0-100
+
+    # Rank and tier
+    rank = Column(Integer, default=0)
+    tier = Column(String(50), default="beginner")  # beginner, intermediate, advanced, expert, master
+
+    # Performance metrics
+    best_score = Column(Float, default=0.0)
+    worst_score = Column(Float, default=0.0)
+    improvement_trend = Column(Float, default=0.0)  # Positive = improving, negative = declining
+
+    # Stats
+    streak_days = Column(Integer, default=0)
+    longest_streak = Column(Integer, default=0)
+    last_active = Column(DateTime, default=datetime.utcnow)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
 async def init_db():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)

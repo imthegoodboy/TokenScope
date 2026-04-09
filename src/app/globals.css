@@ -83,3 +83,130 @@ body {
 .pulse-glow {
   animation: pulse-glow 2s ease-in-out infinite;
 }
+
+/* Home footer: animated light sweep across the wordmark */
+@keyframes footer-shine-sweep {
+  0% {
+    background-position: 120% 50%;
+  }
+  55%,
+  100% {
+    background-position: -120% 50%;
+  }
+}
+
+.footer-brand-shine {
+  background-image: linear-gradient(
+    100deg,
+    #3a3a3a 0%,
+    #8a8a8a 18%,
+    #f0f0f0 32%,
+    #ffffff 38%,
+    #ff9a4d 42%,
+    #ff6b00 48%,
+    #ffb366 52%,
+    #ffffff 58%,
+    #b5b5b5 72%,
+    #3a3a3a 100%
+  );
+  background-size: 280% 100%;
+  background-repeat: no-repeat;
+  -webkit-background-clip: text;
+  background-clip: text;
+  /* filter on gradient text breaks compositing in Chromium/WebKit — keep text fill explicit */
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  animation: footer-shine-sweep 5.8s ease-in-out infinite;
+}
+
+/* Occasional chromatic / slice glitch on the wordmark */
+/* No filter/drop-shadow here — it makes background-clip text vanish in Chrome */
+@keyframes footer-glitch-burst {
+  0%,
+  100% {
+    transform: translate(0, 0);
+    clip-path: inset(0 0 0 0);
+    opacity: 1;
+    text-shadow: none;
+  }
+  1.8% {
+    transform: translate(-4px, 2px);
+    clip-path: inset(6% 0 82% 0);
+    opacity: 0.97;
+    text-shadow: -2px 0 rgba(0, 255, 230, 0.55), 3px 0 rgba(255, 0, 90, 0.45);
+  }
+  2.2% {
+    transform: translate(5px, -3px);
+    clip-path: inset(68% 0 12% 0);
+    text-shadow: 2px 0 rgba(255, 107, 0, 0.5), -3px 0 rgba(180, 255, 255, 0.4);
+  }
+  2.7% {
+    transform: translate(-2px, 1px);
+    clip-path: inset(38% 0 48% 0);
+    text-shadow: -1px 0 rgba(0, 255, 230, 0.45), 2px 0 rgba(255, 0, 90, 0.4);
+  }
+  3.2% {
+    transform: translate(0, 0);
+    clip-path: inset(0 0 0 0);
+    opacity: 1;
+    text-shadow: none;
+  }
+  42% {
+    transform: translate(3px, 2px) skewX(3deg);
+    clip-path: inset(45% 0 35% 0);
+    text-shadow: -3px 0 rgba(0, 255, 230, 0.45), 3px 0 rgba(255, 107, 0, 0.5);
+  }
+  42.4% {
+    transform: translate(-4px, -2px) skewX(-4deg);
+    clip-path: inset(18% 0 62% 0);
+    text-shadow: 3px 0 rgba(255, 0, 90, 0.45), -2px 0 rgba(0, 255, 230, 0.4);
+  }
+  43% {
+    transform: none;
+    clip-path: inset(0 0 0 0);
+    text-shadow: none;
+  }
+  76% {
+    transform: translate(2px, 0);
+    text-shadow: 2px 0 rgba(255, 107, 0, 0.55), -2px 0 rgba(0, 230, 255, 0.35);
+  }
+  76.15% {
+    transform: translate(-3px, 0);
+  }
+  76.3% {
+    transform: none;
+    text-shadow: none;
+  }
+}
+
+.footer-brand-shine.footer-brand-glitch {
+  animation: footer-shine-sweep 5.8s ease-in-out infinite,
+    footer-glitch-burst 4.6s step-end infinite;
+}
+
+.footer-crt-scanlines {
+  background: repeating-linear-gradient(
+    0deg,
+    transparent 0px,
+    transparent 2px,
+    rgba(0, 0, 0, 0.17) 2px,
+    rgba(0, 0, 0, 0.17) 3px
+  );
+  opacity: 0.35;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .footer-brand-shine {
+    animation: none;
+    background-position: 35% 50%;
+  }
+
+  .footer-brand-shine.footer-brand-glitch {
+    animation: none;
+    background-position: 35% 50%;
+    transform: none;
+    clip-path: none;
+    text-shadow: none;
+    opacity: 1;
+  }
+}
