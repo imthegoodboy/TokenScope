@@ -48,7 +48,7 @@ export default function APIKeysPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     loadKeys();
