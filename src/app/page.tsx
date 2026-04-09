@@ -122,6 +122,45 @@ function FooterParticles() {
   );
 }
 
+function FooterBrandHeading() {
+  const ref = useRef<HTMLHeadingElement>(null);
+  const [play, setPlay] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+
+    if (typeof IntersectionObserver === 'undefined') {
+      setPlay(true);
+      return;
+    }
+
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setPlay(true);
+          io.disconnect();
+        }
+      },
+      { threshold: 0.18, rootMargin: '0px 0px -5% 0px' }
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
+  return (
+    <h2
+      ref={ref}
+      className={`footer-brand-shine relative text-center font-black leading-[0.82] tracking-[-0.045em] sm:leading-[0.8] ${play ? 'footer-brand-shine--play' : ''}`}
+    >
+      <span className="relative block text-[clamp(3.25rem,14.5vw,11.5rem)]">Token</span>
+      <span className="relative -mt-[0.06em] block text-[clamp(3.25rem,14.5vw,11.5rem)] sm:-mt-[0.08em]">
+        Scope
+      </span>
+    </h2>
+  );
+}
+
 function LandingContent() {
   const router = useRouter();
   const { isSignedIn, user } = useUser();
@@ -471,12 +510,7 @@ function LandingContent() {
             className="group relative z-10 transition-transform duration-500 ease-out will-change-transform hover:scale-[1.02] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-orange/60 focus-visible:ring-offset-2 focus-visible:ring-offset-[#050505]"
             aria-label="TokenScope home"
           >
-            <h2 className="footer-brand-shine footer-brand-glitch relative text-center font-black leading-[0.82] tracking-[-0.045em] sm:leading-[0.8]">
-              <span className="relative block text-[clamp(3.25rem,14.5vw,11.5rem)]">Token</span>
-              <span className="relative -mt-[0.06em] block text-[clamp(3.25rem,14.5vw,11.5rem)] sm:-mt-[0.08em]">
-                Scope
-              </span>
-            </h2>
+            <FooterBrandHeading />
           </Link>
         </div>
       </footer>

@@ -117,7 +117,8 @@ body {
   background-clip: text;
   color: transparent;
   -webkit-text-fill-color: transparent;
-  background-position: 40% 50%;
+  /* Matches sweep keyframe 0% — no jump when IntersectionObserver adds --play */
+  background-position: 128% 50%;
   animation: none;
 }
 
@@ -137,17 +138,9 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .footer-brand-shine {
-    animation: none;
-    background-position: 35% 50%;
-  }
-
-  .footer-brand-shine.footer-brand-glitch {
-    animation: none;
-    background-position: 35% 50%;
-    transform: none;
-    clip-path: none;
-    text-shadow: none;
-    opacity: 1;
+  .footer-brand-shine,
+  .footer-brand-shine.footer-brand-shine--play {
+    animation: none !important;
+    background-position: 40% 50%;
   }
 }
