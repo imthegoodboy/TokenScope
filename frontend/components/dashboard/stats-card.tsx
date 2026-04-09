@@ -10,40 +10,50 @@ interface StatsCardProps {
   icon: LucideIcon;
   change?: string;
   trend?: boolean;
+  accent?: "jaffa" | "green" | "navy";
 }
 
-export function StatsCard({ title, value, icon: Icon, change, trend }: StatsCardProps) {
+const accentStyles = {
+  jaffa: {
+    bg: "bg-jaffa/8",
+    icon: "text-jaffa",
+  },
+  green: {
+    bg: "bg-green/8",
+    icon: "text-green",
+  },
+  navy: {
+    bg: "bg-navy/8",
+    icon: "text-navy",
+  },
+};
+
+export function StatsCard({ title, value, icon: Icon, change, trend, accent = "jaffa" }: StatsCardProps) {
+  const style = accentStyles[accent];
+  const trendUp = trend ?? true;
+
   return (
     <div className="card group hover:shadow-card-hover transition-all duration-300 hover:-translate-y-0.5">
       <div className="flex items-start justify-between">
         <div>
-          <p className="text-xs font-medium text-black-muted uppercase tracking-wider">
-            {title}
-          </p>
-          <p className="text-2xl font-bold text-black mt-2 font-mono">
-            {value}
-          </p>
+          <p className="text-xs font-medium opacity-60 uppercase tracking-wider">{title}</p>
+          <p className="text-2xl font-bold mt-2 font-mono">{value}</p>
           {change && (
             <div className="flex items-center gap-1 mt-2">
-              {trend ? (
-                <TrendingUp size={12} className="text-success" />
+              {trendUp ? (
+                <TrendingUp size={12} className={accent === "green" ? "text-green" : "text-jaffa"} />
               ) : (
                 <TrendingDown size={12} className="text-danger" />
               )}
-              <span
-                className={cn(
-                  "text-xs font-medium",
-                  trend ? "text-success" : "text-danger"
-                )}
-              >
+              <span className={cn("text-xs font-medium", trendUp ? "text-green" : "text-danger")}>
                 {change}
               </span>
-              <span className="text-xs text-black-muted">vs last month</span>
+              <span className="text-xs opacity-60">vs last month</span>
             </div>
           )}
         </div>
-        <div className="w-10 h-10 rounded-lg bg-black/5 flex items-center justify-center group-hover:bg-black/10 transition-colors">
-          <Icon size={18} className="text-black" />
+        <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center transition-colors", style.bg)}>
+          <Icon size={18} className={style.icon} />
         </div>
       </div>
     </div>

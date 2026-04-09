@@ -1,13 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import { Header } from "@/components/layout/header";
 import { StatsCard } from "@/components/dashboard/stats-card";
 import { UsageTable } from "@/components/dashboard/usage-table";
 import { CostLineChart } from "@/components/charts/cost-line-chart";
 import { ProviderPie } from "@/components/charts/provider-pie";
-import { Usage3DChart } from "@/components/charts/usage-3d-chart";
+import { ContributionGraph } from "@/components/charts/contribution-graph";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Badge } from "@/components/ui/badge";
 import { formatCurrency, formatNumber } from "@/lib/utils";
 import {
   DollarSign,
@@ -15,11 +17,16 @@ import {
   Zap,
   Key,
   TrendingUp,
-  TrendingDown,
+  Activity,
 } from "lucide-react";
 import { useUsageStore } from "@/store/usage-store";
 
-// Demo data for when backend isn't connected
+// Dynamic import for 3D chart (SSR disabled)
+const Usage3DChart = dynamic(
+  () => import("@/components/charts/usage-3d-chart").then((m) => m.Usage3DChart),
+  { ssr: false, loading: () => <Skeleton className="h-64 rounded-lg" /> }
+);
+
 const demoSummary = {
   total_spend: 127.43,
   total_tokens: 4_820_000,
@@ -38,9 +45,9 @@ const demoSummary = {
     { model: "gemini-1.5-flash", tokens: 700_000, cost: 5.25, calls: 100 },
     { model: "claude-3-5-haiku", tokens: 720_000, cost: 5.4, calls: 160 },
   ],
-  chart_data: Array.from({ length: 14 }, (_, i) => {
+  chart_data: Array.from({ length: 30 }, (_, i) => {
     const d = new Date();
-    d.setDate(d.getDate() - (13 - i));
+    d.setDate(d.getDate() - (29 - i));
     return {
       date: d.toISOString().split("T")[0],
       tokens: Math.floor(Math.random() * 500000) + 100000,
@@ -49,57 +56,18 @@ const demoSummary = {
     };
   }),
   recent_calls: [
-    {
-      id: "1",
-      provider: "openai",
-      model: "gpt-4o",
-      prompt_tokens: 1240,
-      completion_tokens: 380,
-      total_tokens: 1620,
-      cost_usd: 0.0628,
-      created_at: new Date(Date.now() - 5 * 60000).toISOString(),
-    },
-    {
-      id: "2",
-      provider: "anthropic",
-      model: "claude-3-5-sonnet",
-      prompt_tokens: 890,
-      completion_tokens: 520,
-      total_tokens: 1410,
-      cost_usd: 0.0282,
-      created_at: new Date(Date.now() - 15 * 60000).toISOString(),
-    },
-    {
-      id: "3",
-      provider: "openai",
-      model: "gpt-4o-mini",
-      prompt_tokens: 2100,
-      completion_tokens: 280,
-      total_tokens: 2380,
-      cost_usd: 0.0318,
-      created_at: new Date(Date.now() - 30 * 60000).toISOString(),
-    },
-    {
-      id: "4",
-      provider: "gemini",
-      model: "gemini-1.5-flash",
-      prompt_tokens: 560,
-      completion_tokens: 190,
-      total_tokens: 750,
-      cost_usd: 0.0056,
-      created_at: new Date(Date.now() - 45 * 60000).toISOString(),
-    },
-    {
-      id: "5",
-      provider: "anthropic",
-      model: "claude-3-5-haiku",
-      prompt_tokens: 340,
-      completion_tokens: 210,
-      total_tokens: 550,
-      cost_usd: 0.0044,
-      created_at: new Date(Date.now() - 60 * 60000).toISOString(),
-    },
+    { id: "1", provider: "openai", model: "gpt-4o", prompt_tokens: 1240, completion_tokens: 380, total_tokens: 1620, cost_usd: 0.0628, created_at: new Date(Date.now() - 5 * 60000).toISOString() },
+    { id: "2", provider: "anthropic", model: "claude-3-5-sonnet", prompt_tokens: 890, completion_tokens: 520, total_tokens: 1410, cost_usd: 0.0282, created_at: new Date(Date.now() - 15 * 60000).toISOString() },
+    { id: "3", provider: "openai", model: "gpt-4o-mini", prompt_tokens: 2100, completion_tokens: 280, total_tokens: 2380, cost_usd: 0.0318, created_at: new Date(Date.now() - 30 * 60000).toISOString() },
+    { id: "4", provider: "gemini", model: "gemini-1.5-flash", prompt_tokens: 560, completion_tokens: 190, total_tokens: 750, cost_usd: 0.0056, created_at: new Date(Date.now() - 45 * 60000).toISOString() },
+    { id: "5", provider: "anthropic", model: "claude-3-5-haiku", prompt_tokens: 340, completion_tokens: 210, total_tokens: 550, cost_usd: 0.0044, created_at: new Date(Date.now() - 60 * 60000).toISOString() },
   ],
+};
+
+const PROVIDER_COLORS: Record<string, string> = {
+  openai: "#F07F3C",
+  anthropic: "#16563B",
+  gemini: "#002F4B",
 };
 
 export default function DashboardPage() {
@@ -120,7 +88,7 @@ export default function DashboardPage() {
           setSummary(d);
         }
       } catch {
-        // Use demo data if backend is not available
+        // Use demo data
       } finally {
         setLoading(false);
       }
@@ -128,18 +96,14 @@ export default function DashboardPage() {
     load();
   }, [setLoading, setSummary]);
 
-  const isDemo = !summary;
   const display = summary || data;
 
   return (
     <div>
-      <Header
-        title="Dashboard"
-        description="Overview of your AI token usage"
-      />
+      <Header title="Dashboard" description="Overview of your AI token usage" />
 
       <div className="px-8 py-6 space-y-6">
-        {/* Stats Grid */}
+        {/* Stats */}
         {isLoading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {[...Array(4)].map((_, i) => (
@@ -148,47 +112,34 @@ export default function DashboardPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <StatsCard
-              title="Total Spend"
-              value={formatCurrency(display.total_spend)}
-              icon={DollarSign}
-              change={`${isDemo ? "+12.4%" : ""}`}
-              trend={false}
-            />
-            <StatsCard
-              title="Total Tokens"
-              value={formatNumber(display.total_tokens)}
-              icon={Cpu}
-              change={`${isDemo ? "+8.2%" : ""}`}
-              trend={true}
-            />
-            <StatsCard
-              title="API Calls"
-              value={formatNumber(display.total_calls)}
-              icon={Zap}
-              change={`${isDemo ? "+15.1%" : ""}`}
-              trend={true}
-            />
-            <StatsCard
-              title="Active Keys"
-              value={display.active_keys.toString()}
-              icon={Key}
-              change={`${isDemo ? "3 providers" : ""}`}
-              trend={true}
-            />
+            <StatsCard title="Total Spend" value={formatCurrency(display.total_spend)} icon={DollarSign} change="+12.4%" trend={false} accent="jaffa" />
+            <StatsCard title="Total Tokens" value={formatNumber(display.total_tokens)} icon={Cpu} change="+8.2%" trend={true} accent="navy" />
+            <StatsCard title="API Calls" value={formatNumber(display.total_calls)} icon={Zap} change="+15.1%" trend={true} accent="green" />
+            <StatsCard title="Active Keys" value={display.active_keys.toString()} icon={Key} change="3 providers" trend={true} accent="jaffa" />
           </div>
         )}
 
-        {/* Charts Row */}
+        {/* Contribution Graph */}
+        <div className="card">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="font-semibold">Request Activity</h3>
+              <p className="text-xs opacity-60 mt-0.5">API calls over the last 12 weeks</p>
+            </div>
+            <Badge className="bg-jaffa-bg text-jaffa-dark border-jaffa/30">
+              <Activity size={10} /> Live tracking
+            </Badge>
+          </div>
+          <ContributionGraph data={display.chart_data.map((d) => ({ date: d.date, count: d.cost * 10 }))} weeks={12} />
+        </div>
+
+        {/* 3D Chart + Provider Pie */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* 3D Usage Chart */}
           <div className="lg:col-span-2 card">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h3 className="font-semibold text-black">Token Usage (3D)</h3>
-                <p className="text-xs text-black-muted mt-0.5">
-                  Drag to rotate • Scroll to zoom
-                </p>
+                <h3 className="font-semibold">Token Usage (3D)</h3>
+                <p className="text-xs opacity-60 mt-0.5">Drag to rotate • Scroll to zoom</p>
               </div>
               <div className="flex gap-1">
                 {(["7d", "14d", "30d"] as const).map((p) => (
@@ -196,9 +147,7 @@ export default function DashboardPage() {
                     key={p}
                     onClick={() => setChartPeriod(p)}
                     className={`px-2.5 py-1 text-xs rounded-md transition-all ${
-                      chartPeriod === p
-                        ? "bg-black text-white"
-                        : "text-black-muted hover:bg-black/5"
+                      chartPeriod === p ? "bg-jaffa text-white" : "text-black-muted hover:bg-black/5"
                     }`}
                   >
                     {p}
@@ -211,85 +160,51 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Provider Breakdown */}
           <div className="card">
-            <h3 className="font-semibold text-black mb-4">By Provider</h3>
-            <div className="h-48">
+            <h3 className="font-semibold mb-4">Spend by Provider</h3>
+            <div className="h-44">
               <ProviderPie data={display.provider_breakdown} />
             </div>
             <div className="mt-4 space-y-2">
               {Object.entries(display.provider_breakdown).map(([key, val]) => (
                 <div key={key} className="flex items-center justify-between text-sm">
                   <div className="flex items-center gap-2">
-                    <div
-                      className="w-2 h-2 rounded-full"
-                      style={{
-                        backgroundColor:
-                          key === "openai"
-                            ? "#10A37F"
-                            : key === "anthropic"
-                            ? "#D4A574"
-                            : "#4285F4",
-                      }}
-                    />
-                    <span className="capitalize text-black">{key}</span>
+                    <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: PROVIDER_COLORS[key] || "#6B6B6B" }} />
+                    <span className="capitalize font-medium">{key}</span>
+                    <span className="text-xs opacity-60">{val.calls} calls</span>
                   </div>
-                  <span className="font-mono text-black-muted">
-                    {formatCurrency(val.cost)}
-                  </span>
+                  <span className="font-mono font-semibold">{formatCurrency(val.cost)}</span>
                 </div>
               ))}
             </div>
           </div>
         </div>
 
-        {/* Cost Line Chart + Recent Activity */}
+        {/* Cost + Recent Activity */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="card">
-            <h3 className="font-semibold text-black mb-4">Cost Over Time</h3>
+            <h3 className="font-semibold mb-4">Cost Over Time</h3>
             <div className="h-52">
               <CostLineChart data={display.chart_data} />
             </div>
           </div>
 
           <div className="card">
-            <h3 className="font-semibold text-black mb-4">Recent Activity</h3>
+            <h3 className="font-semibold mb-4">Recent Activity</h3>
             <div className="space-y-3">
               {display.recent_calls.slice(0, 5).map((call) => (
-                <div
-                  key={call.id}
-                  className="flex items-center justify-between py-2 border-b border-black-border last:border-0"
-                >
+                <div key={call.id} className="flex items-center justify-between py-2 border-b border-black-border last:border-0">
                   <div className="flex items-center gap-3">
-                    <div
-                      className="w-2 h-2 rounded-full"
-                      style={{
-                        backgroundColor:
-                          call.provider === "openai"
-                            ? "#10A37F"
-                            : call.provider === "anthropic"
-                            ? "#D4A574"
-                            : "#4285F4",
-                      }}
-                    />
+                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: PROVIDER_COLORS[call.provider] || "#6B6B6B" }} />
                     <div>
-                      <p className="text-sm font-medium text-black font-mono">
-                        {call.model}
-                      </p>
-                      <p className="text-xs text-black-muted">
-                        {formatNumber(call.total_tokens)} tokens
-                      </p>
+                      <p className="text-sm font-medium font-mono">{call.model}</p>
+                      <p className="text-xs opacity-60">{formatNumber(call.total_tokens)} tokens</p>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm font-mono font-medium text-black">
-                      {formatCurrency(call.cost_usd)}
-                    </p>
-                    <p className="text-xs text-black-muted">
-                      {new Date(call.created_at).toLocaleTimeString([], {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
+                    <p className="text-sm font-mono font-semibold">{formatCurrency(call.cost_usd)}</p>
+                    <p className="text-xs opacity-60">
+                      {new Date(call.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
                     </p>
                   </div>
                 </div>
@@ -300,7 +215,7 @@ export default function DashboardPage() {
 
         {/* Top Models */}
         <div className="card">
-          <h3 className="font-semibold text-black mb-4">Top Models</h3>
+          <h3 className="font-semibold mb-4">Top Models</h3>
           <UsageTable models={display.model_breakdown} />
         </div>
       </div>

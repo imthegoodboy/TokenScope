@@ -52,9 +52,9 @@ const DEMO_KEYS: ApiKey[] = [
 ];
 
 const PROVIDER_COLORS: Record<string, string> = {
-  openai: "#10A37F",
-  anthropic: "#D4A574",
-  gemini: "#4285F4",
+  openai: "#F07F3C",
+  anthropic: "#16563B",
+  gemini: "#002F4B",
 };
 
 const PROVIDER_LABELS: Record<string, string> = {
