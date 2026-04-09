@@ -2,7 +2,7 @@ import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 
 const isProtectedRoute = createRouteMatcher([
   '/dashboard(.*)',
-  '/api/v1/proxy(.*)',
+  // Proxy is authenticated by proxy_id in the URL; do not require Clerk for LLM clients.
   '/api/v1/keys(.*)',
   '/api/v1/stats(.*)',
   '/api/v1/logs(.*)',

@@ -1,6 +1,17 @@
 from sklearn.feature_extraction.text import TfidfVectorizer
 import re
 
+from .token_analyzer import TokenAnalyzer
+
+_TARGET_TO_PRICING_MODEL = {
+    "chatgpt": ("openai", "gpt-4o"),
+    "gemini": ("gemini", "gemini-1.5-flash"),
+    "claude": ("anthropic", "claude-3-5-sonnet"),
+}
+
+_token_analyzer = TokenAnalyzer()
+
+
 class TFIDFEngine:
     def __init__(self):
         self.vectorizer = TfidfVectorizer(
@@ -52,7 +63,8 @@ class TFIDFEngine:
 
         context_additions = {
             "chatgpt": "Provide a clear, concise response.",
-            "gemini": "Give a precise and accurate answer."
+            "gemini": "Give a precise and accurate answer.",
+            "claude": "Reply clearly and directly.",
         }
 
         if len(enhanced.split()) < len(tokens) * 0.7:
@@ -62,13 +74,9 @@ class TFIDFEngine:
 
         return enhanced.strip()
 
-    def estimate_cost(self, text: str, model: str) -> float:
-        tokens = len(text.split())
-        token_cost = 0.001
-
-        if "gpt-4" in model.lower():
-            token_cost = 0.01
-        elif "claude" in model.lower():
-            token_cost = 0.008
-
-        return round(tokens * token_cost / 1000, 6)
+    def estimate_cost(self, text: str, target_model: str) -> float:
+        """Input-only cost (prompt tokens) using TokenAnalyzer $/1M rates for the selected target."""
+        n = len(text.split())
+        key = (target_model or "chatgpt").lower()
+        provider, model = _TARGET_TO_PRICING_MODEL.get(key, ("openai", "gpt-4o"))
+        return _token_analyzer.calculate_cost(provider, model, n, 0)

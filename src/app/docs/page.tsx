@@ -2,7 +2,12 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
-import { BookOpen, Code, Copy, Check, Terminal, FileJson, Zap, ArrowLeft } from 'lucide-react';
+import { Highlight, themes } from 'prism-react-renderer';
+import { Code, Copy, Check, Terminal, FileJson, Zap, ArrowLeft } from 'lucide-react';
+
+const CODE_THEME = themes.nightOwl;
+/** Night Owl plain background from theme */
+const CODE_BG = '#011627';
 
 const codeExamples = {
   python: `import requests
@@ -47,6 +52,75 @@ console.log(data);`,
   }'`,
 };
 
+const exampleLang: Record<keyof typeof codeExamples, string> = {
+  python: 'python',
+  javascript: 'javascript',
+  /** Shell highlighting not bundled; JS lexer still colorizes strings/keywords well */
+  curl: 'javascript',
+};
+
+const REQUEST_BODY_JSON = `{
+  "messages": [
+    {"role": "system", "content": "You are a helpful assistant"},
+    {"role": "user", "content": "Your question here"}
+  ]
+}`;
+
+const RESPONSE_BODY_JSON = `{
+  "id": "chatcmpl-xxx",
+  "model": "gpt-4o-mini",
+  "choices": [{
+    "message": {
+      "role": "assistant",
+      "content": "Here is the response..."
+    }
+  }],
+  "usage": {
+    "prompt_tokens": 25,
+    "completion_tokens": 42,
+    "total_tokens": 67
+  }
+}`;
+
+function SyntaxCode({ code, language }: { code: string; language: string }) {
+  return (
+    <Highlight theme={CODE_THEME} code={code.trimEnd()} language={language}>
+      {({ className, style, tokens, getLineProps, getTokenProps }) => (
+        <pre
+          className={`${className} m-0 px-4 py-4 overflow-x-auto text-[13px] leading-relaxed font-mono`}
+          style={{ ...style, background: 'transparent', margin: 0 }}
+        >
+          {tokens.map((line, i) => (
+            <div key={i} {...getLineProps({ line })}>
+              {line.map((token, key) => (
+                <span key={key} {...getTokenProps({ token })} />
+              ))}
+            </div>
+          ))}
+        </pre>
+      )}
+    </Highlight>
+  );
+}
+
+function HttpRequestMeta() {
+  return (
+    <div className="px-4 pt-4 pb-3 font-mono text-[13px] leading-relaxed border-b border-cyan-950/50">
+      <div>
+        <span className="text-amber-400 font-semibold">POST</span>
+        <span className="text-slate-500"> </span>
+        <span className="text-emerald-400">/api/v1/proxy/</span>
+        <span className="text-teal-300">{'{proxy_id}'}</span>
+      </div>
+      <div className="mt-2">
+        <span className="text-sky-400">Content-Type</span>
+        <span className="text-slate-500">: </span>
+        <span className="text-rose-300">application/json</span>
+      </div>
+    </div>
+  );
+}
+
 export default function DocsPage() {
   const [activeTab, setActiveTab] = useState<'python' | 'javascript' | 'curl'>('python');
   const [copied, setCopied] = useState(false);
@@ -60,12 +134,8 @@ export default function DocsPage() {
   return (
     <div className="min-h-screen bg-black text-white p-4 md:p-6">
       <div className="max-w-4xl mx-auto space-y-8">
-        {/* Header */}
         <div className="flex items-center gap-4 mb-8">
-          <Link
-            href="/dashboard"
-            className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
-          >
+          <Link href="/dashboard" className="p-2 hover:bg-gray-800 rounded-lg transition-colors">
             <ArrowLeft size={20} />
           </Link>
           <div>
@@ -81,7 +151,7 @@ export default function DocsPage() {
           </h2>
 
           <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-6">
-            <ol className="space-y-4 list-decimal list-inside">
+            <ol className="space-y-4 list-decimal list-inside marker:text-orange marker:font-semibold">
               <li className="text-gray-300">
                 <span className="text-white font-medium">Create an account</span> and sign in
               </li>
@@ -106,50 +176,62 @@ export default function DocsPage() {
             <Code className="text-orange" size={24} />
             Integration Examples
           </h2>
+          <p className="text-sm text-zinc-500">
+            Syntax highlighting uses the{' '}
+            <span className="text-cyan-400/90">Night Owl</span> palette (strings, keywords, comments, and JSON keys are
+            color-tinted).
+          </p>
 
-          <div className="bg-gray-900/50 border border-gray-800 rounded-xl overflow-hidden">
-            <div className="flex border-b border-gray-800">
+          <div className="rounded-xl overflow-hidden border border-cyan-900/25 shadow-lg shadow-black/50">
+            <div
+              className="flex flex-wrap border-b border-cyan-950/60 bg-[#0a1628]"
+              style={{ boxShadow: 'inset 0 -1px 0 0 rgba(34, 211, 238, 0.06)' }}
+            >
               <button
+                type="button"
                 onClick={() => setActiveTab('python')}
                 className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors ${
                   activeTab === 'python'
-                    ? 'bg-orange text-black'
-                    : 'text-gray-400 hover:text-white'
+                    ? 'text-cyan-300 bg-cyan-950/50 border-b-2 border-cyan-400 -mb-px'
+                    : 'text-zinc-500 hover:text-zinc-200'
                 }`}
               >
-                <Terminal size={16} />
+                <Terminal size={16} className={activeTab === 'python' ? 'text-amber-400' : ''} />
                 Python
               </button>
               <button
+                type="button"
                 onClick={() => setActiveTab('javascript')}
                 className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors ${
                   activeTab === 'javascript'
-                    ? 'bg-orange text-black'
-                    : 'text-gray-400 hover:text-white'
+                    ? 'text-cyan-300 bg-cyan-950/50 border-b-2 border-cyan-400 -mb-px'
+                    : 'text-zinc-500 hover:text-zinc-200'
                 }`}
               >
-                <FileJson size={16} />
+                <FileJson size={16} className={activeTab === 'javascript' ? 'text-amber-400' : ''} />
                 JavaScript
               </button>
               <button
+                type="button"
                 onClick={() => setActiveTab('curl')}
                 className={`flex items-center gap-2 px-4 py-3 text-sm font-medium transition-colors ${
                   activeTab === 'curl'
-                    ? 'bg-orange text-black'
-                    : 'text-gray-400 hover:text-white'
+                    ? 'text-cyan-300 bg-cyan-950/50 border-b-2 border-cyan-400 -mb-px'
+                    : 'text-zinc-500 hover:text-zinc-200'
                 }`}
               >
-                <Terminal size={16} />
+                <Terminal size={16} className={activeTab === 'curl' ? 'text-amber-400' : ''} />
                 cURL
               </button>
-              <div className="flex-1" />
+              <div className="flex-1 min-w-[1rem]" />
               <button
+                type="button"
                 onClick={copyCode}
-                className="flex items-center gap-2 px-4 py-3 text-sm text-gray-400 hover:text-white transition-colors"
+                className="flex items-center gap-2 px-4 py-3 text-sm text-violet-300/90 hover:text-violet-200 transition-colors"
               >
                 {copied ? (
                   <>
-                    <Check size={16} className="text-green-400" />
+                    <Check size={16} className="text-emerald-400" />
                     Copied!
                   </>
                 ) : (
@@ -161,10 +243,8 @@ export default function DocsPage() {
               </button>
             </div>
 
-            <div className="p-4 overflow-x-auto">
-              <pre className="text-sm text-gray-300 font-mono">
-                <code>{codeExamples[activeTab]}</code>
-              </pre>
+            <div className="overflow-x-auto" style={{ backgroundColor: CODE_BG }}>
+              <SyntaxCode code={codeExamples[activeTab]} language={exampleLang[activeTab]} />
             </div>
           </div>
         </section>
@@ -172,41 +252,24 @@ export default function DocsPage() {
         <section className="space-y-4">
           <h2 className="text-2xl font-bold">Request Format</h2>
 
-          <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-6">
-            <h3 className="text-lg font-semibold mb-4">Request</h3>
-            <div className="bg-black rounded-lg p-4 overflow-x-auto">
-              <pre className="text-sm text-gray-300 font-mono">
-{`POST /api/v1/proxy/{proxy_id}
-Content-Type: application/json
-
-{
-  "messages": [
-    {"role": "system", "content": "You are a helpful assistant"},
-    {"role": "user", "content": "Your question here"}
-  ]
-}`}
-              </pre>
+          <div className="space-y-6">
+            <div>
+              <h3 className="text-lg font-semibold mb-3 text-zinc-200">Request</h3>
+              <div className="rounded-xl overflow-hidden border border-emerald-900/30 shadow-md shadow-black/40">
+                <div style={{ backgroundColor: CODE_BG }}>
+                  <HttpRequestMeta />
+                  <SyntaxCode code={REQUEST_BODY_JSON} language="json" />
+                </div>
+              </div>
             </div>
 
-            <h3 className="text-lg font-semibold mb-4 mt-6">Response</h3>
-            <div className="bg-black rounded-lg p-4 overflow-x-auto">
-              <pre className="text-sm text-gray-300 font-mono">
-{`{
-  "id": "chatcmpl-xxx",
-  "model": "gpt-4o-mini",
-  "choices": [{
-    "message": {
-      "role": "assistant",
-      "content": "Here is the response..."
-    }
-  }],
-  "usage": {
-    "prompt_tokens": 25,
-    "completion_tokens": 42,
-    "total_tokens": 67
-  }
-}`}
-              </pre>
+            <div>
+              <h3 className="text-lg font-semibold mb-3 text-zinc-200">Response</h3>
+              <div className="rounded-xl overflow-hidden border border-violet-900/25 shadow-md shadow-black/40">
+                <div style={{ backgroundColor: CODE_BG }}>
+                  <SyntaxCode code={RESPONSE_BODY_JSON} language="json" />
+                </div>
+              </div>
             </div>
           </div>
         </section>
@@ -229,8 +292,8 @@ Content-Type: application/json
             <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-4">
               <h3 className="font-semibold mb-2">Max Tokens</h3>
               <p className="text-sm text-gray-400">
-                Maximum number of tokens in the response. Controls how long the output can be.
-                Helps control costs and response length.
+                Maximum number of tokens in the response. Controls how long the output can be. Helps control costs and
+                response length.
               </p>
               <div className="mt-3 text-sm">
                 <span className="text-orange">Recommended:</span> 2048 for most use cases
@@ -240,11 +303,11 @@ Content-Type: application/json
             <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-4">
               <h3 className="font-semibold mb-2">System Prompt</h3>
               <p className="text-sm text-gray-400">
-                Sets the behavior and personality of the AI. This is prepended to all requests.
-                Use it to define the assistant's role and guidelines.
+                Sets the behavior and personality of the AI. This is prepended to all requests. Use it to define the
+                assistant&apos;s role and guidelines.
               </p>
               <div className="mt-3 text-sm">
-                <span className="text-orange">Example:</span> "You are a code reviewer..."
+                <span className="text-orange">Example:</span> &quot;You are a code reviewer...&quot;
               </div>
             </div>
 
@@ -265,9 +328,9 @@ Content-Type: application/json
           <h2 className="text-2xl font-bold">Supported Providers</h2>
 
           <div className="grid md:grid-cols-3 gap-4">
-            <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-4">
+            <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-4 ring-1 ring-emerald-500/15">
               <div className="flex items-center gap-3 mb-3">
-                <div className="w-4 h-4 bg-[#10A37F] rounded" />
+                <div className="w-4 h-4 rounded bg-[#10A37F]" />
                 <h3 className="font-semibold">OpenAI</h3>
               </div>
               <ul className="text-sm text-gray-400 space-y-1">
@@ -278,9 +341,9 @@ Content-Type: application/json
               </ul>
             </div>
 
-            <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-4">
+            <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-4 ring-1 ring-amber-500/15">
               <div className="flex items-center gap-3 mb-3">
-                <div className="w-4 h-4 bg-[#EAb308] rounded" />
+                <div className="w-4 h-4 rounded bg-[#EAB308]" />
                 <h3 className="font-semibold">Google Gemini</h3>
               </div>
               <ul className="text-sm text-gray-400 space-y-1">
@@ -290,9 +353,9 @@ Content-Type: application/json
               </ul>
             </div>
 
-            <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-4">
+            <div className="bg-gray-900/50 border border-gray-800 rounded-xl p-4 ring-1 ring-orange-500/15">
               <div className="flex items-center gap-3 mb-3">
-                <div className="w-4 h-4 bg-[#D97706] rounded" />
+                <div className="w-4 h-4 rounded bg-[#D97706]" />
                 <h3 className="font-semibold">Anthropic</h3>
               </div>
               <ul className="text-sm text-gray-400 space-y-1">

@@ -1,0 +1,179 @@
+/* TokenScope Chrome Extension - Content Styles */
+
+#tokenscope-overlay {
+  position: absolute;
+  z-index: 999999;
+  background: linear-gradient(135deg, #1a1a1a 0%, #0a0a0a 100%);
+  border: 1px solid #FF6B00;
+  border-radius: 12px;
+  padding: 16px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color: #ffffff;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5), 0 0 20px rgba(255, 107, 0, 0.2);
+  max-width: 500px;
+  animation: tokenscope-slideIn 0.3s ease-out;
+}
+
+@keyframes tokenscope-slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.tokenscope-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #333;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.tokenscope-logo {
+  font-size: 18px;
+}
+
+.tokenscope-badge {
+  background: linear-gradient(135deg, #FF6B00, #FF8533);
+  color: #000;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  margin-left: auto;
+}
+
+.tokenscope-section {
+  margin-bottom: 12px;
+}
+
+.tokenscope-label {
+  font-size: 12px;
+  color: #888;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.tokenscope-savings {
+  color: #22c55e;
+  font-weight: 600;
+  font-size: 11px;
+}
+
+.tokenscope-text {
+  background: #0d0d0d;
+  border: 1px solid #333;
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 13px;
+  line-height: 1.5;
+  max-height: 100px;
+  overflow-y: auto;
+  word-wrap: break-word;
+}
+
+.tokenscope-text.original {
+  color: #888;
+  border-color: #444;
+}
+
+.tokenscope-text.optimized {
+  color: #fff;
+  border-color: #FF6B00;
+  background: rgba(255, 107, 0, 0.1);
+}
+
+.tokenscope-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid #333;
+}
+
+.tokenscope-btn {
+  flex: 1;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tokenscope-btn.primary {
+  background: linear-gradient(135deg, #FF6B00, #FF8533);
+  color: #000;
+}
+
+.tokenscope-btn.primary:hover {
+  background: linear-gradient(135deg, #FF8533, #FF6B00);
+  transform: translateY(-1px);
+}
+
+.tokenscope-btn.secondary {
+  background: #333;
+  color: #fff;
+}
+
+.tokenscope-btn.secondary:hover {
+  background: #444;
+}
+
+.tokenscope-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 20px;
+  color: #888;
+}
+
+.tokenscope-spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #333;
+  border-top-color: #FF6B00;
+  border-radius: 50%;
+  animation: tokenscope-spin 0.8s linear infinite;
+}
+
+@keyframes tokenscope-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.tokenscope-error {
+  padding: 16px;
+  text-align: center;
+  color: #ef4444;
+}
+
+/* Scrollbar */
+#tokenscope-overlay ::-webkit-scrollbar {
+  width: 6px;
+}
+
+#tokenscope-overlay ::-webkit-scrollbar-track {
+  background: #1a1a1a;
+}
+
+#tokenscope-overlay ::-webkit-scrollbar-thumb {
+  background: #444;
+  border-radius: 3px;
+}
+
+#tokenscope-overlay ::-webkit-scrollbar-thumb:hover {
+  background: #FF6B00;
+}
