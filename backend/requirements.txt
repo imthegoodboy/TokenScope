@@ -1,0 +1,10 @@
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+pydantic==2.10.5
+sqlalchemy==2.0.36
+aiosqlite==0.20.0
+httpx==0.28.1
+tiktoken==0.8.0
+scikit-learn==1.6.1
+python-dotenv==1.0.1
+sse-starlette==2.2.1
