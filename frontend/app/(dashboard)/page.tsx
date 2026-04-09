@@ -197,7 +197,7 @@ export default function DashboardPage() {
                     onClick={() => setChartPeriod(p)}
                     className={`px-2.5 py-1 text-xs rounded-md transition-all ${
                       chartPeriod === p
-                        ? "bg-black text-cream"
+                        ? "bg-black text-white"
                         : "text-black-muted hover:bg-black/5"
                     }`}
                   >

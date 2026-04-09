@@ -81,13 +81,13 @@ export async function getUsageHistory(params?: {
   model?: string;
   start_date?: string;
   end_date?: string;
-}): Promise<{ records: UsageRecord[]; total: number }> {
+}): Promise<{ records: UsageRecord[]; total: number; page: number; limit: number }> {
   const qs = new URLSearchParams(params as Record<string, string>).toString();
   return request(`/api/v1/usage/history${qs ? `?${qs}` : ""}`);
 }
 
 export async function getChartData(params?: {
-  period?: "7d" | "30d" | "90d";
+  period?: "7d" | "14d" | "30d";
 }): Promise<UsageSummary["chart_data"]> {
   const qs = new URLSearchParams(params as Record<string, string>).toString();
   return request(`/api/v1/usage/chart-data${qs ? `?${qs}` : ""}`);

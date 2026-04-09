@@ -12,7 +12,7 @@ interface HeaderProps {
 
 export function Header({ title, description, action }: HeaderProps) {
   return (
-    <header className="sticky top-0 z-10 bg-cream/80 backdrop-blur-md border-b border-black-border px-8 py-4">
+    <header className="sticky top-0 z-10 bg-bg/80 backdrop-blur-md border-b border-black-border px-8 py-4">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-semibold text-black">{title}</h1>

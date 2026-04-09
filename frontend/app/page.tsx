@@ -47,12 +47,12 @@ export default function LandingPage() {
   }, [userId, router]);
 
   return (
-    <div className="min-h-screen bg-cream">
+    <div className="min-h-screen bg-bg">
       {/* Nav */}
-      <nav className="flex items-center justify-between px-8 py-5 border-b border-black-border bg-cream/80 backdrop-blur-md sticky top-0 z-50">
+      <nav className="flex items-center justify-between px-8 py-5 border-b border-black-border bg-bg/80 backdrop-blur-md sticky top-0 z-50">
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center">
-            <Zap size={16} className="text-cream" strokeWidth={2.5} />
+            <Zap size={16} className="text-white" strokeWidth={2.5} />
           </div>
           <span className="font-semibold text-lg tracking-tight">TokenScope</span>
         </div>
@@ -154,7 +154,7 @@ export default function LandingPage() {
         <div className="max-w-2xl mx-auto text-center">
           <div className="card">
             <div className="w-12 h-12 rounded-full bg-black flex items-center justify-center mx-auto mb-6">
-              <Key size={20} className="text-cream" />
+              <Key size={20} className="text-white" />
             </div>
             <h2 className="text-2xl font-bold text-black mb-3">
               Start tracking in 30 seconds

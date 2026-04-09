@@ -30,7 +30,7 @@ export default function RootLayout({
   return (
     <ClerkProvider>
       <html lang="en" className={`${inter.variable} ${jetbrainsMono.variable}`}>
-        <body className="font-sans bg-cream text-black antialiased">
+        <body className="font-sans bg-bg text-black antialiased">
           {children}
         </body>
       </html>

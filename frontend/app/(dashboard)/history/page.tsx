@@ -138,7 +138,7 @@ export default function HistoryPage() {
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-black-border bg-cream">
+                <tr className="border-b border-black-border bg-bg">
                   <th className="w-8 p-3" />
                   <th className="text-left text-xs font-medium text-black-muted uppercase tracking-wider py-3 px-4">
                     Provider

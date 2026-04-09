@@ -31,7 +31,7 @@ export function Sidebar() {
       <div className="px-6 py-6 border-b border-black-border">
         <Link href="/dashboard" className="flex items-center gap-2">
           <div className="w-8 h-8 bg-black rounded-lg flex items-center justify-center">
-            <Zap size={16} className="text-cream" strokeWidth={2.5} />
+            <Zap size={16} className="text-white" strokeWidth={2.5} />
           </div>
           <span className="font-semibold text-lg text-black tracking-tight">
             TokenScope
@@ -54,7 +54,7 @@ export function Sidebar() {
               className={cn(
                 "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200",
                 isActive
-                  ? "bg-black text-cream"
+                  ? "bg-black text-white"
                   : "text-black-muted hover:text-black hover:bg-black/5"
               )}
             >
