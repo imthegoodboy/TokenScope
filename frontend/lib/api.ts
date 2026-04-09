@@ -1,54 +1,46 @@
+// API client for TokenScope backend
+// Uses Clerk auth via the AuthProvider context
+
+import { useAuthToken } from "./auth-context";
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
-// Client-side: get Clerk session token using the standard approach
-let _clientToken: string | null = null;
-let _tokenPromise: Promise<string | null> | null = null;
+// ─── Hook-based request function for client components ───────────────────────
+function useApi() {
+  const { token } = useAuthToken();
 
-export async function getClientToken(): Promise<string | null> {
-  if (typeof window === "undefined") return null;
-  if (_clientToken) return _clientToken;
-  if (_tokenPromise) return _tokenPromise;
+  async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
+    const res = await fetch(`${API_URL}${path}`, {
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...options.headers,
+      },
+    });
 
-  _tokenPromise = (async () => {
-    try {
-      const mod = await import("@clerk/nextjs/auth");
-      const token = await mod.getToken();
-      _clientToken = token;
-      return token;
-    } catch {
-      _tokenPromise = null;
-      return null;
+    if (!res.ok) {
+      const error = await res.json().catch(() => ({ detail: "Request failed" }));
+      throw new Error(error.detail || `HTTP ${res.status}`);
     }
-  })();
 
-  return _tokenPromise;
+    return res.json();
+  }
+
+  return { request, token };
 }
 
-export function clearClientToken(): void {
-  _clientToken = null;
-  _tokenPromise = null;
-}
+// ─── Export the hook for use in client components ───────────────────────────
+export { useApi };
 
-interface RequestOptions {
-  method?: string;
-  body?: unknown;
-  headers?: Record<string, string>;
-}
-
-async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
-  const { method = "GET", body, headers = {} } = options;
-
-  // Get Clerk token automatically
-  const clerkToken = await getClientToken();
-
+// ─── Standalone fetcher for simple cases (SSR/server) ───────────────────────
+export async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
   const res = await fetch(`${API_URL}${path}`, {
-    method,
+    ...options,
     headers: {
       "Content-Type": "application/json",
-      ...(clerkToken ? { Authorization: `Bearer ${clerkToken}` } : {}),
-      ...headers,
+      ...options.headers,
     },
-    body: body ? JSON.stringify(body) : undefined,
   });
 
   if (!res.ok) {
@@ -59,7 +51,7 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
   return res.json();
 }
 
-// ─── Proxy Keys ────────────────────────────────────────────────────────────────
+// ─── Type exports ───────────────────────────────────────────────────────────
 
 export interface ProxyKey {
   id: string;
@@ -71,34 +63,8 @@ export interface ProxyKey {
 }
 
 export interface ProxyKeyWithSecret extends ProxyKey {
-  key: string; // raw proxy key (only shown once)
+  key: string;
 }
-
-export async function listProxyKeys(): Promise<ProxyKey[]> {
-  return request("/api/v1/proxy-keys/");
-}
-
-export async function createProxyKey(label: string): Promise<ProxyKeyWithSecret> {
-  return request("/api/v1/proxy-keys/", {
-    method: "POST",
-    body: { label },
-  });
-}
-
-export async function deleteProxyKey(keyId: string): Promise<void> {
-  await request(`/api/v1/proxy-keys/${keyId}`, { method: "DELETE" });
-}
-
-export async function toggleProxyEnhance(
-  keyId: string,
-  enabled: boolean,
-): Promise<{ auto_enhance: boolean }> {
-  return request(`/api/v1/proxy-keys/${keyId}/toggle-enhance?enabled=${enabled}`, {
-    method: "PATCH",
-  });
-}
-
-// ─── Logs ────────────────────────────────────────────────────────────────────
 
 export interface ProxyLog {
   id: string;
@@ -151,37 +117,6 @@ export interface ChartPoint {
   calls?: number;
 }
 
-export async function getLogs(params?: {
-  page?: number;
-  limit?: number;
-  provider?: string;
-  model?: string;
-  search?: string;
-}): Promise<LogsResponse> {
-  const qs = new URLSearchParams();
-  if (params?.page) qs.set("page", String(params.page));
-  if (params?.limit) qs.set("limit", String(params.limit));
-  if (params?.provider) qs.set("provider", params.provider);
-  if (params?.model) qs.set("model", params.model);
-  if (params?.search) qs.set("search", params.search);
-  const query = qs.toString();
-  return request(`/api/v1/logs/${query ? `?${query}` : ""}`);
-}
-
-export async function getLogsStats(): Promise<LogsStats> {
-  return request("/api/v1/logs/stats");
-}
-
-export async function getLogsBreakdown(): Promise<LogsBreakdown> {
-  return request("/api/v1/logs/breakdown");
-}
-
-export async function getLogsChart(period: "7d" | "14d" | "30d" = "14d"): Promise<ChartPoint[]> {
-  return request(`/api/v1/logs/chart?period=${period}`);
-}
-
-// ─── API Keys ────────────────────────────────────────────────────────────────
-
 export interface ApiKey {
   id: string;
   provider: string;
@@ -192,24 +127,6 @@ export interface ApiKey {
   usage_count?: number;
   total_spent?: number;
 }
-
-export async function listApiKeys(): Promise<ApiKey[]> {
-  return request("/api/v1/keys/");
-}
-
-export async function addApiKey(data: {
-  provider: string;
-  api_key: string;
-  key_label?: string;
-}): Promise<ApiKey> {
-  return request("/api/v1/keys/", { method: "POST", body: data });
-}
-
-export async function deleteApiKey(id: string): Promise<void> {
-  await request(`/api/v1/keys/${id}`, { method: "DELETE" });
-}
-
-// ─── Analyzer ────────────────────────────────────────────────────────────────
 
 export interface TokenScore {
   token: string;
@@ -238,61 +155,4 @@ export interface OptimizeResult {
   saved_cost_output: number;
   saved_cost_total: number;
   kept_key_tokens: TokenScore[];
-}
-
-export async function analyzePrompt(data: {
-  prompt: string;
-  model: string;
-  provider: string;
-}): Promise<AnalyzeResult> {
-  return request("/api/v1/analyze/prompt", { method: "POST", body: data });
-}
-
-export async function optimizePrompt(data: {
-  prompt: string;
-  model: string;
-  provider: string;
-  target_tokens?: number;
-}): Promise<OptimizeResult> {
-  return request("/api/v1/analyze/optimize", { method: "POST", body: data });
-}
-
-// ─── Usage ──────────────────────────────────────────────────────────────────
-
-export interface UsageRecord {
-  id: string;
-  provider: string;
-  model: string;
-  prompt_tokens: number;
-  completion_tokens: number;
-  total_tokens: number;
-  cost_usd: number;
-  created_at: string;
-  prompt_text?: string;
-  response_text?: string;
-}
-
-export async function getUsageSummary() {
-  return request("/api/v1/usage/summary");
-}
-
-export async function getUsageHistory(params?: {
-  page?: number;
-  limit?: number;
-  provider?: string;
-  model?: string;
-}) {
-  const qs = new URLSearchParams();
-  if (params?.page) qs.set("page", String(params.page));
-  if (params?.limit) qs.set("limit", String(params.limit));
-  if (params?.provider) qs.set("provider", params.provider);
-  if (params?.model) qs.set("model", params.model);
-  const query = qs.toString();
-  return request(`/api/v1/usage/history${query ? `?${query}` : ""}`);
-}
-
-// ─── Stats ──────────────────────────────────────────────────────────────────
-
-export async function getRealtimeStats() {
-  return request("/api/v1/stats/realtime");
 }

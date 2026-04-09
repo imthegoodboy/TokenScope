@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
+import { AuthProvider } from "@/lib/auth-context";
 import "./globals.css";
 
 const inter = Inter({
@@ -29,9 +30,11 @@ export default function RootLayout({
 }) {
   return (
     <ClerkProvider>
-      <html lang="en" className={`${inter.variable} ${jetbrainsMono.variable}`}>
-        <body className="font-sans bg-bg text-black antialiased">{children}</body>
-      </html>
+      <AuthProvider>
+        <html lang="en" className={`${inter.variable} ${jetbrainsMono.variable}`}>
+          <body className="font-sans bg-bg text-black antialiased">{children}</body>
+        </html>
+      </AuthProvider>
     </ClerkProvider>
   );
 }
