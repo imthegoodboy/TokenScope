@@ -310,6 +310,13 @@
 
   async function getUserId() {
     try {
+      // First try to get authenticated user
+      const response = await chrome.runtime.sendMessage({ type: 'GET_AUTH_STATUS' });
+      if (response.is_authenticated && response.user_id) {
+        return response.user_id;
+      }
+
+      // Fallback to local storage
       const result = await chrome.storage.local.get('user_id');
       return result.user_id || 'anonymous';
     } catch {
