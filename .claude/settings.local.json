@@ -9,7 +9,9 @@
       "Bash(pip install:*)",
       "Bash(python -c \"from app.main import app; print\\('Backend OK'\\)\")",
       "Bash(npm run:*)",
-      "Bash(python -c \"from app.main import app; print\\('Backend loads OK'\\)\")"
+      "Bash(python -c \"from app.main import app; print\\('Backend loads OK'\\)\")",
+      "Bash(python -c \"from app.main import app; print\\('All routes:', [r.path for r in app.routes][:20]\\)\")",
+      "Bash(python -c \"from app.main import app; print\\([r.path for r in app.routes if 'extension' in r.path or 'group' in r.path or 'connect' in r.path]\\)\")"
     ]
   }
 }

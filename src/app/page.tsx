@@ -2,15 +2,16 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
-import { ArrowRight, Zap, Shield, TrendingUp, Code, BarChart3, Sparkles, Star, ChevronDown, Play, Check } from 'lucide-react';
+import { ArrowRight, Zap, Shield, TrendingUp, Code, BarChart3, Sparkles, Star, ChevronDown, Play, Check, Users, Puzzle, MessageSquare, Download } from 'lucide-react';
 
 const HERO_VIDEO_SRC =
   '/4K%20UHD%2025fps%20FREE%20Video%20Background%20Stars%20Space%20Trip_1080p60.mp4';
 
 function LandingContent() {
   const router = useRouter();
+  const pathname = usePathname();
   const { isSignedIn, user } = useUser();
   const [scrollY, setScrollY] = useState(0);
   const heroRef = useRef<HTMLDivElement>(null);
@@ -28,11 +29,14 @@ function LandingContent() {
     v.play().catch(() => {});
   }, []);
 
+  // Only redirect to dashboard from home page if signed in
+  // Don't redirect from other pages
   useEffect(() => {
-    if (isSignedIn) {
-      router.push('/dashboard');
+    if (isSignedIn && pathname === '/') {
+      // Optional: show a "go to dashboard" button instead of auto-redirect
+      // router.push('/dashboard');
     }
-  }, [isSignedIn, router]);
+  }, [isSignedIn, pathname, router]);
 
   const features = [
     {
@@ -54,6 +58,26 @@ function LandingContent() {
       icon: <Code className="w-6 h-6" />,
       title: 'Multi-Provider Support',
       description: 'OpenAI, Gemini, and Anthropic in one unified interface',
+    },
+    {
+      icon: <Puzzle className="w-6 h-6" />,
+      title: 'Chrome Extension',
+      description: 'Optimize prompts anywhere with our VS Code-style inline suggestions',
+    },
+    {
+      icon: <Users className="w-6 h-6" />,
+      title: 'Team Groups',
+      description: 'Create groups, share codes, and track team-wide usage and savings',
+    },
+    {
+      icon: <MessageSquare className="w-6 h-6" />,
+      title: 'Attention Scores',
+      description: 'Track which prompts are working best with AI attention analysis',
+    },
+    {
+      icon: <Download className="w-6 h-6" />,
+      title: 'Export Reports',
+      description: 'Download team usage reports and member stats as PDF',
     },
     {
       icon: <TrendingUp className="w-6 h-6" />,
@@ -255,6 +279,100 @@ function LandingContent() {
                 <p className="text-gray-400">{feature.description}</p>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Chrome Extension Section */}
+      <section className="py-32 bg-gray-900/30">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold mb-4">
+              <span className="text-orange">Chrome Extension</span> - AI Prompts Anywhere
+            </h2>
+            <p className="text-gray-400 max-w-xl mx-auto">
+              Works on ChatGPT, Claude, Gemini, and any website with AI chat
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-12 items-center">
+            <div>
+              <div className="space-y-6">
+                <div className="flex items-start gap-4">
+                  <div className="w-10 h-10 bg-orange/20 rounded-lg flex items-center justify-center text-orange font-bold">1</div>
+                  <div>
+                    <h3 className="font-semibold mb-1">Type Naturally</h3>
+                    <p className="text-gray-400 text-sm">Write your prompt as you normally would</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-4">
+                  <div className="w-10 h-10 bg-orange/20 rounded-lg flex items-center justify-center text-orange font-bold">2</div>
+                  <div>
+                    <h3 className="font-semibold mb-1">AI Optimizes</h3>
+                    <p className="text-gray-400 text-sm">Our TF-IDF engine analyzes and suggests improvements</p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-4">
+                  <div className="w-10 h-10 bg-orange/20 rounded-lg flex items-center justify-center text-orange font-bold">3</div>
+                  <div>
+                    <h3 className="font-semibold mb-1">Press Tab to Accept</h3>
+                    <p className="text-gray-400 text-sm">One keypress to use the optimized version</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className="bg-gray-800/50 rounded-2xl p-6 border border-gray-700">
+              <div className="bg-black rounded-lg p-4 mb-4 font-mono text-sm">
+                <div className="text-gray-500 mb-2">// Your prompt</div>
+                <div className="text-gray-300 mb-4">Write a function that takes a list and returns the sum of all numbers</div>
+                <div className="border-t border-gray-700 pt-4 mt-4">
+                  <div className="text-green-400 mb-2">✨ Optimized: Save 25% tokens</div>
+                  <div className="text-white">Write a function to sum a list of numbers</div>
+                </div>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-gray-500">Press <kbd className="bg-gray-700 px-2 py-1 rounded">Tab</kbd> to accept</span>
+                <span className="text-orange">⚡ -25% tokens</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Team Groups Section */}
+      <section className="py-32">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold mb-4">
+              <span className="text-orange">Team Collaboration</span> - Track Together
+            </h2>
+            <p className="text-gray-400 max-w-xl mx-auto">
+              Create groups, share codes, and monitor everyone's usage in one place
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-6">
+            <div className="p-6 bg-gray-900/50 border border-gray-800 rounded-2xl text-center">
+              <div className="w-16 h-16 bg-orange/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <Users className="w-8 h-8 text-orange" />
+              </div>
+              <h3 className="text-xl font-semibold mb-2">Create Group</h3>
+              <p className="text-gray-400 text-sm">Admin creates a group and gets a unique 8-character code</p>
+            </div>
+            <div className="p-6 bg-gray-900/50 border border-gray-800 rounded-2xl text-center">
+              <div className="w-16 h-16 bg-orange/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <Sparkles className="w-8 h-8 text-orange" />
+              </div>
+              <h3 className="text-xl font-semibold mb-2">Share Code</h3>
+              <p className="text-gray-400 text-sm">Members join using the code and their usage is tracked</p>
+            </div>
+            <div className="p-6 bg-gray-900/50 border border-gray-800 rounded-2xl text-center">
+              <div className="w-16 h-16 bg-orange/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <BarChart3 className="w-8 h-8 text-orange" />
+              </div>
+              <h3 className="text-xl font-semibold mb-2">View Dashboard</h3>
+              <p className="text-gray-400 text-sm">Admin sees all members' stats, attention scores, and exports reports</p>
+            </div>
           </div>
         </div>
       </section>
