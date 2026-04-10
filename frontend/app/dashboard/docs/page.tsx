@@ -70,7 +70,7 @@ export default function DocsPage() {
           <div className="flex items-center gap-2 flex-wrap">
             <Badge variant="jaffa">OpenAI Compatible</Badge>
             <Badge variant="success">Multi-Provider</Badge>
-            <Badge variant="navy">Token Tracking</Badge>
+            <Badge variant="black">Token Tracking</Badge>
             <Badge variant="black">Auto-Enhance</Badge>
           </div>
         </div>
