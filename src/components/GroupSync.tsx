@@ -14,12 +14,13 @@ export default function GroupSync() {
       if (activeGroupId) {
         // Sync with extension
         try {
-          chrome.runtime.sendMessage({
-            type: 'SET_GROUP_ID',
-            payload: { groupId: parseInt(activeGroupId) }
-          }).catch(() => {
-            // Extension not installed, ignore
-          });
+          const w = window as any;
+          if (w.chrome?.runtime?.sendMessage) {
+            w.chrome.runtime.sendMessage({
+              type: 'SET_GROUP_ID',
+              payload: { groupId: parseInt(activeGroupId) }
+            }).catch(() => {});
+          }
         } catch (e) {
           // Extension not available
         }

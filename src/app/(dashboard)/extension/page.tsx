@@ -2,9 +2,10 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useUser } from '@clerk/nextjs';
-import { Sparkles, TrendingUp, Clock, Target, Zap, DollarSign, MessageSquare, BarChart3, RefreshCw, CheckCircle, XCircle, ChevronDown, ChevronUp } from 'lucide-react';
+import { Sparkles, TrendingUp, Clock, Target, Zap, DollarSign, MessageSquare, BarChart3, RefreshCw, CheckCircle, XCircle, ChevronDown, ChevronUp, Link2, AlertCircle } from 'lucide-react';
 import { LogoMark } from '@/components/LogoMark';
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import Link from 'next/link';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 interface ExtensionStats {
   total_optimizations: number;
@@ -75,6 +76,7 @@ export default function ExtensionPage() {
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedHistory, setExpandedHistory] = useState<number | null>(null);
+  const [isConnected, setIsConnected] = useState(false);
 
   const loadData = useCallback(async () => {
     if (!user) return;

@@ -14,15 +14,16 @@ export default function ExtensionAuthSync() {
 
       // Try to notify extension via chrome runtime
       try {
-        chrome.runtime.sendMessage({
-          type: 'SET_USER_CONTEXT',
-          payload: {
-            userId: user.id,
-            email: user.emailAddresses[0]?.emailAddress
-          }
-        }).catch(() => {
-          // Extension not installed or not accessible
-        });
+        const w = window as any;
+        if (w.chrome?.runtime?.sendMessage) {
+          w.chrome.runtime.sendMessage({
+            type: 'SET_USER_CONTEXT',
+            payload: {
+              userId: user.id,
+              email: user.emailAddresses[0]?.emailAddress
+            }
+          }).catch(() => {});
+        }
       } catch (e) {
         // Extension not available
       }
