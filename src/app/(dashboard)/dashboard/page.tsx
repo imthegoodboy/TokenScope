@@ -2,8 +2,10 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useUser } from '@clerk/nextjs';
-import { Plus, Copy, Trash2, Check, AlertCircle, Activity, Zap, DollarSign, Clock, RefreshCw, ExternalLink, Settings, Play, BarChart3 } from 'lucide-react';
+import { Plus, Copy, Trash2, Check, AlertCircle, Activity, Zap, DollarSign, Clock, RefreshCw, ExternalLink, Settings, Play, BarChart3, Puzzle } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import Link from 'next/link';
+import ExtensionAuthSync from '@/components/ExtensionAuthSync';
 
 interface ProxyKey {
   id: number;
@@ -130,8 +132,7 @@ export default function DashboardPage() {
     }
 
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
-    const baseUrl = apiUrl.replace('/api/v1', '');
-    const eventSource = new EventSource(`${baseUrl}/logs/stream?user_id=${user.id}`);
+    const eventSource = new EventSource(`${apiUrl}/logs/stream?user_id=${user.id}`);
     eventSourceRef.current = eventSource;
 
     eventSource.onmessage = (event) => {
@@ -293,24 +294,35 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white p-4 md:p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold">Dashboard</h1>
-            <p className="text-gray-400 mt-1">
-              Welcome back, {user.firstName || user.emailAddresses[0]?.emailAddress}
-            </p>
+    <>
+      <ExtensionAuthSync />
+      <div className="min-h-screen bg-black text-white p-4 md:p-6">
+        <div className="max-w-7xl mx-auto space-y-6">
+          {/* Header */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <h1 className="text-2xl md:text-3xl font-bold">Dashboard</h1>
+              <p className="text-gray-400 mt-1">
+                Welcome back, {user.firstName || user.emailAddresses[0]?.emailAddress}
+              </p>
+            </div>
+            <div className="flex items-center gap-3">
+              <Link
+                href="/extension"
+                className="flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
+              >
+                <Puzzle size={18} />
+                Extension Stats
+              </Link>
+              <button
+                onClick={() => setShowCreateModal(true)}
+                className="flex items-center gap-2 bg-orange hover:bg-orange-light text-black font-medium px-4 py-2 rounded-lg transition-colors"
+              >
+                <Plus size={18} />
+                Create Proxy URL
+              </button>
+            </div>
           </div>
-          <button
-            onClick={() => setShowCreateModal(true)}
-            className="flex items-center gap-2 bg-orange hover:bg-orange-light text-black font-medium px-4 py-2 rounded-lg transition-colors"
-          >
-            <Plus size={18} />
-            Create Proxy URL
-          </button>
-        </div>
 
         {/* Error Banner */}
         {error && (
@@ -726,72 +738,7 @@ export default function DashboardPage() {
           </div>
         </div>
       )}
-
-      {/* Chrome Extension Section */}
-      <div className="bg-gradient-to-r from-orange/10 to-orange/5 border border-orange/20 rounded-xl p-6">
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
-            <div className="w-14 h-14 bg-gradient-to-br from-orange to-orange-light rounded-xl flex items-center justify-center shadow-lg shadow-orange/20">
-              <span className="text-black font-bold text-xl">TS</span>
-            </div>
-            <div>
-              <h3 className="text-xl font-bold text-white">TokenScope Browser Extension</h3>
-              <p className="text-gray-400 mt-1">
-                Optimize prompts directly in ChatGPT, Claude, and Gemini with one click.
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="hidden md:flex items-center gap-4 text-sm">
-              <div className="flex items-center gap-2 text-gray-400">
-                <span className="w-2 h-2 bg-green-500 rounded-full" />
-                Real-time
-              </div>
-              <div className="flex items-center gap-2 text-gray-400">
-                <span className="w-2 h-2 bg-blue-500 rounded-full" />
-                TF-IDF Powered
-              </div>
-            </div>
-            <button
-              onClick={() => window.open('https://github.com/yourusername/tokenscope#chrome-extension', '_blank')}
-              className="px-6 py-3 bg-orange hover:bg-orange-light text-black font-semibold rounded-lg transition-colors flex items-center gap-2"
-            >
-              <span>📦</span>
-              Get Extension
-            </button>
-          </div>
-        </div>
-
-        <div className="mt-6 grid grid-cols-3 gap-4">
-          <div className="bg-black/50 rounded-lg p-4 text-center">
-            <div className="text-2xl font-bold text-orange">40%</div>
-            <div className="text-xs text-gray-500 mt-1">Token Savings</div>
-          </div>
-          <div className="bg-black/50 rounded-lg p-4 text-center">
-            <div className="text-2xl font-bold text-green-400">$0.00</div>
-            <div className="text-xs text-gray-500 mt-1">Cost Reduced</div>
-          </div>
-          <div className="bg-black/50 rounded-lg p-4 text-center">
-            <div className="text-2xl font-bold text-blue-400">3</div>
-            <div className="text-xs text-gray-500 mt-1">Chatbots Supported</div>
-          </div>
-        </div>
-
-        <div className="mt-4 flex flex-wrap gap-3">
-          <div className="flex items-center gap-2 text-sm text-gray-400">
-            <span className="w-6 h-6 bg-[#10A37F]/20 rounded-full flex items-center justify-center text-xs">🤖</span>
-            ChatGPT
-          </div>
-          <div className="flex items-center gap-2 text-sm text-gray-400">
-            <span className="w-6 h-6 bg-[#D97706]/20 rounded-full flex items-center justify-center text-xs">🧠</span>
-            Claude
-          </div>
-          <div className="flex items-center gap-2 text-sm text-gray-400">
-            <span className="w-6 h-6 bg-[#EAb308]/20 rounded-full flex items-center justify-center text-xs">✨</span>
-            Gemini
-          </div>
-        </div>
       </div>
-    </div>
+    </>
   );
 }

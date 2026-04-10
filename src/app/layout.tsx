@@ -5,6 +5,10 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "TokenScope - AI Proxy & Token Analytics",
   description: "Smart LLM proxy with token-level analytics and prompt optimization",
+  icons: {
+    icon: "/tokenscope-logo.png",
+    apple: "/tokenscope-logo.png",
+  },
 };
 
 export default function RootLayout({
