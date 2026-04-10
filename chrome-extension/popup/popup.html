@@ -711,10 +711,17 @@
   </div>
 
   <div class="footer">
-    <a href="http://localhost:3000/dashboard" target="_blank" class="open-dashboard" id="open-dashboard">
-      <span>📊</span> Open Dashboard
+    <a href="#" onclick="openExtensionStats()" class="open-dashboard" id="open-dashboard">
+      <span>📊</span> View Extension Stats
     </a>
   </div>
+
+  <script>
+    function openExtensionStats() {
+      const userId = localStorage.getItem('tokenscope_user_id') || 'anonymous';
+      window.open(`http://localhost:3000/extension?userId=${encodeURIComponent(userId)}`, '_blank');
+    }
+  </script>
 
   <script src="popup.js"></script>
 </body>

@@ -2,8 +2,10 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useUser } from '@clerk/nextjs';
-import { Plus, Copy, Trash2, Check, AlertCircle, Activity, Zap, DollarSign, Clock, RefreshCw, ExternalLink, Settings, Play, BarChart3 } from 'lucide-react';
+import { Plus, Copy, Trash2, Check, AlertCircle, Activity, Zap, DollarSign, Clock, RefreshCw, ExternalLink, Settings, Play, BarChart3, Puzzle } from 'lucide-react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import Link from 'next/link';
+import ExtensionAuthSync from '@/components/ExtensionAuthSync';
 
 interface ProxyKey {
   id: number;
@@ -293,24 +295,35 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white p-4 md:p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold">Dashboard</h1>
-            <p className="text-gray-400 mt-1">
-              Welcome back, {user.firstName || user.emailAddresses[0]?.emailAddress}
-            </p>
+    <>
+      <ExtensionAuthSync />
+      <div className="min-h-screen bg-black text-white p-4 md:p-6">
+        <div className="max-w-7xl mx-auto space-y-6">
+          {/* Header */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <h1 className="text-2xl md:text-3xl font-bold">Dashboard</h1>
+              <p className="text-gray-400 mt-1">
+                Welcome back, {user.firstName || user.emailAddresses[0]?.emailAddress}
+              </p>
+            </div>
+            <div className="flex items-center gap-3">
+              <Link
+                href="/extension"
+                className="flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
+              >
+                <Puzzle size={18} />
+                Extension Stats
+              </Link>
+              <button
+                onClick={() => setShowCreateModal(true)}
+                className="flex items-center gap-2 bg-orange hover:bg-orange-light text-black font-medium px-4 py-2 rounded-lg transition-colors"
+              >
+                <Plus size={18} />
+                Create Proxy URL
+              </button>
+            </div>
           </div>
-          <button
-            onClick={() => setShowCreateModal(true)}
-            className="flex items-center gap-2 bg-orange hover:bg-orange-light text-black font-medium px-4 py-2 rounded-lg transition-colors"
-          >
-            <Plus size={18} />
-            Create Proxy URL
-          </button>
-        </div>
 
         {/* Error Banner */}
         {error && (
@@ -726,6 +739,7 @@ export default function DashboardPage() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 }
