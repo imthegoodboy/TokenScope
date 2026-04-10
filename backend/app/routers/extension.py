@@ -22,6 +22,7 @@ class ExtensionLogCreate(BaseModel):
     attention_score: float = 0.0
     chatbot: str = "chatgpt"
     accepted: bool = True
+    group_id: Optional[int] = None
 
 class ExtensionSyncRequest(BaseModel):
     logs: List[ExtensionLogCreate]
@@ -38,6 +39,7 @@ async def create_extension_log(
     # Create log entry
     log_entry = ExtensionLog(
         user_id=user_id,
+        group_id=log_data.group_id,
         original_prompt=log_data.original_prompt,
         optimized_prompt=log_data.optimized_prompt,
         original_tokens=log_data.original_tokens,
@@ -99,6 +101,7 @@ async def sync_extension_logs(
     for log_data in sync_data.logs:
         log_entry = ExtensionLog(
             user_id=user_id,
+            group_id=log_data.group_id,
             original_prompt=log_data.original_prompt,
             optimized_prompt=log_data.optimized_prompt,
             original_tokens=log_data.original_tokens,

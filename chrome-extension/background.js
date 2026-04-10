@@ -99,6 +99,20 @@ async function getUserId() {
   }
 }
 
+// Group ID helpers
+async function setGroupId(groupId) {
+  await chrome.storage.local.set({ [STORAGE_KEYS.GROUP_ID]: groupId });
+}
+
+async function getGroupId() {
+  try {
+    const result = await chrome.storage.local.get(STORAGE_KEYS.GROUP_ID);
+    return result[STORAGE_KEYS.GROUP_ID] || null;
+  } catch {
+    return null;
+  }
+}
+
 // ============ MESSAGE HANDLERS ============
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {

@@ -67,6 +67,7 @@ class ExtensionLog(Base):
 
     id = Column(Integer, primary_key=True, autoincrement=True)
     user_id = Column(String(255), nullable=False, index=True)
+    group_id = Column(Integer, nullable=True, index=True)  # Optional: if user is in a group
     original_prompt = Column(Text, nullable=False)
     optimized_prompt = Column(Text, nullable=False)
     original_tokens = Column(Integer, default=0)
