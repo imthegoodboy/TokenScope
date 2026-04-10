@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import Link from 'next/link';
-import { LayoutDashboard, FileText, Sparkles, Menu, X, Puzzle } from 'lucide-react';
+import { LayoutDashboard, FileText, Sparkles, Menu, X, Puzzle, Users } from 'lucide-react';
 import { useState } from 'react';
 import { UserButton } from '@clerk/nextjs';
 
@@ -14,6 +14,7 @@ function DashboardNav() {
   const navItems = [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/extension', label: 'Extension', icon: Puzzle },
+    { href: '/groups', label: 'Groups', icon: Users },
     { href: '/optimizer', label: 'Optimizer', icon: Sparkles },
     { href: '/docs', label: 'Docs', icon: FileText },
   ];

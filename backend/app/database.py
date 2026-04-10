@@ -96,6 +96,29 @@ class ExtensionStats(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
+class Group(Base):
+    """Groups for team/workspace collaboration"""
+    __tablename__ = "groups"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+    code = Column(String(8), unique=True, nullable=False, index=True)  # Unique join code
+    admin_id = Column(String(255), nullable=False, index=True)  # Creator's user ID
+    created_at = Column(DateTime, default=datetime.utcnow)
+    is_active = Column(Boolean, default=True)
+
+class GroupMember(Base):
+    """Members of a group"""
+    __tablename__ = "group_members"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    group_id = Column(Integer, nullable=False, index=True)
+    user_id = Column(String(255), nullable=False, index=True)
+    role = Column(String(50), default="member")  # admin, member
+    joined_at = Column(DateTime, default=datetime.utcnow)
+    is_active = Column(Boolean, default=True)
+
 async def init_db():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)

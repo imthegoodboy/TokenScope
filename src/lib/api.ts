@@ -97,6 +97,20 @@ export const api = {
     logEvent: (data: any) => request<any>('/extension/log', { method: 'POST', body: data }),
     syncEvents: (logs: any[]) => request<any>('/extension/sync', { method: 'POST', body: { logs } }),
   },
+
+  groups: {
+    list: () => request<any[]>('/groups'),
+    create: (data: { name: string; description?: string }) =>
+      request<any>('/groups', { method: 'POST', body: data }),
+    get: (groupId: number) => request<any>(`/groups/${groupId}`),
+    delete: (groupId: number) => request<any>(`/groups/${groupId}`, { method: 'DELETE' }),
+    join: (code: string) => request<any>('/groups/join', { method: 'POST', body: { code } }),
+    leave: (groupId: number) => request<any>(`/groups/${groupId}/leave`, { method: 'POST' }),
+    members: (groupId: number) => request<any[]>(`/groups/${groupId}/members`),
+    memberLogs: (groupId: number, memberUserId: string, limit?: number) =>
+      request<any[]>(`/groups/${groupId}/members/${memberUserId}/logs?limit=${limit || 50}`),
+    stats: (groupId: number) => request<any>(`/groups/${groupId}/stats`),
+  },
 };
 
 export default api;
