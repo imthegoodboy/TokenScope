@@ -132,8 +132,7 @@ export default function DashboardPage() {
     }
 
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
-    const baseUrl = apiUrl.replace('/api/v1', '');
-    const eventSource = new EventSource(`${baseUrl}/logs/stream?user_id=${user.id}`);
+    const eventSource = new EventSource(`${apiUrl}/logs/stream?user_id=${user.id}`);
     eventSourceRef.current = eventSource;
 
     eventSource.onmessage = (event) => {
