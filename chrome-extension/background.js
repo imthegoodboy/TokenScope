@@ -61,7 +61,6 @@ chrome.runtime.onInstalled.addListener(() => {
 // Listen for auth state changes from frontend
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === 'AUTH_STATE') {
-    // Update user_id from frontend auth
     setUserId(message.payload.userId || 'anonymous');
     sendResponse({ success: true });
     return true;
@@ -69,6 +68,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   if (message.type === 'GET_USER_ID') {
     getUserId().then(userId => sendResponse({ userId }));
+    return true;
+  }
+
+  if (message.type === 'SET_USER_CONTEXT') {
+    // This is the main way frontend tells extension who is logged in
+    setUserId(message.payload.userId);
+    if (message.payload.groupId) {
+      chrome.storage.local.set({ [STORAGE_KEYS.GROUP_ID]: message.payload.groupId });
+    }
+    sendResponse({ success: true });
     return true;
   }
 
@@ -285,7 +294,16 @@ async function logAcceptedOptimization(payload) {
   // Send to backend
   try {
     const userId = await getUserId();
-    await fetch(`${API_BASE}/extension/log`, {
+    const groupId = await getGroupId();
+
+    console.log('[TokenScope] Logging to backend:', {
+      userId,
+      groupId,
+      tokens_saved,
+      chatbot
+    });
+
+    fetch(`${API_BASE}/extension/log`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -302,9 +320,13 @@ async function logAcceptedOptimization(payload) {
         cost_saved,
         attention_score,
         chatbot,
-        accepted: true
+        accepted: true,
+        group_id: groupId
       })
-    });
+    }).then(r => {
+      if (!r.ok) console.error('[TokenScope] Backend log failed:', r.status);
+      else console.log('[TokenScope] Backend log success');
+    }).catch(e => console.error('[TokenScope] Backend log error:', e));
   } catch (error) {
     console.error('Failed to log to backend:', error);
   }

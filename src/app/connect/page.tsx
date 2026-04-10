@@ -27,6 +27,20 @@ export default function ConnectPage() {
     if (isLoaded && user) {
       localStorage.setItem('tokenscope_user_id', user.id);
       localStorage.setItem('tokenscope_user_email', user.emailAddresses[0]?.emailAddress || '');
+
+      // Also save to chrome storage if extension is available
+      try {
+        const w = window as any;
+        if (w.chrome?.runtime?.sendMessage) {
+          w.chrome.runtime.sendMessage({
+            type: 'SET_USER_CONTEXT',
+            payload: {
+              userId: user.id,
+              email: user.emailAddresses[0]?.emailAddress
+            }
+          }).catch(() => {});
+        }
+      } catch (e) {}
     }
   }, [isLoaded, user]);
 
