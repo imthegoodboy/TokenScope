@@ -87,6 +87,16 @@ export const api = {
     enhance: (prompt: string, targetModel?: string) =>
       request<any>('/enhance', { method: 'POST', body: { prompt, target_model: targetModel } }),
   },
+
+  extension: {
+    statsOverview: () => request<any>('/extension/stats/overview'),
+    statsDaily: (days?: number) => request<any>(`/extension/stats/daily?days=${days || 30}`),
+    statsByChatbot: () => request<any>('/extension/stats/by-chatbot'),
+    history: (limit?: number) => request<any[]>(`/extension/history?limit=${limit || 100}`),
+    attentionScores: () => request<any>('/extension/attention-scores'),
+    logEvent: (data: any) => request<any>('/extension/log', { method: 'POST', body: data }),
+    syncEvents: (logs: any[]) => request<any>('/extension/sync', { method: 'POST', body: { logs } }),
+  },
 };
 
 export default api;

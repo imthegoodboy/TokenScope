@@ -1,13 +1,16 @@
 // TokenScope Chrome Extension - Background Service Worker
 
+// ============ CONFIGURATION ============
 const API_BASE = 'http://localhost:8000/api/v1';
+const FRONTEND_URL = 'http://localhost:3000';
 
 // Storage keys
 const STORAGE_KEYS = {
   USER_ID: 'user_id',
   SETTINGS: 'settings',
   HISTORY: 'history',
-  STATS: 'stats'
+  STATS: 'stats',
+  AUTH_TOKEN: 'auth_token'
 };
 
 // Default settings
@@ -21,6 +24,68 @@ const DEFAULT_SETTINGS = {
     gemini: true
   }
 };
+
+// ============ INITIALIZATION ============
+chrome.runtime.onInstalled.addListener(() => {
+  // Set default settings on first install
+  chrome.storage.local.get(STORAGE_KEYS.SETTINGS, (result) => {
+    if (!result[STORAGE_KEYS.SETTINGS]) {
+      chrome.storage.local.set({
+        [STORAGE_KEYS.SETTINGS]: DEFAULT_SETTINGS
+      });
+    }
+  });
+
+  // Set default stats
+  chrome.storage.local.get(STORAGE_KEYS.STATS, (result) => {
+    if (!result[STORAGE_KEYS.STATS]) {
+      chrome.storage.local.set({
+        [STORAGE_KEYS.STATS]: {
+          total_prompts: 0,
+          total_tokens_saved: 0,
+          total_cost_saved: 0,
+          total_accepts: 0,
+          total_rejects: 0,
+          avg_attention_score: 0.5
+        }
+      });
+    }
+  });
+
+  console.log('TokenScope extension installed');
+});
+
+// ============ AUTH HANDLING ============
+
+// Listen for auth state changes from frontend
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.type === 'AUTH_STATE') {
+    // Update user_id from frontend auth
+    setUserId(message.payload.userId || 'anonymous');
+    sendResponse({ success: true });
+    return true;
+  }
+
+  if (message.type === 'GET_USER_ID') {
+    getUserId().then(userId => sendResponse({ userId }));
+    return true;
+  }
+});
+
+// Function to set user ID (called from frontend or on install)
+async function setUserId(userId) {
+  await chrome.storage.local.set({ [STORAGE_KEYS.USER_ID]: userId });
+}
+
+// Function to get user ID
+async function getUserId() {
+  try {
+    const result = await chrome.storage.local.get(STORAGE_KEYS.USER_ID);
+    return result[STORAGE_KEYS.USER_ID] || 'anonymous';
+  } catch {
+    return 'anonymous';
+  }
+}
 
 // ============ MESSAGE HANDLERS ============
 
@@ -43,7 +108,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       return true;
 
     case 'UPDATE_SETTINGS':
-      // Broadcast to all tabs
       chrome.tabs.query({}, (tabs) => {
         tabs.forEach(tab => {
           if (tab.id) {
@@ -75,6 +139,18 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
     case 'SYNC_WITH_BACKEND':
       syncWithBackend().then(result => sendResponse(result));
+      return true;
+
+    case 'LOG_ACCEPTED':
+      logAcceptedOptimization(message.payload).then(() => sendResponse({ success: true }));
+      return true;
+
+    case 'LOG_DISMISSED':
+      logDismissedOptimization(message.payload).then(() => sendResponse({ success: true }));
+      return true;
+
+    case 'SYNC_STATS_TO_BACKEND':
+      syncStatsToBackend().then(result => sendResponse(result));
       return true;
 
     default:
@@ -146,20 +222,172 @@ async function handleEnhancePrompt(payload, sendResponse) {
   }
 }
 
-// ============ STORAGE HELPERS ============
+// ============ EXTENSION LOGGING ============
 
-async function getUserId() {
+async function logAcceptedOptimization(payload) {
+  const { original_prompt, optimized_prompt, original_tokens, optimized_tokens, chatbot, attention_score } = payload;
+
+  const tokens_saved = Math.max(0, original_tokens - optimized_tokens);
+  const cost_saved = calculateCostSavings(tokens_saved);
+
+  // Update local stats
+  const stats = await getStats();
+  stats.total_prompts += 1;
+  stats.total_accepts += 1;
+  stats.total_tokens_saved += tokens_saved;
+  stats.total_cost_saved += cost_saved;
+
+  // Update average attention score
+  const prevCount = stats.total_accepts - 1;
+  stats.avg_attention_score = prevCount > 0
+    ? (stats.avg_attention_score * prevCount + attention_score) / stats.total_accepts
+    : attention_score;
+
+  await chrome.storage.local.set({ [STORAGE_KEYS.STATS]: stats });
+
+  // Add to local history
+  await addToHistory({
+    original: original_prompt,
+    optimized: optimized_prompt,
+    saved_tokens: tokens_saved,
+    saved_cost: cost_saved,
+    chatbot,
+    accepted: true,
+    attention_score
+  });
+
+  // Send to backend
   try {
-    const result = await chrome.storage.local.get(STORAGE_KEYS.USER_ID);
-    return result[STORAGE_KEYS.USER_ID] || 'anonymous';
-  } catch {
-    return 'anonymous';
+    const userId = await getUserId();
+    await fetch(`${API_BASE}/extension/log`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-User-Id': userId
+      },
+      body: JSON.stringify({
+        original_prompt,
+        optimized_prompt,
+        original_tokens,
+        optimized_tokens,
+        tokens_saved,
+        cost_original: calculateCost(original_tokens),
+        cost_optimized: calculateCost(optimized_tokens),
+        cost_saved,
+        attention_score,
+        chatbot,
+        accepted: true
+      })
+    });
+  } catch (error) {
+    console.error('Failed to log to backend:', error);
   }
 }
 
-async function setUserId(userId) {
-  await chrome.storage.local.set({ [STORAGE_KEYS.USER_ID]: userId });
+async function logDismissedOptimization(payload) {
+  const { original_prompt, optimized_prompt, original_tokens, optimized_tokens, chatbot, attention_score } = payload;
+
+  // Update local stats
+  const stats = await getStats();
+  stats.total_prompts += 1;
+  stats.total_rejects += 1;
+  await chrome.storage.local.set({ [STORAGE_KEYS.STATS]: stats });
+
+  // Add to local history as dismissed
+  await addToHistory({
+    original: original_prompt,
+    optimized: optimized_prompt,
+    saved_tokens: 0,
+    saved_cost: 0,
+    chatbot,
+    accepted: false,
+    attention_score
+  });
+
+  // Optionally log to backend
+  try {
+    const userId = await getUserId();
+    await fetch(`${API_BASE}/extension/log`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-User-Id': userId
+      },
+      body: JSON.stringify({
+        original_prompt,
+        optimized_prompt,
+        original_tokens,
+        optimized_tokens,
+        tokens_saved: 0,
+        cost_original: calculateCost(original_tokens),
+        cost_optimized: calculateCost(optimized_tokens),
+        cost_saved: 0,
+        attention_score,
+        chatbot,
+        accepted: false
+      })
+    });
+  } catch (error) {
+    console.error('Failed to log dismiss to backend:', error);
+  }
 }
+
+async function syncStatsToBackend() {
+  try {
+    const userId = await getUserId();
+    const stats = await getStats();
+    const history = await getHistory();
+
+    const response = await fetch(`${API_BASE}/extension/sync`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-User-Id': userId
+      },
+      body: JSON.stringify({
+        logs: history.slice(0, 100).map(item => ({
+          original_prompt: item.original,
+          optimized_prompt: item.optimized,
+          original_tokens: countTokens(item.original),
+          optimized_tokens: countTokens(item.optimized),
+          tokens_saved: item.saved_tokens || 0,
+          cost_original: calculateCost(countTokens(item.original)),
+          cost_optimized: calculateCost(countTokens(item.optimized)),
+          cost_saved: item.saved_cost || 0,
+          attention_score: item.attention_score || 0.5,
+          chatbot: item.chatbot || 'manual',
+          accepted: item.accepted !== false
+        }))
+      })
+    });
+
+    if (response.ok) {
+      return { success: true, synced: history.length };
+    }
+
+    return { success: false, error: 'Sync failed' };
+  } catch (error) {
+    return { success: false, error: error.message };
+  }
+}
+
+// ============ HELPER FUNCTIONS ============
+
+function calculateCost(tokens) {
+  // Approximate GPT-4o-mini pricing
+  return (tokens / 1000000) * 0.15;
+}
+
+function calculateCostSavings(tokens_saved) {
+  return calculateCost(tokens_saved);
+}
+
+function countTokens(text) {
+  // Rough token estimation: ~4 chars per token
+  return Math.ceil((text || '').split(/\s+/).filter(w => w.length > 0).length * 1.3);
+}
+
+// ============ STORAGE HELPERS ============
 
 async function getSettings() {
   const result = await chrome.storage.local.get(STORAGE_KEYS.SETTINGS);
@@ -191,9 +419,6 @@ async function addToHistory(entry) {
   await chrome.storage.local.set({
     [STORAGE_KEYS.HISTORY]: trimmed
   });
-
-  // Update local stats
-  await updateStats(entry);
 }
 
 async function clearHistory() {
@@ -206,76 +431,16 @@ async function getStats() {
   const result = await chrome.storage.local.get(STORAGE_KEYS.STATS);
   return result[STORAGE_KEYS.STATS] || {
     total_prompts: 0,
-    total_saved_tokens: 0,
-    total_saved_cost: 0
+    total_tokens_saved: 0,
+    total_cost_saved: 0,
+    total_accepts: 0,
+    total_rejects: 0,
+    avg_attention_score: 0.5
   };
 }
 
-async function updateStats(entry) {
-  const stats = await getStats();
-
-  stats.total_prompts += 1;
-
-  if (entry.saved_tokens) {
-    stats.total_saved_tokens += entry.saved_tokens;
-  }
-
-  if (entry.saved_cost) {
-    stats.total_saved_cost += entry.saved_cost;
-  }
-
-  await chrome.storage.local.set({
-    [STORAGE_KEYS.STATS]: stats
-  });
-
-  // Also sync to backend
-  try {
-    const userId = await getUserId();
-    await fetch(`${API_BASE}/stats/extension`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-User-Id': userId
-      },
-      body: JSON.stringify({
-        prompts: stats.total_prompts,
-        tokens_saved: stats.total_saved_tokens,
-        cost_saved: stats.total_saved_cost
-      })
-    });
-  } catch (error) {
-    console.error('Failed to sync stats to backend:', error);
-  }
-}
-
 async function syncWithBackend() {
-  try {
-    const userId = await getUserId();
-    const stats = await getStats();
-    const history = await getHistory();
-
-    // Send to backend
-    const response = await fetch(`${API_BASE}/stats/extension-sync`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-User-Id': userId
-      },
-      body: JSON.stringify({
-        stats,
-        history: history.slice(0, 50)
-      })
-    });
-
-    if (response.ok) {
-      const data = await response.json();
-      return { success: true, data };
-    }
-
-    return { success: false, error: 'Sync failed' };
-  } catch (error) {
-    return { success: false, error: error.message };
-  }
+  return await syncStatsToBackend();
 }
 
 // ============ KEYBOARD SHORTCUTS ============
@@ -288,34 +453,6 @@ chrome.commands.onCommand.addListener((command) => {
       }
     });
   }
-});
-
-// ============ INITIALIZATION ============
-
-chrome.runtime.onInstalled.addListener(() => {
-  // Set default settings on first install
-  chrome.storage.local.get(STORAGE_KEYS.SETTINGS, (result) => {
-    if (!result[STORAGE_KEYS.SETTINGS]) {
-      chrome.storage.local.set({
-        [STORAGE_KEYS.SETTINGS]: DEFAULT_SETTINGS
-      });
-    }
-  });
-
-  // Set default stats
-  chrome.storage.local.get(STORAGE_KEYS.STATS, (result) => {
-    if (!result[STORAGE_KEYS.STATS]) {
-      chrome.storage.local.set({
-        [STORAGE_KEYS.STATS]: {
-          total_prompts: 0,
-          total_saved_tokens: 0,
-          total_saved_cost: 0
-        }
-      });
-    }
-  });
-
-  console.log('TokenScope extension installed');
 });
 
 // Listen for tab updates to re-inject content script
