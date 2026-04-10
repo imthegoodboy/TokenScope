@@ -10,7 +10,8 @@ const STORAGE_KEYS = {
   SETTINGS: 'settings',
   HISTORY: 'history',
   STATS: 'stats',
-  AUTH_TOKEN: 'auth_token'
+  AUTH_TOKEN: 'auth_token',
+  GROUP_ID: 'group_id'
 };
 
 // Default settings
@@ -68,6 +69,17 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
   if (message.type === 'GET_USER_ID') {
     getUserId().then(userId => sendResponse({ userId }));
+    return true;
+  }
+
+  if (message.type === 'SET_GROUP_ID') {
+    setGroupId(message.payload.groupId);
+    sendResponse({ success: true });
+    return true;
+  }
+
+  if (message.type === 'GET_GROUP_ID') {
+    getGroupId().then(groupId => sendResponse({ groupId }));
     return true;
   }
 });
