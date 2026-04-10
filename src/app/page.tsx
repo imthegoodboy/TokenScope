@@ -6,16 +6,26 @@ import { useRouter } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import { ArrowRight, Zap, Shield, TrendingUp, Code, BarChart3, Sparkles, Star, ChevronDown, Play, Check } from 'lucide-react';
 
+const HERO_VIDEO_SRC =
+  '/4K%20UHD%2025fps%20FREE%20Video%20Background%20Stars%20Space%20Trip_1080p60.mp4';
+
 function LandingContent() {
   const router = useRouter();
   const { isSignedIn, user } = useUser();
   const [scrollY, setScrollY] = useState(0);
   const heroRef = useRef<HTMLDivElement>(null);
+  const heroVideoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
     const handleScroll = () => setScrollY(window.scrollY);
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  useEffect(() => {
+    const v = heroVideoRef.current;
+    if (!v) return;
+    v.play().catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -126,32 +136,43 @@ function LandingContent() {
         ref={heroRef}
         className="relative min-h-screen flex items-center justify-center pt-16 overflow-hidden"
       >
-        {/* Animated Background */}
-        <div className="absolute inset-0 overflow-hidden">
+        {/* Full-viewport video background */}
+        <div className="absolute inset-0 z-0">
+          <video
+            ref={heroVideoRef}
+            className="absolute left-1/2 top-1/2 min-h-full min-w-full -translate-x-1/2 -translate-y-1/2 object-cover w-auto h-auto"
+            style={{ minWidth: '100%', minHeight: '100%' }}
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="auto"
+            aria-hidden
+          >
+            <source src={HERO_VIDEO_SRC} type="video/mp4" />
+          </video>
+          {/* Readability: vignette + brand-tinted dark wash */}
           <div
-            className="absolute top-1/4 left-1/4 w-96 h-96 bg-orange/20 rounded-full blur-[128px] animate-pulse"
-            style={{ transform: `translate(${scrollY * 0.1}px, ${scrollY * 0.05}px)` }}
+            className="absolute inset-0 bg-gradient-to-b from-black/75 via-black/55 to-black/90"
+            aria-hidden
           />
           <div
-            className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-orange/10 rounded-full blur-[128px] animate-pulse"
-            style={{
-              animationDelay: '1s',
-              transform: `translate(${-scrollY * 0.1}px, ${-scrollY * 0.05}px)`,
-            }}
+            className="absolute inset-0 bg-gradient-to-tr from-orange/15 via-transparent to-transparent mix-blend-overlay"
+            aria-hidden
           />
-          {/* Grid Pattern */}
           <div
-            className="absolute inset-0 opacity-[0.03]"
+            className="absolute inset-0 opacity-[0.04]"
             style={{
-              backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),
-                               linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)`,
+              backgroundImage: `linear-gradient(rgba(255,255,255,0.12) 1px, transparent 1px),
+                               linear-gradient(90deg, rgba(255,255,255,0.12) 1px, transparent 1px)`,
               backgroundSize: '64px 64px',
-              transform: `translateY(${scrollY * 0.2}px)`,
+              transform: `translateY(${scrollY * 0.15}px)`,
             }}
+            aria-hidden
           />
         </div>
 
-        <div className="relative z-10 max-w-5xl mx-auto px-4 text-center">
+        <div className="relative z-10 max-w-5xl mx-auto px-4 text-center drop-shadow-[0_2px_24px_rgba(0,0,0,0.45)]">
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-orange/10 border border-orange/20 rounded-full mb-8 animate-fadeIn">
             <Sparkles className="w-4 h-4 text-orange" />
             <span className="text-sm text-orange">AI-Powered Token Analytics</span>
@@ -202,8 +223,8 @@ function LandingContent() {
           </div>
         </div>
 
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
-          <ChevronDown className="w-6 h-6 text-gray-500" />
+        <div className="absolute bottom-8 left-1/2 z-10 -translate-x-1/2 animate-bounce">
+          <ChevronDown className="w-6 h-6 text-white/50 drop-shadow-md" />
         </div>
       </section>
 

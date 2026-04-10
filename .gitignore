@@ -54,8 +54,3 @@ next-env.d.ts
 .env.local.example.local.example
 .env.example.local.example.local
 .env.local.example.local.example.local
-
-.cursor
-.claude
- 
-.claude

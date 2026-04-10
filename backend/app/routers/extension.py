@@ -5,6 +5,8 @@ from sqlalchemy import select, func, Integer
 from datetime import datetime, date, timedelta
 from typing import List, Optional
 
+from ..database import ExtensionLog, ExtensionStats, get_db
+
 router = APIRouter()
 
 def get_user_id(x_user_id: str = Header(default=None)) -> str:

@@ -111,6 +111,13 @@ export const api = {
       request<any[]>(`/groups/${groupId}/members/${memberUserId}/logs?limit=${limit || 50}`),
     stats: (groupId: number) => request<any>(`/groups/${groupId}/stats`),
   },
+
+  connect: {
+    createToken: () => request<any>('/extension/connect', { method: 'POST' }),
+    verifyToken: (token: string) =>
+      request<any>(`/extension/connect/verify?token=${token}`, { method: 'POST' }),
+    status: () => request<any>('/extension/connect/status'),
+  },
 };
 
 export default api;

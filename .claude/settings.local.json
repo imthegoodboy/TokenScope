@@ -8,7 +8,8 @@
       "Bash(npm install:*)",
       "Bash(pip install:*)",
       "Bash(python -c \"from app.main import app; print\\('Backend OK'\\)\")",
-      "Bash(npm run:*)"
+      "Bash(npm run:*)",
+      "Bash(python -c \"from app.main import app; print\\('Backend loads OK'\\)\")"
     ]
   }
 }
