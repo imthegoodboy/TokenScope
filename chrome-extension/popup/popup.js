@@ -53,6 +53,18 @@ async function setUserId(userId) {
   await chrome.storage.local.set({ user_id: userId });
 }
 
+// Listen for messages from frontend to set user context
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.type === 'SET_USER_CONTEXT') {
+    setUserId(message.payload.userId);
+    if (message.payload.groupId) {
+      chrome.storage.local.set({ group_id: message.payload.groupId });
+    }
+    sendResponse({ success: true });
+    return true;
+  }
+});
+
 // ============ BACKEND SYNC ============
 
 async function syncWithBackend() {
