@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useUser } from '@clerk/nextjs';
 import { Users, Plus, Copy, Check, Trash2, UserPlus, LogOut, ChevronRight, Shield, Crown } from 'lucide-react';
 import Link from 'next/link';
+import Link from 'next/link';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 interface Group {
@@ -366,12 +367,21 @@ export default function GroupsPage() {
                         )}
                       </button>
                       {selectedGroup.role === 'admin' && (
-                        <button
-                          onClick={() => deleteGroup(selectedGroup.id)}
-                          className="p-2 hover:bg-red-900/30 text-red-400 rounded-lg transition-colors"
-                        >
-                          <Trash2 size={16} />
-                        </button>
+                        <>
+                          <Link
+                            href={`/groups/admin?groupId=${selectedGroup.id}`}
+                            className="p-2 hover:bg-orange/20 text-orange rounded-lg transition-colors"
+                            title="Admin Dashboard"
+                          >
+                            <Shield size={16} />
+                          </Link>
+                          <button
+                            onClick={() => deleteGroup(selectedGroup.id)}
+                            className="p-2 hover:bg-red-900/30 text-red-400 rounded-lg transition-colors"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </>
                       )}
                       {selectedGroup.role !== 'admin' && (
                         <button
