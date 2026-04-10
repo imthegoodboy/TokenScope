@@ -69,7 +69,20 @@ export default function ConnectPage() {
       localStorage.setItem('tokenscope_user_id', user.id);
       localStorage.setItem('tokenscope_connection_token', tokenData.token);
 
-      // 4. Try to notify extension
+      // 4. Migrate any anonymous data to this user
+      try {
+        await fetch(`${apiUrl}/extension/migrate-anonymous`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-User-Id': user.id
+          }
+        });
+      } catch (e) {
+        console.log('Migration skipped');
+      }
+
+      // 5. Try to notify extension
       try {
         const w = window as any;
         if (w.chrome?.runtime?.sendMessage) {

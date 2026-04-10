@@ -86,6 +86,10 @@ export default function ExtensionPage() {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
       const userId = user.id;
 
+      // Check connection status
+      const storedId = localStorage.getItem('tokenscope_user_id');
+      setIsConnected(storedId === userId);
+
       const [statsRes, dailyRes, chatbotRes, historyRes] = await Promise.all([
         fetch(`${apiUrl}/extension/stats/overview`, {
           headers: { 'X-User-Id': userId }
@@ -112,6 +116,14 @@ export default function ExtensionPage() {
       console.error('Failed to load extension stats:', err);
     } finally {
       setLoading(false);
+    }
+  }, [user]);
+
+  // Sync user ID to localStorage when user changes
+  useEffect(() => {
+    if (user) {
+      localStorage.setItem('tokenscope_user_id', user.id);
+      localStorage.setItem('tokenscope_user_email', user.emailAddresses[0]?.emailAddress || '');
     }
   }, [user]);
 
@@ -166,14 +178,37 @@ export default function ExtensionPage() {
               <p className="text-gray-400 text-sm">Track your Chrome extension performance</p>
             </div>
           </div>
-          <button
-            onClick={loadData}
-            className="flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
-          >
-            <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
-            Refresh
-          </button>
+          <div className="flex items-center gap-3">
+            {/* Connection Status */}
+            <div className={`flex items-center gap-2 px-3 py-2 rounded-lg ${isConnected ? 'bg-green-500/20 text-green-400' : 'bg-yellow-500/20 text-yellow-400'}`}>
+              {isConnected ? <CheckCircle size={16} /> : <AlertCircle size={16} />}
+              <span className="text-sm">{isConnected ? 'Connected' : 'Not Connected'}</span>
+            </div>
+            <button
+              onClick={loadData}
+              className="flex items-center gap-2 px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
+            >
+              <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
+              Refresh
+            </button>
+          </div>
         </div>
+
+        {/* Connection Help */}
+        {!isConnected && (
+          <div className="bg-yellow-900/20 border border-yellow-800/50 rounded-xl p-4 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Link2 className="text-yellow-400" size={20} />
+              <div>
+                <p className="font-medium">Extension not connected to your account</p>
+                <p className="text-sm text-gray-400">Connect your extension to sync your stats</p>
+              </div>
+            </div>
+            <Link href="/connect" className="px-4 py-2 bg-yellow-500 text-black font-medium rounded-lg hover:bg-yellow-400 transition-colors">
+              Connect Extension
+            </Link>
+          </div>
+        )}
 
         {loading && !stats && (
           <div className="flex items-center justify-center py-20">

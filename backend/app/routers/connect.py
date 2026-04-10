@@ -1,10 +1,9 @@
 from fastapi import APIRouter, Depends, HTTPException, Header
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select
+from sqlalchemy import select, update
 from datetime import datetime, timedelta
 import secrets
-import string
 
 from ..database import ExtensionLog, get_db
 
@@ -13,19 +12,10 @@ router = APIRouter()
 def get_user_id(x_user_id: str = Header(default=None)) -> str:
     return x_user_id or "anonymous"
 
-class ConnectionTokenCreate(BaseModel):
-    pass
-
-class ConnectionTokenResponse(BaseModel):
-    token: str
-    expires_at: str
-
-# In-memory store for connection tokens (for demo)
-# In production, use Redis or database
+# In-memory store for connection tokens
 connection_tokens = {}
 
 def generate_connection_token():
-    """Generate a unique connection token"""
     return secrets.token_urlsafe(32)
 
 @router.post("/extension/connect")
@@ -37,7 +27,6 @@ async def create_connection_token(
     if user_id == "anonymous" or not user_id:
         raise HTTPException(status_code=401, detail="Please sign in first")
 
-    # Generate token
     token = generate_connection_token()
     expires_at = datetime.utcnow() + timedelta(minutes=5)
 
@@ -50,13 +39,13 @@ async def create_connection_token(
 
     return {
         "token": token,
-        "expires_at": expires_at.isoformat(),
-        "connect_url": f"http://localhost:3000/connect?token={token}"
+        "expires_at": expires_at.isoformat()
     }
 
 @router.post("/extension/connect/verify")
 async def verify_connection_token(
     token: str,
+    migrate_anonymous: bool = True,
     db: AsyncSession = Depends(get_db),
     user_id: str = Depends(get_user_id)
 ):
@@ -75,6 +64,16 @@ async def verify_connection_token(
     if datetime.utcnow() > token_data["expires_at"]:
         raise HTTPException(status_code=400, detail="Token expired")
 
+    # Migrate any anonymous data to this user
+    if migrate_anonymous:
+        # Find all logs with user_id starting with "anonymous_"
+        await db.execute(
+            update(ExtensionLog)
+            .where(ExtensionLog.user_id.like("anonymous_%"))
+            .values(user_id=user_id)
+        )
+        await db.commit()
+
     # Mark token as used
     token_data["used"] = True
 
@@ -89,7 +88,6 @@ async def get_connection_status(
     user_id: str = Depends(get_user_id)
 ):
     """Check if extension is connected to this user"""
-    # Check if there are any recent logs for this user
     if user_id == "anonymous" or not user_id:
         return {
             "connected": False,
@@ -98,6 +96,36 @@ async def get_connection_status(
 
     return {
         "connected": True,
-        "user_id": user_id,
-        "message": "Extension is connected to this account"
+        "user_id": user_id
+    }
+
+@router.post("/extension/migrate-anonymous")
+async def migrate_anonymous_data(
+    anonymous_prefix: str = "anonymous_",
+    db: AsyncSession = Depends(get_db),
+    user_id: str = Depends(get_user_id)
+):
+    """Migrate all anonymous data to the current user"""
+    if user_id == "anonymous" or not user_id:
+        raise HTTPException(status_code=401, detail="Please sign in first")
+
+    # Count anonymous logs
+    result = await db.execute(
+        select(ExtensionLog).where(ExtensionLog.user_id.like(f"{anonymous_prefix}%"))
+    )
+    anonymous_logs = result.scalars().all()
+    count = len(anonymous_logs)
+
+    if count > 0:
+        await db.execute(
+            update(ExtensionLog)
+            .where(ExtensionLog.user_id.like(f"{anonymous_prefix}%"))
+            .values(user_id=user_id)
+        )
+        await db.commit()
+
+    return {
+        "success": True,
+        "migrated_count": count,
+        "message": f"Migrated {count} logs to user {user_id}"
     }
