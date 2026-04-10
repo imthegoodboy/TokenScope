@@ -4,8 +4,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { useUser } from '@clerk/nextjs';
 import { Users, Plus, Copy, Check, Trash2, UserPlus, LogOut, ChevronRight, Shield, Crown } from 'lucide-react';
 import Link from 'next/link';
-import Link from 'next/link';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import GroupSync from '@/components/GroupSync';
 
 interface Group {
   id: number;
@@ -116,6 +116,8 @@ export default function GroupsPage() {
   useEffect(() => {
     if (selectedGroup) {
       loadGroupDetails(selectedGroup.id);
+      // Save active group to localStorage for extension sync
+      localStorage.setItem('tokenscope_active_group_id', String(selectedGroup.id));
     }
   }, [selectedGroup, loadGroupDetails]);
 
@@ -256,15 +258,17 @@ export default function GroupsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white p-4 md:p-6">
-      <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-gradient-to-br from-orange to-orange-light rounded-xl flex items-center justify-center">
-              <Users className="w-6 h-6 text-black" />
-            </div>
-            <div>
+    <>
+      <GroupSync />
+      <div className="min-h-screen bg-black text-white p-4 md:p-6">
+        <div className="max-w-7xl mx-auto space-y-6">
+          {/* Header */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-gradient-to-br from-orange to-orange-light rounded-xl flex items-center justify-center">
+                <Users className="w-6 h-6 text-black" />
+              </div>
+              <div>
               <h1 className="text-2xl md:text-3xl font-bold">Groups</h1>
               <p className="text-gray-400 text-sm">Collaborate and track team usage</p>
             </div>
@@ -576,6 +580,7 @@ export default function GroupsPage() {
           </div>
         </div>
       )}
-    </div>
+      </div>
+    </>
   );
 }
