@@ -267,6 +267,8 @@ async def get_extension_history(
             "original_tokens": log.original_tokens,
             "optimized_tokens": log.optimized_tokens,
             "tokens_saved": log.tokens_saved,
+            "cost_original": log.cost_original,
+            "cost_optimized": log.cost_optimized,
             "cost_saved": log.cost_saved,
             "attention_score": log.attention_score,
             "chatbot": log.chatbot,
@@ -293,20 +295,53 @@ async def get_attention_scores(
         ).group_by(ExtensionLog.chatbot)
     )
 
+    by_chatbot = [
+        {
+            "chatbot": row.chatbot,
+            "avg_score": round(row.score or 0, 2),
+            "sample_count": row.count
+        }
+        for row in result.all()
+    ]
+
+    # Calculate overall average
+    total_samples = sum(c["sample_count"] for c in by_chatbot)
+    overall_avg = (
+        sum(c["avg_score"] * c["sample_count"] for c in by_chatbot) / max(total_samples, 1)
+        if by_chatbot else 0.0
+    )
+
+    # Get score distribution
+    high_result = await db.execute(
+        select(func.count(ExtensionLog.id)).where(
+            ExtensionLog.user_id == user_id,
+            ExtensionLog.accepted == True,
+            ExtensionLog.attention_score > 0.7
+        )
+    )
+    med_result = await db.execute(
+        select(func.count(ExtensionLog.id)).where(
+            ExtensionLog.user_id == user_id,
+            ExtensionLog.accepted == True,
+            ExtensionLog.attention_score >= 0.4,
+            ExtensionLog.attention_score <= 0.7
+        )
+    )
+    low_result = await db.execute(
+        select(func.count(ExtensionLog.id)).where(
+            ExtensionLog.user_id == user_id,
+            ExtensionLog.accepted == True,
+            ExtensionLog.attention_score < 0.4
+        )
+    )
+
     return {
-        "overall_avg": 0.0,  # Will be calculated from the result
-        "by_chatbot": [
-            {
-                "chatbot": row.chatbot,
-                "avg_score": round(row.score or 0, 2),
-                "sample_count": row.count
-            }
-            for row in result.all()
-        ],
+        "overall_avg": round(overall_avg, 2),
+        "by_chatbot": by_chatbot,
         "score_distribution": {
-            "high": 0,    # > 0.7
-            "medium": 0,  # 0.4 - 0.7
-            "low": 0      # < 0.4
+            "high": high_result.scalar() or 0,
+            "medium": med_result.scalar() or 0,
+            "low": low_result.scalar() or 0
         }
     }
 
