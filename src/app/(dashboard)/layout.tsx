@@ -8,6 +8,7 @@ import { LayoutDashboard, FileText, Sparkles, Menu, X, Puzzle, Users } from 'luc
 import { useState } from 'react';
 import { UserButton } from '@clerk/nextjs';
 import { LogoMark } from '@/components/LogoMark';
+import ExtensionAuthSync from '@/components/ExtensionAuthSync';
 
 function DashboardNav() {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -101,6 +102,7 @@ export default function DashboardLayout({
 
   return (
     <>
+      <ExtensionAuthSync />
       <DashboardNav />
       <main className="min-h-screen pt-16 bg-black">
         {children}
