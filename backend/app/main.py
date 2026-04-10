@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
-from .routers import proxy, keys, stats, logs, usage, analyzer
+from .routers import proxy, keys, stats, logs, usage, analyzer, extension, groups, connect
 from .database import init_db
 
 @asynccontextmanager
@@ -30,6 +30,9 @@ app.include_router(stats.router, prefix="/api/v1", tags=["Stats"])
 app.include_router(logs.router, prefix="/api/v1", tags=["Logs"])
 app.include_router(usage.router, prefix="/api/v1", tags=["Usage"])
 app.include_router(analyzer.router, prefix="/api/v1", tags=["Analyzer"])
+app.include_router(extension.router, prefix="/api/v1", tags=["Extension"])
+app.include_router(groups.router, prefix="/api/v1", tags=["Groups"])
+app.include_router(connect.router, prefix="/api/v1", tags=["Connect"])
 
 @app.get("/")
 async def root():

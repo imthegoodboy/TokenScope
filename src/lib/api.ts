@@ -87,6 +87,37 @@ export const api = {
     enhance: (prompt: string, targetModel?: string) =>
       request<any>('/enhance', { method: 'POST', body: { prompt, target_model: targetModel } }),
   },
+
+  extension: {
+    statsOverview: () => request<any>('/extension/stats/overview'),
+    statsDaily: (days?: number) => request<any>(`/extension/stats/daily?days=${days || 30}`),
+    statsByChatbot: () => request<any>('/extension/stats/by-chatbot'),
+    history: (limit?: number) => request<any[]>(`/extension/history?limit=${limit || 100}`),
+    attentionScores: () => request<any>('/extension/attention-scores'),
+    logEvent: (data: any) => request<any>('/extension/log', { method: 'POST', body: data }),
+    syncEvents: (logs: any[]) => request<any>('/extension/sync', { method: 'POST', body: { logs } }),
+  },
+
+  groups: {
+    list: () => request<any[]>('/groups'),
+    create: (data: { name: string; description?: string }) =>
+      request<any>('/groups', { method: 'POST', body: data }),
+    get: (groupId: number) => request<any>(`/groups/${groupId}`),
+    delete: (groupId: number) => request<any>(`/groups/${groupId}`, { method: 'DELETE' }),
+    join: (code: string) => request<any>('/groups/join', { method: 'POST', body: { code } }),
+    leave: (groupId: number) => request<any>(`/groups/${groupId}/leave`, { method: 'POST' }),
+    members: (groupId: number) => request<any[]>(`/groups/${groupId}/members`),
+    memberLogs: (groupId: number, memberUserId: string, limit?: number) =>
+      request<any[]>(`/groups/${groupId}/members/${memberUserId}/logs?limit=${limit || 50}`),
+    stats: (groupId: number) => request<any>(`/groups/${groupId}/stats`),
+  },
+
+  connect: {
+    createToken: () => request<any>('/extension/connect', { method: 'POST' }),
+    verifyToken: (token: string) =>
+      request<any>(`/extension/connect/verify?token=${token}`, { method: 'POST' }),
+    status: () => request<any>('/extension/connect/status'),
+  },
 };
 
 export default api;

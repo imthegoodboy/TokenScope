@@ -18,12 +18,15 @@
   let isVisible = false;
   let debounceTimer = null;
   let isOptimizing = false;
+  let currentAttentionScore = 0.5;
+  let currentChatbot = 'chatgpt';
 
   function init() {
     loadSettings();
     createOverlay();
     setupEventListeners();
     observeNewInputs();
+    detectCurrentChatbot();
   }
 
   async function loadSettings() {
@@ -33,6 +36,19 @@
         CONFIG.autoEnabled = result.settings.auto_popup !== false;
       }
     } catch (e) {}
+  }
+
+  function detectCurrentChatbot() {
+    const hostname = window.location.hostname;
+    if (hostname.includes('openai.com') || hostname.includes('chatgpt')) {
+      currentChatbot = 'chatgpt';
+    } else if (hostname.includes('claude.ai')) {
+      currentChatbot = 'claude';
+    } else if (hostname.includes('gemini')) {
+      currentChatbot = 'gemini';
+    } else if (hostname.includes('perplexity')) {
+      currentChatbot = 'perplexity';
+    }
   }
 
   function createOverlay() {
@@ -99,11 +115,20 @@
         .ts-btn:hover {
           background: #333;
         }
+
+        .ts-score {
+          font-size: 10px;
+          color: #888;
+          padding: 4px 8px;
+          background: #f0f0f0;
+          border-radius: 12px;
+        }
       </style>
 
       <div class="ts-container">
         <div class="ts-text" id="ts-text"></div>
-        <button class="ts-btn" id="ts-accept">Accept</button>
+        <span class="ts-score" id="ts-score">⚡ 0%</span>
+        <button class="ts-btn" id="ts-accept">Tab to accept</button>
       </div>
     `;
   }
@@ -162,7 +187,7 @@
 
     if (e.key === 'Escape') {
       e.preventDefault();
-      hideOverlay();
+      dismissSuggestion();
       return;
     }
   }
@@ -202,15 +227,17 @@
     currentText = text;
 
     try {
+      const userId = await getUserId();
+
       const response = await fetch(`${CONFIG.apiBase}/analyze`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'X-User-Id': await getUserId()
+          'X-User-Id': userId
         },
         body: JSON.stringify({
           prompt: text,
-          target_model: 'chatgpt'
+          target_model: currentChatbot
         })
       });
 
@@ -220,8 +247,19 @@
 
       if (data && data.suggestion && data.suggestion.text) {
         optimizedText = data.suggestion.text;
+
+        // Calculate attention score based on token savings
+        const originalTokens = countTokens(text);
+        const optimizedTokens = countTokens(optimizedText);
+        const tokenSavings = Math.max(0, originalTokens - optimizedTokens);
+
+        // Higher score = more tokens saved
+        currentAttentionScore = tokenSavings > 0
+          ? Math.min(1, (tokenSavings / originalTokens) + 0.3)
+          : 0.3;
       } else {
         optimizedText = text;
+        currentAttentionScore = 0.3;
       }
 
       showSuggestion();
@@ -234,9 +272,18 @@
 
   function showSuggestion() {
     const textEl = suggestionOverlay.querySelector('#ts-text');
-    if (!textEl) return;
+    const scoreEl = suggestionOverlay.querySelector('#ts-score');
+
+    if (!textEl || !scoreEl) return;
 
     textEl.textContent = optimizedText;
+
+    // Update attention score display
+    const tokenSavings = countTokens(currentText) - countTokens(optimizedText);
+    const percentSaved = countTokens(currentText) > 0
+      ? Math.round((tokenSavings / countTokens(currentText)) * 100)
+      : 0;
+    scoreEl.textContent = `⚡ -${percentSaved}%`;
 
     positionOverlay();
     showOverlay();
@@ -292,13 +339,24 @@
   function acceptSuggestion() {
     if (!currentInput || !optimizedText) return;
 
-    saveToHistory(currentText, optimizedText);
+    const originalTokens = countTokens(currentText);
+    const optimizedTokens = countTokens(optimizedText);
 
+    // Log to backend
+    logToBackend({
+      original_prompt: currentText,
+      optimized_prompt: optimizedText,
+      original_tokens: originalTokens,
+      optimized_tokens: optimizedTokens,
+      chatbot: currentChatbot,
+      attention_score: currentAttentionScore,
+      accepted: true
+    });
+
+    // Visual feedback
     currentInput.value = optimizedText;
     acceptedText = optimizedText;
-
     currentInput.dispatchEvent(new Event('input', { bubbles: true }));
-
     currentInput.style.border = '2px solid #000';
     setTimeout(() => {
       if (currentInput) currentInput.style.border = '';
@@ -306,6 +364,41 @@
 
     hideOverlay();
     currentText = '';
+  }
+
+  function dismissSuggestion() {
+    if (!currentText) return;
+
+    // Log dismissed to backend
+    logToBackend({
+      original_prompt: currentText,
+      optimized_prompt: optimizedText,
+      original_tokens: countTokens(currentText),
+      optimized_tokens: countTokens(optimizedText),
+      chatbot: currentChatbot,
+      attention_score: currentAttentionScore,
+      accepted: false
+    });
+
+    hideOverlay();
+    currentText = '';
+  }
+
+  async function logToBackend(data) {
+    try {
+      const userId = await getUserId();
+      const groupId = await getGroupId();
+
+      await chrome.runtime.sendMessage({
+        type: 'LOG_ACCEPTED',
+        payload: {
+          ...data,
+          group_id: groupId
+        }
+      });
+    } catch (e) {
+      console.error('[TokenScope] Failed to log:', e);
+    }
   }
 
   async function getUserId() {
@@ -317,32 +410,18 @@
     }
   }
 
-  async function saveToHistory(original, optimized) {
+  async function getGroupId() {
     try {
-      if (!original || !optimized) return;
+      const result = await chrome.storage.local.get('group_id');
+      return result.group_id || null;
+    } catch {
+      return null;
+    }
+  }
 
-      const result = await chrome.storage.local.get(['history', 'stats']);
-      const history = result.history || [];
-      const stats = result.stats || { total_prompts: 0, total_saved_tokens: 0, total_saved_cost: 0 };
-
-      const originalTokens = (original.split(' ').filter(w => w.length > 0)).length;
-      const optimizedTokens = (optimized.split(' ').filter(w => w.length > 0)).length;
-      const savedTokens = Math.max(0, originalTokens - optimizedTokens);
-
-      history.unshift({
-        original: String(original),
-        optimized: String(optimized),
-        saved_tokens: savedTokens,
-        timestamp: new Date().toISOString()
-      });
-
-      const trimmed = history.slice(0, 100);
-
-      stats.total_prompts = (stats.total_prompts || 0) + 1;
-      stats.total_saved_tokens = (stats.total_saved_tokens || 0) + savedTokens;
-
-      await chrome.storage.local.set({ history: trimmed, stats });
-    } catch (e) {}
+  function countTokens(text) {
+    // Rough token estimation
+    return Math.ceil((text || '').split(/\s+/).filter(w => w.length > 0).length * 1.3);
   }
 
   function observeNewInputs() {

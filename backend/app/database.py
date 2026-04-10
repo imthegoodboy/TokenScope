@@ -61,6 +61,65 @@ class Usage(Base):
     cost = Column(Float, default=0.0)
     request_count = Column(Integer, default=0)
 
+class ExtensionLog(Base):
+    """Tracks Chrome extension usage - prompt optimizations accepted by users"""
+    __tablename__ = "extension_logs"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(String(255), nullable=False, index=True)
+    group_id = Column(Integer, nullable=True, index=True)  # Optional: if user is in a group
+    original_prompt = Column(Text, nullable=False)
+    optimized_prompt = Column(Text, nullable=False)
+    original_tokens = Column(Integer, default=0)
+    optimized_tokens = Column(Integer, default=0)
+    tokens_saved = Column(Integer, default=0)
+    cost_original = Column(Float, default=0.0)
+    cost_optimized = Column(Float, default=0.0)
+    cost_saved = Column(Float, default=0.0)
+    attention_score = Column(Float, default=0.0)  # 0-1 score based on usage pattern
+    chatbot = Column(String(50), default="chatgpt")  # chatgpt, claude, gemini, manual
+    accepted = Column(Boolean, default=True)  # true = user accepted, false = dismissed
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+class ExtensionStats(Base):
+    """Aggregated extension stats per user"""
+    __tablename__ = "extension_stats"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    user_id = Column(String(255), nullable=False, index=True)
+    date = Column(String(20), nullable=False)  # YYYY-MM-DD
+    total_optimizations = Column(Integer, default=0)
+    total_accepts = Column(Integer, default=0)
+    total_rejects = Column(Integer, default=0)
+    total_tokens_saved = Column(Integer, default=0)
+    total_cost_saved = Column(Float, default=0.0)
+    avg_attention_score = Column(Float, default=0.0)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+class Group(Base):
+    """Groups for team/workspace collaboration"""
+    __tablename__ = "groups"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    name = Column(String(255), nullable=False)
+    description = Column(Text, nullable=True)
+    code = Column(String(8), unique=True, nullable=False, index=True)  # Unique join code
+    admin_id = Column(String(255), nullable=False, index=True)  # Creator's user ID
+    created_at = Column(DateTime, default=datetime.utcnow)
+    is_active = Column(Boolean, default=True)
+
+class GroupMember(Base):
+    """Members of a group"""
+    __tablename__ = "group_members"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    group_id = Column(Integer, nullable=False, index=True)
+    user_id = Column(String(255), nullable=False, index=True)
+    role = Column(String(50), default="member")  # admin, member
+    joined_at = Column(DateTime, default=datetime.utcnow)
+    is_active = Column(Boolean, default=True)
+
 async def init_db():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)

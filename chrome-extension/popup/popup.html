@@ -40,14 +40,10 @@
     .logo {
       width: 48px;
       height: 48px;
-      background: #000;
       border-radius: 14px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 18px;
-      font-weight: 700;
-      color: #fff;
+      object-fit: cover;
+      flex-shrink: 0;
+      display: block;
     }
 
     .title-area {
@@ -590,7 +586,7 @@
 <body>
   <div class="header">
     <div class="header-content">
-      <div class="logo">TS</div>
+      <img class="logo" src="../icons/icon128.png" width="48" height="48" alt="" />
       <div class="title-area">
         <div class="title">Token<span>Scope</span></div>
         <div class="subtitle">Prompt Optimizer</div>
@@ -711,10 +707,72 @@
   </div>
 
   <div class="footer">
-    <a href="http://localhost:3000/dashboard" target="_blank" class="open-dashboard" id="open-dashboard">
-      <span>📊</span> Open Dashboard
+    <button class="connect-btn" id="connect-btn" onclick="openConnectPage()">
+      <span>🔗</span> Connect to Account
+    </button>
+    <a href="#" onclick="openExtensionStats()" class="open-dashboard" id="open-dashboard">
+      <span>📊</span> View Extension Stats
     </a>
   </div>
+
+  <style>
+    .connect-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      width: 100%;
+      padding: 12px;
+      background: #000;
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-bottom: 8px;
+    }
+
+    .connect-btn:hover {
+      background: #333;
+    }
+
+    .connect-btn.connected {
+      background: #10A37F;
+    }
+
+    .connect-btn.connected:hover {
+      background: #0d8a6c;
+    }
+  </style>
+
+  <script>
+    function openConnectPage() {
+      window.open('http://localhost:3000/connect', '_blank');
+    }
+
+    function openExtensionStats() {
+      const userId = localStorage.getItem('tokenscope_user_id') || 'anonymous';
+      window.open(`http://localhost:3000/extension?userId=${encodeURIComponent(userId)}`, '_blank');
+    }
+
+    // Check connection status on load
+    function checkConnectionStatus() {
+      const userId = localStorage.getItem('tokenscope_user_id');
+      const btn = document.getElementById('connect-btn');
+      if (userId && userId !== 'anonymous' && userId.startsWith('user_')) {
+        btn.textContent = '✅ Connected';
+        btn.classList.add('connected');
+      } else {
+        btn.textContent = '🔗 Connect to Account';
+        btn.classList.remove('connected');
+      }
+    }
+
+    // Run on load
+    setTimeout(checkConnectionStatus, 500);
+  </script>
 
   <script src="popup.js"></script>
 </body>
