@@ -134,25 +134,23 @@ async def get_extension_overview(
             func.count(ExtensionLog.id).label("total_optimizations"),
             func.sum(func.cast(ExtensionLog.tokens_saved, Integer)).label("total_tokens_saved"),
             func.sum(ExtensionLog.cost_saved).label("total_cost_saved"),
+            func.sum(ExtensionLog.cost_original).label("total_cost_original"),
+            func.sum(ExtensionLog.cost_optimized).label("total_cost_optimized"),
             func.avg(ExtensionLog.attention_score).label("avg_attention_score"),
-            func.count().filter(ExtensionLog.accepted == True).label("total_accepts")
         ).where(ExtensionLog.user_id == user_id)
     )
     row = result.one()
 
-    # Get acceptance rate
-    total_result = await db.execute(
-        select(func.count(ExtensionLog.id)).where(ExtensionLog.user_id == user_id)
-    )
-    total_count = total_result.scalar()
+    total_count = row.total_optimizations or 0
 
+    # Get acceptance count
     accepted_result = await db.execute(
         select(func.count(ExtensionLog.id)).where(
             ExtensionLog.user_id == user_id,
             ExtensionLog.accepted == True
         )
     )
-    accepted_count = accepted_result.scalar()
+    accepted_count = accepted_result.scalar() or 0
 
     # Get weekly stats
     week_ago = (datetime.utcnow().date() - timedelta(days=7)).isoformat()
@@ -169,13 +167,13 @@ async def get_extension_overview(
     weekly = weekly_result.one()
 
     return {
-        "total_optimizations": row.total_optimizations or 0,
-        "total_accepts": accepted_count or 0,
-        "total_rejects": (total_count or 0) - (accepted_count or 0),
+        "total_optimizations": total_count,
+        "total_accepts": accepted_count,
+        "total_rejects": total_count - accepted_count,
         "total_tokens_saved": row.total_tokens_saved or 0,
         "total_cost_saved": row.total_cost_saved or 0.0,
         "avg_attention_score": round(row.avg_attention_score or 0, 2),
-        "acceptance_rate": round((accepted_count or 0) / (total_count or 1) * 100, 1),
+        "acceptance_rate": round(accepted_count / max(total_count, 1) * 100, 1),
         "weekly_optimizations": weekly.weekly_optimizations or 0,
         "weekly_tokens_saved": weekly.weekly_tokens_saved or 0,
         "weekly_cost_saved": weekly.weekly_cost_saved or 0.0
