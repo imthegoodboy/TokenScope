@@ -2,42 +2,43 @@
 
 import { useState, useEffect } from 'react';
 import { useUser } from '@clerk/nextjs';
-import { useRouter, useSearchParams } from 'next/navigation';
-import { Link2, Check, Copy, RefreshCw, AlertCircle, Zap } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Link2, Check, Copy, RefreshCw, AlertCircle, Zap, Loader2 } from 'lucide-react';
 
 export default function ConnectPage() {
   const { user, isLoaded } = useUser();
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const tokenFromUrl = searchParams.get('token');
 
-  const [connectionToken, setConnectionToken] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [status, setStatus] = useState<'idle' | 'connecting' | 'success' | 'error'>('idle');
+  const [connectionStatus, setConnectionStatus] = useState<'idle' | 'connecting' | 'success' | 'error'>('idle');
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [manualToken, setManualToken] = useState('');
 
-  // Generate connection token when page loads
+  // Check if already connected on load
+  useEffect(() => {
+    const storedId = localStorage.getItem('tokenscope_user_id');
+    if (storedId && storedId.startsWith('user_')) {
+      setConnectionStatus('success');
+    }
+  }, []);
+
+  // Save user ID to localStorage when logged in
   useEffect(() => {
     if (isLoaded && user) {
-      generateToken();
+      localStorage.setItem('tokenscope_user_id', user.id);
+      localStorage.setItem('tokenscope_user_email', user.emailAddresses[0]?.emailAddress || '');
     }
   }, [isLoaded, user]);
 
-  // If token in URL, verify it
-  useEffect(() => {
-    if (tokenFromUrl && isLoaded && user) {
-      verifyToken(tokenFromUrl);
-    }
-  }, [tokenFromUrl, isLoaded, user]);
-
-  const generateToken = async () => {
+  const connectExtension = async () => {
     if (!user) return;
 
-    setLoading(true);
+    setConnectionStatus('connecting');
+
     try {
+      // 1. Get connection token from backend
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
-      const res = await fetch(`${apiUrl}/extension/connect`, {
+      const tokenRes = await fetch(`${apiUrl}/extension/connect`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -45,26 +46,14 @@ export default function ConnectPage() {
         }
       });
 
-      if (res.ok) {
-        const data = await res.json();
-        setConnectionToken(data.token);
-      } else {
-        setError('Failed to generate connection token');
+      if (!tokenRes.ok) {
+        throw new Error('Failed to generate connection token');
       }
-    } catch (err) {
-      setError('Failed to connect to backend');
-    } finally {
-      setLoading(false);
-    }
-  };
 
-  const verifyToken = async (token: string) => {
-    if (!user) return;
+      const tokenData = await tokenRes.json();
 
-    setStatus('connecting');
-    try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api/v1';
-      const res = await fetch(`${apiUrl}/extension/connect/verify?token=${token}`, {
+      // 2. Verify the token (this links the extension to this user)
+      const verifyRes = await fetch(`${apiUrl}/extension/connect/verify?token=${tokenData.token}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -72,26 +61,52 @@ export default function ConnectPage() {
         }
       });
 
-      if (res.ok) {
-        setStatus('success');
-        // Store user_id in localStorage for extension to use
-        localStorage.setItem('tokenscope_user_id', user.id);
-        // Redirect after 2 seconds
-        setTimeout(() => router.push('/extension'), 2000);
-      } else {
-        const err = await res.json();
-        setError(err.detail || 'Failed to verify token');
-        setStatus('error');
+      if (!verifyRes.ok) {
+        throw new Error('Failed to verify connection');
       }
-    } catch (err) {
-      setError('Failed to verify token');
-      setStatus('error');
+
+      // 3. Save user ID to localStorage
+      localStorage.setItem('tokenscope_user_id', user.id);
+      localStorage.setItem('tokenscope_connection_token', tokenData.token);
+
+      // 4. Try to notify extension
+      try {
+        const w = window as any;
+        if (w.chrome?.runtime?.sendMessage) {
+          w.chrome.runtime.sendMessage({
+            type: 'SET_USER_CONTEXT',
+            payload: {
+              userId: user.id,
+              email: user.emailAddresses[0]?.emailAddress,
+              connected: true
+            }
+          });
+        }
+      } catch (e) {
+        // Extension not available, that's ok
+        console.log('Extension not found, user ID saved locally');
+      }
+
+      setConnectionStatus('success');
+
+    } catch (err: any) {
+      setError(err.message || 'Connection failed');
+      setConnectionStatus('error');
     }
   };
 
-  const copyToken = async () => {
-    if (connectionToken) {
-      await navigator.clipboard.writeText(connectionToken);
+  const handleManualConnect = () => {
+    if (manualToken && user) {
+      localStorage.setItem('tokenscope_user_id', user.id);
+      localStorage.setItem('tokenscope_connection_token', manualToken);
+      setConnectionStatus('success');
+      setManualToken('');
+    }
+  };
+
+  const copyUserId = async () => {
+    if (user) {
+      await navigator.clipboard.writeText(user.id);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     }
@@ -100,7 +115,7 @@ export default function ConnectPage() {
   if (!isLoaded) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="w-12 h-12 border-4 border-orange border-t-transparent rounded-full animate-spin" />
+        <Loader2 className="w-12 h-12 text-orange animate-spin" />
       </div>
     );
   }
@@ -112,9 +127,9 @@ export default function ConnectPage() {
           <AlertCircle className="w-16 h-16 mx-auto mb-4 text-red-400" />
           <h1 className="text-2xl font-bold mb-2">Sign In Required</h1>
           <p className="text-gray-400 mb-6">Please sign in to connect your extension</p>
-          <Link href="/sign-in" className="px-6 py-3 bg-orange text-black font-medium rounded-lg inline-block">
+          <a href="/sign-in" className="inline-block px-6 py-3 bg-orange text-black font-medium rounded-lg">
             Sign In
-          </Link>
+          </a>
         </div>
       </div>
     );
@@ -131,20 +146,28 @@ export default function ConnectPage() {
           <p className="text-gray-400">Link your Chrome extension to your TokenScope account</p>
         </div>
 
-        {status === 'success' ? (
+        {connectionStatus === 'success' ? (
           <div className="text-center py-8">
             <div className="w-16 h-16 bg-green-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
               <Check className="w-8 h-8 text-green-400" />
             </div>
             <h2 className="text-xl font-bold text-green-400 mb-2">Connected!</h2>
-            <p className="text-gray-400">Your extension is now linked to your account</p>
-            <p className="text-sm text-gray-500 mt-2">Redirecting to Extension Stats...</p>
+            <p className="text-gray-400 mb-4">Your extension is now linked to your account</p>
+            <p className="text-sm text-gray-500 mb-6">User ID: {user.id.slice(0, 20)}...</p>
+            <div className="flex gap-3 justify-center">
+              <a href="/extension" className="px-6 py-3 bg-orange text-black font-medium rounded-lg">
+                View Extension Stats
+              </a>
+              <button onClick={() => setConnectionStatus('idle')} className="px-6 py-3 bg-gray-800 text-white rounded-lg">
+                Disconnect
+              </button>
+            </div>
           </div>
-        ) : status === 'connecting' ? (
+        ) : connectionStatus === 'connecting' ? (
           <div className="text-center py-8">
-            <div className="w-16 h-16 border-4 border-orange border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+            <Loader2 className="w-16 h-16 mx-auto mb-4 text-orange animate-spin" />
             <h2 className="text-xl font-bold mb-2">Connecting...</h2>
-            <p className="text-gray-400">Please wait while we verify the connection</p>
+            <p className="text-gray-400">Please wait while we link your extension</p>
           </div>
         ) : (
           <>
@@ -155,63 +178,69 @@ export default function ConnectPage() {
               </div>
             )}
 
+            {/* Quick Connect Button */}
             <div className="bg-gray-800/50 rounded-lg p-6 mb-6">
-              <div className="flex items-center gap-2 mb-4">
+              <div className="flex items-center gap-3 mb-4">
                 <Zap className="text-orange" size={20} />
-                <span className="font-medium">Connection Token</span>
+                <span className="font-medium">Quick Connect</span>
               </div>
-
-              {connectionToken ? (
-                <>
-                  <div className="bg-gray-900 rounded-lg p-4 font-mono text-sm break-all mb-4">
-                    {connectionToken}
-                  </div>
-                  <div className="flex gap-3">
-                    <button
-                      onClick={copyToken}
-                      className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors"
-                    >
-                      {copied ? <Check size={16} className="text-green-400" /> : <Copy size={16} />}
-                      {copied ? 'Copied!' : 'Copy Token'}
-                    </button>
-                    <button
-                      onClick={generateToken}
-                      className="flex items-center justify-center gap-2 px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors"
-                    >
-                      <RefreshCw size={16} />
-                      Refresh
-                    </button>
-                  </div>
-                </>
-              ) : loading ? (
-                <div className="flex items-center justify-center py-4">
-                  <div className="w-6 h-6 border-2 border-orange border-t-transparent rounded-full animate-spin" />
-                </div>
-              ) : null}
+              <p className="text-sm text-gray-400 mb-4">
+                Click the button below to instantly connect your extension to your account.
+              </p>
+              <button
+                onClick={connectExtension}
+                className="w-full flex items-center justify-center gap-2 px-6 py-4 bg-orange hover:bg-orange-light text-black font-semibold rounded-lg transition-colors"
+              >
+                <Zap size={20} />
+                Connect Extension Now
+              </button>
             </div>
 
-            <div className="space-y-4 text-sm text-gray-400">
-              <h3 className="font-medium text-white">How to connect:</h3>
-              <ol className="list-decimal list-inside space-y-2 pl-4">
-                <li>Copy the connection token above</li>
-                <li>Open the TokenScope Chrome extension</li>
-                <li>Click the "Connect" button in the extension popup</li>
-                <li>Paste the token and click "Connect"</li>
-              </ol>
+            {/* Current User Info */}
+            <div className="bg-gray-800/50 rounded-lg p-4 mb-6">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm text-gray-400">Current User</span>
+                <span className="text-xs px-2 py-1 bg-green-500/20 text-green-400 rounded">Signed In</span>
+              </div>
+              <div className="font-mono text-sm truncate">{user.id}</div>
+              <button
+                onClick={copyUserId}
+                className="mt-2 text-sm text-orange hover:text-orange-light flex items-center gap-1"
+              >
+                {copied ? <Check size={14} /> : <Copy size={14} />}
+                {copied ? 'Copied!' : 'Copy User ID'}
+              </button>
             </div>
 
-            <div className="mt-6 pt-6 border-t border-gray-800">
-              <Link href="/extension" className="block text-center text-gray-500 hover:text-white transition-colors">
+            {/* Manual Connection */}
+            <div className="border-t border-gray-800 pt-6">
+              <h3 className="text-sm font-medium text-gray-400 mb-3">Manual Connection</h3>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={manualToken}
+                  onChange={(e) => setManualToken(e.target.value)}
+                  placeholder="Paste connection token"
+                  className="flex-1 px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:border-orange"
+                />
+                <button
+                  onClick={handleManualConnect}
+                  disabled={!manualToken}
+                  className="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors disabled:opacity-50"
+                >
+                  Connect
+                </button>
+              </div>
+            </div>
+
+            <div className="mt-6 pt-6 border-t border-gray-800 text-center">
+              <a href="/extension" className="text-gray-500 hover:text-white transition-colors text-sm">
                 Skip for now - Go to Extension Stats
-              </Link>
+              </a>
             </div>
           </>
         )}
       </div>
     </div>
   );
-}
-
-function Link(href: string) {
-  return null;
 }

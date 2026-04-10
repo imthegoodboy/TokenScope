@@ -1,13 +1,190 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import { ArrowRight, Zap, Shield, TrendingUp, Code, BarChart3, Sparkles, Star, ChevronDown, Play, Check, Users, Puzzle, MessageSquare, Download } from 'lucide-react';
+import { LogoMark } from '@/components/LogoMark';
 
 const HERO_VIDEO_SRC =
   '/4K%20UHD%2025fps%20FREE%20Video%20Background%20Stars%20Space%20Trip_1080p60.mp4';
+
+/* ───── Interactive Footer: giant "TokenScope" with particle + sweep shine ───── */
+function FooterSection() {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const particlesRef = useRef<{ x: number; y: number; vx: number; vy: number; life: number; maxLife: number; size: number; color: string }[]>([]);
+  const rafRef = useRef<number>(0);
+  const [isHovered, setIsHovered] = useState(false);
+
+  const spawnParticles = useCallback((mx: number, my: number) => {
+    const colors = ['#FF6B00', '#FF8C33', '#FFB366', '#ffffff', '#FFA500', '#FF4500'];
+    for (let i = 0; i < 5; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const speed = 0.8 + Math.random() * 2.5;
+      particlesRef.current.push({
+        x: mx + (Math.random() - 0.5) * 40,
+        y: my + (Math.random() - 0.5) * 40,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed - 1,
+        life: 1,
+        maxLife: 50 + Math.random() * 60,
+        size: 2 + Math.random() * 4,
+        color: colors[Math.floor(Math.random() * colors.length)],
+      });
+    }
+  }, []);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    const container = containerRef.current;
+    if (!canvas || !container) return;
+
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    let dpr = window.devicePixelRatio || 1;
+
+    const resize = () => {
+      dpr = window.devicePixelRatio || 1;
+      const rect = container.getBoundingClientRect();
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      canvas.style.width = rect.width + 'px';
+      canvas.style.height = rect.height + 'px';
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    };
+    resize();
+    window.addEventListener('resize', resize);
+
+    const handleMove = (e: MouseEvent) => {
+      const rect = container.getBoundingClientRect();
+      spawnParticles(e.clientX - rect.left, e.clientY - rect.top);
+    };
+
+    container.addEventListener('mousemove', handleMove);
+
+    const animate = () => {
+      const w = canvas.width / dpr;
+      const h = canvas.height / dpr;
+      ctx.clearRect(0, 0, w, h);
+
+      const particles = particlesRef.current;
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.015;
+        p.vx *= 0.995;
+        p.life -= 1;
+
+        const alpha = Math.max(0, p.life / p.maxLife);
+        const r = p.size * alpha;
+
+        // Outer glow
+        ctx.globalAlpha = alpha * 0.12;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, r * 4, 0, Math.PI * 2);
+        ctx.fillStyle = p.color;
+        ctx.fill();
+
+        // Core
+        ctx.globalAlpha = alpha * 0.9;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
+        ctx.fillStyle = p.color;
+        ctx.fill();
+
+        if (p.life <= 0) particles.splice(i, 1);
+      }
+      ctx.globalAlpha = 1;
+      rafRef.current = requestAnimationFrame(animate);
+    };
+    rafRef.current = requestAnimationFrame(animate);
+
+    return () => {
+      cancelAnimationFrame(rafRef.current);
+      window.removeEventListener('resize', resize);
+      container.removeEventListener('mousemove', handleMove);
+    };
+  }, [spawnParticles]);
+
+  return (
+    <footer className="relative overflow-hidden">
+      {/* Gradient that blends from the CTA section's orange tint into the footer */}
+      <div className="absolute inset-0 bg-gradient-to-b from-orange/[0.06] via-black/95 to-black pointer-events-none" />
+
+      {/* Interactive area */}
+      <div
+        ref={containerRef}
+        className="relative flex items-center justify-center py-28 md:py-40 lg:py-52 cursor-default select-none"
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+      >
+        {/* Particle canvas */}
+        <canvas
+          ref={canvasRef}
+          className="absolute inset-0 pointer-events-none z-10"
+        />
+
+        {/* Radial glow behind text on hover */}
+        <div
+          className="absolute inset-0 transition-opacity duration-700 pointer-events-none"
+          style={{
+            opacity: isHovered ? 1 : 0,
+            background: 'radial-gradient(ellipse 60% 50% at 50% 50%, rgba(255,107,0,0.08) 0%, transparent 70%)',
+          }}
+        />
+
+        {/* The giant text */}
+        <h2
+          className="footer-giant-text relative z-0 font-black leading-none tracking-tighter text-transparent select-none"
+          style={{
+            fontSize: 'clamp(80px, 18vw, 320px)',
+            WebkitTextStroke: isHovered ? '2px rgba(255,107,0,0.25)' : '2px rgba(255,255,255,0.06)',
+            transition: '-webkit-text-stroke 0.5s ease',
+          }}
+        >
+          TokenScope
+        </h2>
+      </div>
+
+      <style jsx>{`
+        .footer-giant-text {
+          background-image: linear-gradient(
+            120deg,
+            transparent 20%,
+            rgba(255, 107, 0, 0.0) 35%,
+            rgba(255, 140, 51, 0.0) 50%,
+            rgba(255, 107, 0, 0.0) 65%,
+            transparent 80%
+          );
+          background-size: 300% 100%;
+          background-position: 100% center;
+          -webkit-background-clip: text;
+          background-clip: text;
+          transition: background-position 0s, -webkit-text-stroke 0.5s ease;
+        }
+        .footer-giant-text:hover {
+          background-image: linear-gradient(
+            120deg,
+            transparent 20%,
+            rgba(255, 107, 0, 0.12) 35%,
+            rgba(255, 180, 80, 0.3) 50%,
+            rgba(255, 107, 0, 0.12) 65%,
+            transparent 80%
+          );
+          animation: footerSweep 1.8s ease forwards;
+        }
+        @keyframes footerSweep {
+          0%   { background-position: 100% center; }
+          100% { background-position: -100% center; }
+        }
+      `}</style>
+    </footer>
+  );
+}
 
 function LandingContent() {
   const router = useRouter();
@@ -118,9 +295,7 @@ function LandingContent() {
       <nav className="fixed top-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-lg border-b border-gray-800/50">
         <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
-            <div className="w-10 h-10 bg-gradient-to-br from-orange to-orange-light rounded-xl flex items-center justify-center">
-              <span className="text-black font-bold">TS</span>
-            </div>
+            <LogoMark size={40} rounded="xl" priority />
             <span className="text-xl font-bold">
               Token<span className="text-orange">Scope</span>
             </span>
@@ -480,28 +655,7 @@ function LandingContent() {
       </section>
 
       {/* Footer */}
-      <footer className="py-12 border-t border-gray-800">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-gradient-to-br from-orange to-orange-light rounded-lg flex items-center justify-center">
-                <span className="text-black font-bold text-sm">TS</span>
-              </div>
-              <span className="font-bold">
-                Token<span className="text-orange">Scope</span>
-              </span>
-            </div>
-            <div className="flex items-center gap-6 text-gray-500 text-sm">
-              <Link href="/docs" className="hover:text-white transition-colors">Documentation</Link>
-              <Link href="/privacy" className="hover:text-white transition-colors">Privacy</Link>
-              <Link href="/terms" className="hover:text-white transition-colors">Terms</Link>
-            </div>
-            <div className="text-gray-500 text-sm">
-              2026 TokenScope. All rights reserved.
-            </div>
-          </div>
-        </div>
-      </footer>
+      <FooterSection />
     </div>
   );
 }

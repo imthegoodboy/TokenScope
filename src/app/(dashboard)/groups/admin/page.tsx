@@ -389,9 +389,9 @@ export default function GroupAdminPage() {
                     className="px-3 py-2 bg-black border border-gray-700 rounded-lg text-white text-sm focus:border-orange"
                   >
                     <option value="all">All Accept Rates</option>
-                    <option value="high">High (>70%)</option>
+                    <option value="high">High (&gt;70%)</option>
                     <option value="medium">Medium (40-70%)</option>
-                    <option value="low">Low (<40%)</option>
+                    <option value="low">Low (&lt;40%)</option>
                   </select>
 
                   <select
@@ -400,9 +400,9 @@ export default function GroupAdminPage() {
                     className="px-3 py-2 bg-black border border-gray-700 rounded-lg text-white text-sm focus:border-orange"
                   >
                     <option value="all">All Token Savings</option>
-                    <option value="high">High (>100)</option>
+                    <option value="high">High (&gt;100)</option>
                     <option value="medium">Medium (20-100)</option>
-                    <option value="low">Low (<20)</option>
+                    <option value="low">Low (&lt;20)</option>
                   </select>
 
                   <select

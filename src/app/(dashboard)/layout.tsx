@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { LayoutDashboard, FileText, Sparkles, Menu, X, Puzzle, Users } from 'lucide-react';
 import { useState } from 'react';
 import { UserButton } from '@clerk/nextjs';
+import { LogoMark } from '@/components/LogoMark';
 
 function DashboardNav() {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -23,9 +24,7 @@ function DashboardNav() {
     <nav className="fixed top-0 left-0 right-0 h-16 bg-black/95 backdrop-blur-sm border-b border-gray-800 z-50">
       <div className="max-w-7xl mx-auto px-4 h-full flex items-center justify-between">
         <Link href="/dashboard" className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-gradient-to-br from-orange to-orange-light rounded-lg flex items-center justify-center">
-            <span className="text-black font-bold text-sm">TS</span>
-          </div>
+          <LogoMark size={32} rounded="lg" />
           <span className="text-xl font-bold text-white">
             Token<span className="text-orange">Scope</span>
           </span>

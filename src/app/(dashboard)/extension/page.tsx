@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useUser } from '@clerk/nextjs';
 import { Sparkles, TrendingUp, Clock, Target, Zap, DollarSign, MessageSquare, BarChart3, RefreshCw, CheckCircle, XCircle, ChevronDown, ChevronUp } from 'lucide-react';
+import { LogoMark } from '@/components/LogoMark';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
 interface ExtensionStats {
@@ -41,6 +42,8 @@ interface HistoryItem {
   original_tokens: number;
   optimized_tokens: number;
   tokens_saved: number;
+  cost_original: number;
+  cost_optimized: number;
   cost_saved: number;
   attention_score: number;
   chatbot: string;
@@ -155,9 +158,7 @@ export default function ExtensionPage() {
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-gradient-to-br from-orange to-orange-light rounded-xl flex items-center justify-center">
-              <Sparkles className="w-6 h-6 text-black" />
-            </div>
+            <LogoMark size={48} rounded="xl" />
             <div>
               <h1 className="text-2xl md:text-3xl font-bold">Extension Stats</h1>
               <p className="text-gray-400 text-sm">Track your Chrome extension performance</p>
