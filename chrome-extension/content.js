@@ -387,9 +387,14 @@
   async function logToBackend(data) {
     try {
       const userId = await getUserId();
+      const groupId = await getGroupId();
+
       await chrome.runtime.sendMessage({
         type: 'LOG_ACCEPTED',
-        payload: data
+        payload: {
+          ...data,
+          group_id: groupId
+        }
       });
     } catch (e) {
       console.error('[TokenScope] Failed to log:', e);
@@ -402,6 +407,15 @@
       return result.user_id || 'anonymous';
     } catch {
       return 'anonymous';
+    }
+  }
+
+  async function getGroupId() {
+    try {
+      const result = await chrome.storage.local.get('group_id');
+      return result.group_id || null;
+    } catch {
+      return null;
     }
   }
 
